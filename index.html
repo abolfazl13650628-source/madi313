@@ -2081,16 +2081,22 @@ async function prepareAiImage(file){
   let img;
   if(window.createImageBitmap){img=await createImageBitmap(file)}
   else{img=await new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{URL.revokeObjectURL(u);res(im)};im.onerror=rej;im.src=u})}
-  const maxSide=1600;
-  const sc=Math.min(1,maxSide/Math.max(img.width,img.height));
-  const c=document.createElement('canvas');
-  c.width=Math.max(1,Math.round(img.width*sc));
-  c.height=Math.max(1,Math.round(img.height*sc));
-  const x=c.getContext('2d');
-  if(!x) { img.close&&img.close(); throw new Error('پردازش تصویر در این مرورگر پشتیبانی نمی‌شود'); }
-  x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);
+  const MAXB64=5400000;           // سقف سرور ≈ ۶٫۰ میلیون نویسه
+  let maxSide=2400,q=0.88,out='';
+  for(let i=0;i<5;i++){
+    const sc=Math.min(1,maxSide/Math.max(img.width,img.height));
+    const c=document.createElement('canvas');
+    c.width=Math.max(1,Math.round(img.width*sc));
+    c.height=Math.max(1,Math.round(img.height*sc));
+    const x=c.getContext('2d');
+    if(!x){img.close&&img.close();throw new Error('پردازش تصویر در این مرورگر پشتیبانی نمی‌شود')}
+    x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);
+    out=c.toDataURL('image/jpeg',q).split(',')[1];
+    if(out.length<=MAXB64)break;
+    maxSide=Math.round(maxSide*0.85);q=Math.max(0.78,q-0.03);
+  }
   img.close&&img.close();
-  return c.toDataURL('image/jpeg',0.92).split(',')[1];
+  return out;
 }
 const SPALIAS={'زبان گنجشک':'ون','زبانگنجشک':'ون','ممرزی':'ممرز'};
 function lev(a,b){const m=a.length,n=b.length,d=Array.from({length:m+1},(_,i)=>[i]);for(let j=1;j<=n;j++)d[0][j]=j;for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[m][n]}
@@ -2123,6 +2129,7 @@ async function aiReadImage(file){
   }else if(isFinite(sheetTot)&&sheetTot>0){
     note+='جمع کل درج‌شده روی برگه: '+toFa(sheetTot)+' مترمکعب؛ حجم ردیف‌ها از تصویر قابل‌تأیید نبود. ';
   }
+  if(j.partial)note+='⚠️ خروجی هوش مصنوعی ناقص بود؛ ردیف‌های آخر برگه را بررسی کنید. ';
   if(j.provider)note+='['+j.provider+'] ';
   if(unk)note+='⚠️ '+toFa(unk)+' سطر نام گونهٔ معتبر نداشت (قرمز)؛ اصلاح کنید. ';
   return {rows,note};
