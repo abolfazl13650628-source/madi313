@@ -2487,7 +2487,7 @@ function showImportPreview(data, note) {
       <div style="flex:1;overflow:auto;border:1px solid var(--bd);border-radius:8px;">
         <table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap;">
           <thead style="position:sticky;top:0;background:var(--bg);z-index:2;">
-            <tr><th>شماره</th><th>گونه (Sp)</th><th>قطر (D)</th><th>ارتفاع (H)</th><th>تعداد</th><th>توضیحات</th><th>حذف</th></tr>
+            <tr><th>شماره</th><th>گونه (Sp)</th><th>قطر (D)</th><th>ارتفاع (H)</th><th>تعداد</th><th>حجم</th><th>توضیحات</th><th>حذف</th></tr>
           </thead>
           <tbody id="impTbBody">
             ${data.map((item, i) => `
@@ -2495,8 +2495,9 @@ function showImportPreview(data, note) {
                 <td style="padding:4px;"><input type="text" class="imp-no" value="${esc(item.no || '')}" style="padding:4px;text-align:center;width:50px;"></td>
                 <td style="padding:4px;"><input type="text" class="imp-sp" value="${esc(item.sp || '')}" style="padding:4px;text-align:center;width:70px;"></td>
                 <td style="padding:4px;"><input type="text" inputmode="decimal" class="imp-d" value="${item.d || ''}" style="padding:4px;text-align:center;width:60px;"></td>
-                <td style="padding:4px;"><input type="text" inputmode="decimal" class="imp-h" value="${item.h || ''}" style="padding:4px;text-align:center;width:60px;"></td>
+                <td style="padding:4px;"><input type="text" inputmode="decimal" class="imp-h" value="${item.h ? toFa(item.h) : ''}" style="padding:4px;text-align:center;width:60px;"></td>
                 <td style="padding:4px;"><input type="text" inputmode="decimal" class="imp-n" value="${item.n || 1}" style="padding:4px;text-align:center;width:45px;"></td>
+                <td class="imp-v" style="padding:4px;text-align:center;font-weight:bold;color:var(--ac);">—</td>
                 <td style="padding:4px;"><input type="text" class="imp-ds" value="${esc(item.ds || '')}" style="padding:4px;text-align:center;width:100px;"></td>
                 <td style="padding:4px;text-align:center;"><button class="x" onclick="this.closest('tr').remove()">×</button></td>
               </tr>
@@ -2508,13 +2509,55 @@ function showImportPreview(data, note) {
     </div>
   `;
   document.body.append(ov);
+  const tbody = ov.querySelector('#impTbBody');
+
+  const updateImpRow = (tr) => {
+    const sp = tr.querySelector('.imp-sp').value.trim();
+    const d = parseNum(tr.querySelector('.imp-d').value);
+    let h = parseNum(tr.querySelector('.imp-h').value) || 0;
+    const n = Math.max(1, parseInt(toEn(tr.querySelector('.imp-n').value)) || 1);
+    const hInput = tr.querySelector('.imp-h');
+    
+    // در حالت تالار: ارتفاع خالی یا قبلاً خودکار → از جدول
+    if ((getActiveSheet()?.volClass === 'tala') && d > 0) {
+      const res = talaLookup(sp, d);
+      if (res && (!hInput.value.trim() || hInput.dataset.auto === '1')) {
+        hInput.value = toFa(res.h.toFixed(1));
+        hInput.dataset.auto = '1';
+        h = res.h;
+      }
+    }
+    // اگر کاربر دستی تایپ کرد، پرچم خودکار برداشته شود
+    if (hInput.dataset.auto === '1' && parseNum(hInput.value) && Math.abs(parseNum(hInput.value) - h) > 0.05) {
+      // handled below via resolveHV; clear auto flag when user edits
+    }
+    if (!(d > 0)) { tr.querySelector('.imp-v').textContent = '—'; return; }
+    const hv = resolveHV(sp, d, parseNum(hInput.value) || 0);
+    // اگر ارتفاع خالی بود و resolveHV ارتفاع جدول داد، برای نمایش حجم از آن استفاده می‌شود
+    const v = hv.v * n;
+    tr.querySelector('.imp-v').textContent = v > 0 ? fa(v, 3) : '—';
+  };
+
+  tbody.querySelectorAll('tr').forEach(updateImpRow);
+  tbody.addEventListener('input', e => {
+    if (e.target.matches('.imp-h')) {
+      e.target.dataset.auto = ''; // کاربر دستی تغییر داد
+    }
+    if (e.target.matches('.imp-d, .imp-h, .imp-sp, .imp-n')) {
+      updateImpRow(e.target.closest('tr'));
+    }
+  });
+
   ov.querySelector('#impCancel').onclick = () => ov.remove();
   ov.querySelector('#impConfirm').onclick = () => {
     const rows = ov.querySelectorAll('#impTbBody tr'); let added = 0;
     let currentMaxNo = T.filter(t=>t.ty!='h').reduce((max, t) => Math.max(max, parseInt(t.no) || 0), 0);
+    
     rows.forEach(tr => {
       const no = tr.querySelector('.imp-no').value.trim(); let sp = tr.querySelector('.imp-sp').value.trim();
-      const d = parseNum(tr.querySelector('.imp-d').value); const hRaw = parseNum(tr.querySelector('.imp-h').value) || 0; const ds = tr.querySelector('.imp-ds').value.trim();
+      const d = parseNum(tr.querySelector('.imp-d').value); 
+      let hRaw = parseNum(tr.querySelector('.imp-h').value) || 0; 
+      const ds = tr.querySelector('.imp-ds').value.trim();
       const n = Math.max(1, parseInt(toEn(tr.querySelector('.imp-n').value)) || 1);
       
       if (d > 0) {
@@ -2556,7 +2599,7 @@ function openQuickEntry(prefill, note) {
       <div style="flex:1;overflow:auto;border:1px solid var(--bd);border-radius:8px;">
         <table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap;">
           <thead style="position:sticky;top:0;background:var(--bg);z-index:2;">
-            <tr><th>گونه (Sp)</th><th>قطر (D)</th><th>طول (H)</th><th>تعداد</th><th>نوع</th><th>حجم</th><th>حذف</th></tr>
+            <tr><th>شماره</th><th>گونه (Sp)</th><th>قطر (D)</th><th>طول (H)</th><th>تعداد</th><th>نوع</th><th>حجم</th><th>حذف</th></tr>
           </thead>
           <tbody id="quickTbBody">${prefill && prefill.length ? prefill.map(r => quickRowHtml(r)).join('') : quickRowHtml()}</tbody>
         </table>
@@ -2566,44 +2609,68 @@ function openQuickEntry(prefill, note) {
   `;
   document.body.append(ov);
   const tbody = ov.querySelector('#quickTbBody');
+  
   const updV = () => tbody.querySelectorAll('tr').forEach(tr => {
-    const sp = tr.querySelector('.q-sp').value.trim(), d = parseNum(tr.querySelector('.q-d').value), hRaw = parseNum(tr.querySelector('.q-h').value) || 0, n = parseInt(toEn(tr.querySelector('.q-count').value)) || 1;
+    const sp = tr.querySelector('.q-sp').value.trim();
+    const d = parseNum(tr.querySelector('.q-d').value);
+    const hRaw = parseNum(tr.querySelector('.q-h').value) || 0;
+    const n = parseInt(toEn(tr.querySelector('.q-count').value)) || 1;
     const c = tr.querySelector('.q-v');
+    const hi = tr.querySelector('.q-h');
     if (!c) return;
     if (!(d > 0)) { c.textContent = '—'; return; }
+    
+    if ((getActiveSheet()?.volClass === 'tala') && d > 0) {
+      const res = talaLookup(sp, d);
+      if (res && hi && (!hi.value.trim() || hi.dataset.auto === '1')) {
+        hi.value = toFa(res.h.toFixed(1));
+        hi.dataset.auto = '1';
+      }
+    }
     const hv = resolveHV(sp, d, hRaw);
     c.textContent = hv.v > 0 ? fa(hv.v * n, 2) : '—';
-    // اگر کلاسه تالار و ارتفاع خالی بود، مقدار جدول را در فیلد نشان بده (فقط نمایش، بدون قفل)
-    if ((getActiveSheet()?.volClass === 'tala') && !hRaw && hv.h > 0) {
-      const hi = tr.querySelector('.q-h');
-      if (hi && !hi.value.trim()) hi.placeholder = toFa(hv.h.toFixed(1));
-    }
   });
-  tbody.addEventListener('input', updV); tbody.addEventListener('change', updV); updV();
+  
+  tbody.addEventListener('input', e => {
+    if (e.target.matches('.q-h')) e.target.dataset.auto = '';
+    updV();
+  });
+  tbody.addEventListener('change', updV);
+  updV();
   ov.querySelector('#qAddRow').onclick = () => { tbody.insertAdjacentHTML('beforeend', quickRowHtml()); };
   ov.querySelector('#qCancel').onclick = () => ov.remove();
+  
   ov.querySelector('#qConfirm').onclick = () => {
     const rows = tbody.querySelectorAll('tr'); let added = 0;
     let currentMaxNo = T.filter(t=>t.ty!='h').reduce((max, t) => Math.max(max, parseInt(t.no) || 0), 0);
     rows.forEach(tr => {
-      let sp = matchSp(tr.querySelector('.q-sp').value.trim()); const d = parseNum(tr.querySelector('.q-d').value); const hRaw = parseNum(tr.querySelector('.q-h').value) || 0; const count = parseInt(toEn(tr.querySelector('.q-count').value)) || 1;
-      const k = tr.querySelector('.q-ty').value; 
+      let sp = matchSp(tr.querySelector('.q-sp').value.trim());
+      const d = parseNum(tr.querySelector('.q-d').value);
+      const hRaw = parseNum(tr.querySelector('.q-h').value) || 0;
+      const count = parseInt(toEn(tr.querySelector('.q-count').value)) || 1;
+      const k = tr.querySelector('.q-ty').value;
+      let rowNo = tr.querySelector('.q-no') ? tr.querySelector('.q-no').value.trim() : '';
       
       if (d > 0) {
         if (!sp) sp = 'نامشخص';
         const hv = resolveHV(sp, d, hRaw);
         const h = hv.h, v = hv.v, hManual = hv.hManual;
         const isFw = d < 20;
+        
         if (isFw) {
           const newId = T.reduce((a, t) => Math.max(a, t.id), 0) + 1;
-          T.push({ id: newId, no: '', sp: sp, g: (SP[sp] || [0,3])[1], ty: 'h', n: count, d: d, h: h, hManual, f: 0.5, v: v, ds: '', k: k, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: new Date().toISOString().slice(0,10) });
+          T.push({ id: newId, no: rowNo || '', sp: sp, g: (SP[sp] || [0,3])[1], ty: 'h', n: count, d: d, h: h, hManual, f: 0.5, v: v, ds: '', k: k, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: new Date().toISOString().slice(0,10) });
           added += count;
         } else {
           for (let i = 0; i < count; i++) {
-            currentMaxNo++;
+            let finalNo = rowNo;
+            if (!finalNo) { currentMaxNo++; finalNo = currentMaxNo.toString(); }
+            else { currentMaxNo = Math.max(currentMaxNo, parseInt(finalNo) || 0); }
+            
             const newId = T.reduce((a, t) => Math.max(a, t.id), 0) + 1;
-            T.push({ id: newId, no: currentMaxNo.toString(), sp: sp, g: (SP[sp] || [0,3])[1], ty: 'i', n: 1, d: d, h: h, hManual, f: 0.5, v: v, ds: '', k: k, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: new Date().toISOString().slice(0,10) });
+            T.push({ id: newId, no: finalNo, sp: sp, g: (SP[sp] || [0,3])[1], ty: 'i', n: 1, d: d, h: h, hManual, f: 0.5, v: v, ds: '', k: k, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: new Date().toISOString().slice(0,10) });
             added++;
+            rowNo = (parseInt(finalNo) + 1).toString();
           }
         }
       }
@@ -2612,9 +2679,10 @@ function openQuickEntry(prefill, note) {
     ov.remove();
   };
 }
-document.getElementById('btnQuickEntry').onclick = () => openQuickEntry();
+
 function quickRowHtml(r) { r = r || {};
   return `<tr style="border-bottom:1px solid var(--bd);">
+    <td style="padding:4px;"><input type="text" class="q-no" value="${esc(r.no || '')}" style="padding:6px;text-align:center;width:45px;"></td>
     <td style="padding:4px;"><input type="text" class="q-sp" list="spList" value="${esc(r.sp || '')}" placeholder="${esc(r.spRaw || '')}" style="padding:6px;text-align:center;width:80px;${(r.spRaw && !r.sp) ? 'border-color:#d33;background:#fdecea;color:#000;' : ''}"></td>
     <td style="padding:4px;"><input type="text" inputmode="decimal" class="q-d" value="${r.d ? toFa(r.d) : ''}" style="padding:6px;text-align:center;width:60px;"></td>
     <td style="padding:4px;"><input type="text" inputmode="decimal" class="q-h" value="${r.h ? toFa(r.h) : ''}" style="padding:6px;text-align:center;width:60px;"></td>
@@ -2625,11 +2693,12 @@ function quickRowHtml(r) { r = r || {};
         <option value="planted"${r.k === 'planted' ? ' selected' : ''}>🌱 دست‌کاشت</option>
       </select>
     </td>
-    <td class="q-v" style="padding:4px;text-align:center;">—</td>
+    <td class="q-v" style="padding:4px;text-align:center;font-weight:bold;color:var(--ac);">—</td>
     <td style="padding:4px;text-align:center;"><button class="x" onclick="this.closest('tr').remove()">×</button></td>
   </tr>`; 
 }
 
+document.getElementById('btnQuickEntry').onclick = () => openQuickEntry();
 function saveSnaps(){try{localStorage.setItem('snaps',JSON.stringify(SNAPS));stWarn(false)}catch(e){stWarn(true)}}
 function renderSnaps(){const el=$('#savedList');if(!el)return;if(!SNAPS.length){el.innerHTML='<div class="m">هنوز موردی ذخیره نشده است.</div>';return}el.innerHTML=SNAPS.slice().reverse().map(s=>`<div class="sitem"><div class="sinfo"><b>${esc(s.name)}</b><small>${toFa((s.trees||[]).length)} درخت</small></div><button class="o" style="padding:4px 10px;font-size:12px" data-load="${s.id}">باز کردن</button><button class="x" data-del="${s.id}">×</button></div>`).join('');el.querySelectorAll('[data-load]').forEach(b=>b.onclick=()=>loadSnap(+b.dataset.load));el.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{const id=+b.dataset.del;if(!confirm('حذف شود؟'))return;SNAPS=SNAPS.filter(s=>s.id!==id);saveSnaps();renderSnaps()});}
 $('#saveSnap').onclick=()=>{
