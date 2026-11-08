@@ -984,6 +984,38 @@ function talaLookup(sp, d) {
  *  If volClass=tala and h given but different → scale volume.
  *  Returns {h, v, hManual}.
  */
+
+/** ===== منطق واحد شماره و نوع در کل برنامه =====
+ *  قطر < 20  → هیزمی (h) ، بدون شماره
+ *  قطر >= 20 → صنعتی (i) ، شماره اجباری (خودکار اگر خالی باشد)
+ */
+function isFirewood(d) {
+  return (+d > 0) && (+d < 20);
+}
+function nextIndustrialNo(excludeIds) {
+  const skip = new Set(excludeIds || []);
+  let maxNo = 0;
+  T.forEach(t => {
+    if (t.ty === 'h') return;
+    if (skip.has(t.id)) return;
+    const start = parseInt(t.no, 10) || 0;
+    const count = t.n || 1;
+    const end = start + count - 1;
+    if (end > maxNo) maxNo = end;
+  });
+  return maxNo + 1;
+}
+/** بر اساس قطر، نوع و شماره را برمی‌گرداند.
+ *  existingNo: شماره‌ای که کاربر نوشته (اختیاری)
+ *  forceAuto: اگر true باشد حتی با existingNo هم از شمارنده استفاده می‌کند وقتی خالی است
+ */
+function resolveTypeAndNo(d, existingNo) {
+  if (isFirewood(d)) return { ty: 'h', no: '' };
+  const raw = (existingNo == null ? '' : String(existingNo)).trim();
+  const no = raw || String(nextIndustrialNo());
+  return { ty: 'i', no };
+}
+
 function resolveHV(sp, d, h) {
   const sh = (typeof getActiveSheet === 'function') ? getActiveSheet() : null;
   const vc = (sh && sh.volClass) || 'general';
@@ -1049,11 +1081,19 @@ if(!SHEETS.length){
   let oldT=[],oldMap=null;
   try{oldT=JSON.parse(localStorage.getItem('trees')||'[]')}catch(e){}
   try{oldMap=JSON.parse(localStorage.getItem('map')||'null')}catch(e){}
-  SHEETS=[{id:1,name:'زمین ۱ (باغی)',mode:'garden',trees:oldT,map:oldMap?{p:oldMap.p,z:oldMap.z,nm:oldMap.nm}:null}];
+  SHEETS=[{id:1,name:'زمین ۱ (باغی)',mode:'garden',trees:oldT,map:oldMap?{p:oldMap.p,z:oldMap.z,nm:oldMap.nm}:null,uid:Math.random().toString(36).slice(2)+Date.now().toString(36),ua:Date.now()}];
   activeId=1;
   try{localStorage.setItem('sheets',JSON.stringify(SHEETS));localStorage.setItem('activeSheet','1')}catch(e){}
 }
-function getActiveSheet(){return SHEETS.find(s=>s.id===activeId)||SHEETS[0]}
+function ensureSheetUids(){
+  const seen=new Set();
+  SHEETS.forEach(s=>{
+    if(!s.uid || seen.has(s.uid)) s.uid = Math.random().toString(36).slice(2)+Date.now().toString(36);
+    seen.add(s.uid);
+    if(!s.ua) s.ua = Date.now();
+  });
+}
+function getActiveSheet(){ensureSheetUids();return SHEETS.find(s=>s.id===activeId)||SHEETS[0]}
 function modeOf(sh){return sh.mode||((sh.trees&&sh.trees.length)?'forest':'garden')}
 
 function updateModeLock() {
@@ -1101,7 +1141,7 @@ function loadActive(){
 }
 function saveActive(){const sh=getActiveSheet();if(!sh)return;sh.trees=T;if(MAPP.length)sh.map={p:MAPP,z:MAPZ,nm:MAPNM};else delete sh.map;if(TRACK.length>0)sh.track=TRACK;else delete sh.track;try{localStorage.setItem('sheets',JSON.stringify(SHEETS));stWarn(false)}catch(e){stWarn(true)}}
 function stWarn(bad){const e=document.getElementById('sw');if(!e)return;e.classList.toggle('hid',!bad);e.textContent='⛔ ذخیره‌سازی انجام نشد (حافظه پر است). پشتیبان بگیرید.'}
-const norm=()=>T.forEach(t=>{if(t.sp=='زبان‌گنجشک')t.sp='ون';if(!t.g)t.g=(SP[t.sp]||[0,3])[1];if(!t.ty)t.ty=t.d<20?'h':'i';if(SP[t.sp]){t.v=volSp(t.sp,t.d,t.h);if(t.d2)t.v2=volSp(t.sp,t.d2,t.h2)}if(t.lat&&!t.ux){const u=utm(t.lat,t.lng);t.ux=u.E;t.uy=u.N;t.uz=u.z}});
+const norm=()=>T.forEach(t=>{if(t.sp=='زبان‌گنجشک')t.sp='ون';if(!t.g)t.g=(SP[t.sp]||[0,3])[1];if(t.d>0){if(isFirewood(t.d)){t.ty='h';t.no='';}else if(!t.ty)t.ty='i';}if(!t.ty)t.ty=isFirewood(t.d)?'h':'i';if(SP[t.sp]){t.v=volSp(t.sp,t.d,t.h);if(t.d2)t.v2=volSp(t.sp,t.d2,t.h2)}if(t.lat&&!t.ux){const u=utm(t.lat,t.lng);t.ux=u.E;t.uy=u.N;t.uz=u.z}});
 loadActive();norm();
 const store=()=>{saveActive();bnr();try{if(window.syncSoon)window.syncSoon()}catch(e){}};
 
@@ -1419,7 +1459,7 @@ function addSheet(){
         return;
       }
       const id = SHEETS.reduce((a, s) => Math.max(a, s.id), 0) + 1;
-      SHEETS.push({ id, name: nm, mode, trees: [] });
+      SHEETS.push({ id, name: nm, mode, trees: [], uid: (typeof rid==='function'?rid():Math.random().toString(36).slice(2)+Date.now().toString(36)), ua: Date.now() });
       switchSheet(id);
       store();
     };
@@ -1783,14 +1823,17 @@ function doSave(useCoords, forcedK){
   const startId = T.reduce((a,t)=>Math.max(a,t.id),0)+1;
   lastSavedId = startId;
   
-  if (hz) {
+  // منطق واحد: قطر < 20 همیشه هیزمی بدون شماره
+  const fw = isFirewood(d) || hz;
+  if (fw) {
     const o={no:'',sp,g:+$('#gd').value,ty:'h',n:count,d,h,hManual:hv.hManual,f:ff(),v:hv.v,ds:$('#ds').value};
     if(forcedK) o.k = forcedK;
     T.push(Object.assign({id:startId,...(coords||{lat:null,lng:null,ux:null,uy:null,uz:null,ua:null}),dt:new Date().toISOString().slice(0,10)},o));
   } else {
-    const startNo = parseInt(toEn($('#no').value)) || (T.filter(t=>t.ty!='h').reduce((a,t)=>Math.max(a,(parseInt(t.no)||0)+(t.n||1)-1),0)+1);
+    let startNo = parseInt(toEn($('#no').value), 10);
+    if (!startNo) startNo = nextIndustrialNo();
     for (let c = 0; c < count; c++) {
-      const o={no:(startNo + c).toString(),sp,g:+$('#gd').value,ty:'i',n:1,d,h,hManual:hv.hManual,f:ff(),v:hv.v,ds:$('#ds').value};
+      const o={no:String(startNo + c),sp,g:+$('#gd').value,ty:'i',n:1,d,h,hManual:hv.hManual,f:ff(),v:hv.v,ds:$('#ds').value};
       if(forcedK) o.k = forcedK;
       T.push(Object.assign({id:startId+c, ...(coords||{lat:null,lng:null,ux:null,uy:null,uz:null,ua:null}), dt:new Date().toISOString().slice(0,10)},o));
     }
@@ -1968,7 +2011,16 @@ $('#emSave').onclick = () => {
   t.hManual = !emHAuto;
   t.n = Math.max(1, Math.round(toEn($('#emNn').value)) || 1);
   t.ty = $('#emTy').value;
-  t.no = t.ty==='h' ? '' : toEn($('#emNo').value);
+  // منطق واحد شماره
+  if (isFirewood(d) || t.ty === 'h') {
+    t.ty = 'h';
+    t.no = '';
+  } else {
+    t.ty = 'i';
+    let n0 = toEn($('#emNo').value).trim();
+    if (!n0) n0 = String(nextIndustrialNo([t.id]));
+    t.no = n0;
+  }
   t.ds = $('#emDs').value;
   
   if(getActiveSheet().mode==='garden'){
@@ -2269,22 +2321,22 @@ $('#d').addEventListener('input',()=>{$('#gi').value=''});
 
 const autoNo=()=>{
   if(noM)return;
-  if($('#ty').value=='h'){
-    $('#no').value='';
-  }else{
-    let maxNo = 0;
-    T.filter(t=>t.ty!='h').forEach(t=>{
-      const start = parseInt(t.no) || 0;
-      const count = t.n || 1;
-      const end = start + count - 1;
-      if(end > maxNo) maxNo = end;
-    });
-    $('#no').value = toFa(maxNo + 1);
+  const d = N('#d');
+  if (isFirewood(d) || $('#ty').value === 'h') {
+    $('#no').value = '';
+  } else if (d > 0) {
+    $('#no').value = toFa(nextIndustrialNo());
   }
 };
 let tyM=false, noM=false;
-$('#ty').addEventListener('change',()=>{tyM=true});
-const autoTy=()=>{if(!tyM)$('#ty').value=(N('#d')>0&&N('#d')<20)?'h':'i';autoNo()};
+$('#ty').addEventListener('change',()=>{tyM=true; autoNo()});
+const autoTy=()=>{
+  if(!tyM){
+    const d = N('#d');
+    if (d > 0) $('#ty').value = isFirewood(d) ? 'h' : 'i';
+  }
+  autoNo();
+};
 $('#no').addEventListener('input',()=>{noM=true});
 const ff=()=>(SP[$('#sp').value]||[.5])[0];
 
@@ -2514,37 +2566,56 @@ function showImportPreview(data, note) {
   const updateImpRow = (tr) => {
     const sp = tr.querySelector('.imp-sp').value.trim();
     const d = parseNum(tr.querySelector('.imp-d').value);
-    let h = parseNum(tr.querySelector('.imp-h').value) || 0;
     const n = Math.max(1, parseInt(toEn(tr.querySelector('.imp-n').value)) || 1);
     const hInput = tr.querySelector('.imp-h');
+    const noInput = tr.querySelector('.imp-no');
     
-    // در حالت تالار: ارتفاع خالی یا قبلاً خودکار → از جدول
+    // ارتفاع خودکار تالار
     if ((getActiveSheet()?.volClass === 'tala') && d > 0) {
       const res = talaLookup(sp, d);
-      if (res && (!hInput.value.trim() || hInput.dataset.auto === '1')) {
+      if (res && hInput && (!hInput.value.trim() || hInput.dataset.auto === '1')) {
         hInput.value = toFa(res.h.toFixed(1));
         hInput.dataset.auto = '1';
-        h = res.h;
       }
-    }
-    // اگر کاربر دستی تایپ کرد، پرچم خودکار برداشته شود
-    if (hInput.dataset.auto === '1' && parseNum(hInput.value) && Math.abs(parseNum(hInput.value) - h) > 0.05) {
-      // handled below via resolveHV; clear auto flag when user edits
     }
     if (!(d > 0)) { tr.querySelector('.imp-v').textContent = '—'; return; }
     const hv = resolveHV(sp, d, parseNum(hInput.value) || 0);
-    // اگر ارتفاع خالی بود و resolveHV ارتفاع جدول داد، برای نمایش حجم از آن استفاده می‌شود
     const v = hv.v * n;
     tr.querySelector('.imp-v').textContent = v > 0 ? fa(v, 3) : '—';
   };
 
+  const refreshImpNos = () => {
+    let n = nextIndustrialNo();
+    tbody.querySelectorAll('tr').forEach(tr => {
+      const d = parseNum(tr.querySelector('.imp-d').value);
+      const noInput = tr.querySelector('.imp-no');
+      if (!noInput) return;
+      if (!(d > 0) || isFirewood(d)) {
+        if (noInput.dataset.auto !== '0') {
+          noInput.value = '';
+          noInput.dataset.auto = '1';
+        }
+        return;
+      }
+      if (!noInput.value.trim() || noInput.dataset.auto === '1') {
+        noInput.value = toFa(n);
+        noInput.dataset.auto = '1';
+        n += 1;
+      } else {
+        const v = parseInt(toEn(noInput.value), 10);
+        if (v >= n) n = v + 1;
+      }
+    });
+  };
+
   tbody.querySelectorAll('tr').forEach(updateImpRow);
+  refreshImpNos();
   tbody.addEventListener('input', e => {
-    if (e.target.matches('.imp-h')) {
-      e.target.dataset.auto = ''; // کاربر دستی تغییر داد
-    }
-    if (e.target.matches('.imp-d, .imp-h, .imp-sp, .imp-n')) {
+    if (e.target.matches('.imp-h')) e.target.dataset.auto = '';
+    if (e.target.matches('.imp-no')) e.target.dataset.auto = '0';
+    if (e.target.matches('.imp-d, .imp-h, .imp-sp, .imp-n, .imp-no')) {
       updateImpRow(e.target.closest('tr'));
+      refreshImpNos();
     }
   });
 
@@ -2554,7 +2625,8 @@ function showImportPreview(data, note) {
     let currentMaxNo = T.filter(t=>t.ty!='h').reduce((max, t) => Math.max(max, parseInt(t.no) || 0), 0);
     
     rows.forEach(tr => {
-      const no = tr.querySelector('.imp-no').value.trim(); let sp = tr.querySelector('.imp-sp').value.trim();
+      const noRaw = tr.querySelector('.imp-no').value.trim();
+      let sp = tr.querySelector('.imp-sp').value.trim();
       const d = parseNum(tr.querySelector('.imp-d').value); 
       let hRaw = parseNum(tr.querySelector('.imp-h').value) || 0; 
       const ds = tr.querySelector('.imp-ds').value.trim();
@@ -2564,22 +2636,21 @@ function showImportPreview(data, note) {
         if (!sp) sp = 'نامشخص';
         const hv = resolveHV(sp, d, hRaw);
         const h = hv.h, v = hv.v, hManual = hv.hManual;
-        let finalNo = no;
-        const isFw = d < 20;
         
-        if (isFw) {
+        if (isFirewood(d)) {
           const newId = T.reduce((a, t) => Math.max(a, t.id), 0) + 1;
           T.push({ id: newId, no: '', sp: sp, g: (SP[sp] || [0,3])[1], ty: 'h', n: n, d: d, h: h, hManual, f: 0.5, v: v, ds: ds, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: new Date().toISOString().slice(0,10) });
           added += n;
         } else {
+          // صنعتی: شماره پشت‌سرهم
+          let finalNo = noRaw;
           for (let i = 0; i < n; i++) {
-            if(!finalNo) { currentMaxNo++; finalNo = currentMaxNo.toString(); }
-            else { currentMaxNo = Math.max(currentMaxNo, parseInt(finalNo) || 0); }
-            
+            if (!finalNo) { currentMaxNo++; finalNo = String(currentMaxNo); }
+            else { currentMaxNo = Math.max(currentMaxNo, parseInt(finalNo, 10) || 0); }
             const newId = T.reduce((a, t) => Math.max(a, t.id), 0) + 1;
             T.push({ id: newId, no: finalNo, sp: sp, g: (SP[sp] || [0,3])[1], ty: 'i', n: 1, d: d, h: h, hManual, f: 0.5, v: v, ds: ds, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: new Date().toISOString().slice(0,10) });
             added++;
-            finalNo = (parseInt(finalNo) + 1).toString();
+            finalNo = String((parseInt(finalNo, 10) || 0) + 1);
           }
         }
       }
@@ -2617,9 +2688,10 @@ function openQuickEntry(prefill, note) {
     const n = parseInt(toEn(tr.querySelector('.q-count').value)) || 1;
     const c = tr.querySelector('.q-v');
     const hi = tr.querySelector('.q-h');
+    const noInput = tr.querySelector('.q-no');
     if (!c) return;
-    if (!(d > 0)) { c.textContent = '—'; return; }
-    
+
+    // ارتفاع خودکار تالار
     if ((getActiveSheet()?.volClass === 'tala') && d > 0) {
       const res = talaLookup(sp, d);
       if (res && hi && (!hi.value.trim() || hi.dataset.auto === '1')) {
@@ -2627,16 +2699,48 @@ function openQuickEntry(prefill, note) {
         hi.dataset.auto = '1';
       }
     }
+    if (!(d > 0)) { c.textContent = '—'; return; }
     const hv = resolveHV(sp, d, hRaw);
     c.textContent = hv.v > 0 ? fa(hv.v * n, 2) : '—';
   });
+
+  // شماره زنده برای همه سطرهای صنعتی جدول
+  const refreshNos = () => {
+    let n = nextIndustrialNo();
+    tbody.querySelectorAll('tr').forEach(tr => {
+      const d = parseNum(tr.querySelector('.q-d').value);
+      const noInput = tr.querySelector('.q-no');
+      if (!noInput) return;
+      if (!(d > 0) || isFirewood(d)) {
+        if (noInput.dataset.auto !== '0') {
+          noInput.value = '';
+          noInput.placeholder = '';
+          noInput.dataset.auto = '1';
+        }
+        return;
+      }
+      // صنعتی
+      if (!noInput.value.trim() || noInput.dataset.auto === '1') {
+        noInput.value = toFa(n);
+        noInput.dataset.auto = '1';
+        n += 1;
+      } else {
+        // کاربر دستی نوشته
+        const v = parseInt(toEn(noInput.value), 10);
+        if (v >= n) n = v + 1;
+      }
+    });
+  };
   
   tbody.addEventListener('input', e => {
     if (e.target.matches('.q-h')) e.target.dataset.auto = '';
+    if (e.target.matches('.q-no')) e.target.dataset.auto = '0';
     updV();
+    refreshNos();
   });
-  tbody.addEventListener('change', updV);
+  tbody.addEventListener('change', () => { updV(); refreshNos(); });
   updV();
+  refreshNos();
   ov.querySelector('#qAddRow').onclick = () => { tbody.insertAdjacentHTML('beforeend', quickRowHtml()); };
   ov.querySelector('#qCancel').onclick = () => ov.remove();
   
@@ -2648,29 +2752,27 @@ function openQuickEntry(prefill, note) {
       const d = parseNum(tr.querySelector('.q-d').value);
       const hRaw = parseNum(tr.querySelector('.q-h').value) || 0;
       const count = parseInt(toEn(tr.querySelector('.q-count').value)) || 1;
-      const k = tr.querySelector('.q-ty').value;
+      const k = tr.querySelector('.q-ty') ? tr.querySelector('.q-ty').value : 'natural';
       let rowNo = tr.querySelector('.q-no') ? tr.querySelector('.q-no').value.trim() : '';
       
       if (d > 0) {
         if (!sp) sp = 'نامشخص';
         const hv = resolveHV(sp, d, hRaw);
         const h = hv.h, v = hv.v, hManual = hv.hManual;
-        const isFw = d < 20;
         
-        if (isFw) {
+        if (isFirewood(d)) {
           const newId = T.reduce((a, t) => Math.max(a, t.id), 0) + 1;
           T.push({ id: newId, no: '', sp: sp, g: (SP[sp] || [0,3])[1], ty: 'h', n: count, d: d, h: h, hManual, f: 0.5, v: v, ds: '', k: k, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: new Date().toISOString().slice(0,10) });
           added += count;
         } else {
           for (let i = 0; i < count; i++) {
             let finalNo = rowNo;
-            if (!finalNo) { currentMaxNo++; finalNo = currentMaxNo.toString(); }
-            else { currentMaxNo = Math.max(currentMaxNo, parseInt(finalNo) || 0); }
-            
+            if (!finalNo) { currentMaxNo++; finalNo = String(currentMaxNo); }
+            else { currentMaxNo = Math.max(currentMaxNo, parseInt(finalNo, 10) || 0); }
             const newId = T.reduce((a, t) => Math.max(a, t.id), 0) + 1;
             T.push({ id: newId, no: finalNo, sp: sp, g: (SP[sp] || [0,3])[1], ty: 'i', n: 1, d: d, h: h, hManual, f: 0.5, v: v, ds: '', k: k, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: new Date().toISOString().slice(0,10) });
             added++;
-            rowNo = (parseInt(finalNo) + 1).toString();
+            rowNo = String((parseInt(finalNo, 10) || 0) + 1);
           }
         }
       }
@@ -2724,7 +2826,7 @@ $('#ga').textContent='📍 مختصات';$('#ga').classList.add('o');
 
 const DL={save:async({filename,data})=>{const u=URL.createObjectURL(data),a=document.createElement('a');a.href=u;a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000)}};
 $('#rb').onclick=()=>$('#rf').click();
-$('#rf').onchange=async e=>{ const f=e.target.files[0];if(!f)return; try{ const j=JSON.parse(await f.text()); const sheetsArr=Array.isArray(j.sheets)?j.sheets.map(s=>{const c=Object.assign({},s);delete c.uid;delete c.h;delete c.ua;return c}):null; if(sheetsArr&&!sheetsArr.length)throw 0; const treesArr=Array.isArray(j)?j:(Array.isArray(j.trees)?j.trees:null); if(sheetsArr){ if($('#rm').value==='r'){if(!confirm('همهٔ داده‌های فعلی حذف و با فایل پشتیبان جایگزین شوند؟'))return;SHEETS=sheetsArr;activeId=SHEETS[0]?.id||1;}else{let m=SHEETS.reduce((a,s)=>Math.max(a,s.id),0);sheetsArr.forEach(s=>{m++;let nm=s.name,k=2;while(SHEETS.some(x=>x.name===nm))nm=s.name+' ('+(k++)+')';SHEETS.push(Object.assign({},s,{id:m,name:nm}))})} loadActive();norm();saveActive(); if(Array.isArray(j.snaps)){if($('#rm').value==='r')SNAPS=j.snaps;else{let m2=SNAPS.reduce((a,x)=>Math.max(a,x.id||0),0);j.snaps.forEach(x=>{m2++;SNAPS.push(Object.assign({},x,{id:m2}))})}saveSnaps();renderSnaps()} }else if(treesArr){ if($('#rm').value==='r'){if(!confirm('همهٔ داده‌های فعلی حذف و با فایل پشتیبان جایگزین شوند؟'))return;T=treesArr}else{let m=T.reduce((x,t)=>Math.max(x,t.id),0);T=T.concat(treesArr.map(t=>Object.assign({},t,{id:++m})))} norm();saveActive(); }else throw 0; renderTabs();updateMapInfo();draw();mapCheck();updateModeLock();alert('بازیابی شد.'); }catch(x){alert('فایل معتبر نیست.')} e.target.value=''; };
+$('#rf').onchange=async e=>{ const f=e.target.files[0];if(!f)return; try{ const j=JSON.parse(await f.text()); const sheetsArr=Array.isArray(j.sheets)?j.sheets.map(s=>{const c=Object.assign({},s);delete c.uid;delete c.h;delete c.ua;return c}):null; if(sheetsArr&&!sheetsArr.length)throw 0; const treesArr=Array.isArray(j)?j:(Array.isArray(j.trees)?j.trees:null); if(sheetsArr){ if($('#rm').value==='r'){if(!confirm('همهٔ داده‌های فعلی حذف و با فایل پشتیبان جایگزین شوند؟'))return;SHEETS=sheetsArr.map(s=>({...s,uid:s.uid||(Math.random().toString(36).slice(2)+Date.now().toString(36)),ua:s.ua||Date.now()}));activeId=SHEETS[0]?.id||1;}else{let m=SHEETS.reduce((a,s)=>Math.max(a,s.id),0);sheetsArr.forEach(s=>{m++;let nm=s.name,k=2;while(SHEETS.some(x=>x.name===nm))nm=s.name+' ('+(k++)+')';SHEETS.push(Object.assign({},s,{id:m,name:nm,uid:Math.random().toString(36).slice(2)+Date.now().toString(36),ua:Date.now()}))})} loadActive();norm();saveActive(); if(Array.isArray(j.snaps)){if($('#rm').value==='r')SNAPS=j.snaps;else{let m2=SNAPS.reduce((a,x)=>Math.max(a,x.id||0),0);j.snaps.forEach(x=>{m2++;SNAPS.push(Object.assign({},x,{id:m2}))})}saveSnaps();renderSnaps()} }else if(treesArr){ if($('#rm').value==='r'){if(!confirm('همهٔ داده‌های فعلی حذف و با فایل پشتیبان جایگزین شوند؟'))return;T=treesArr}else{let m=T.reduce((x,t)=>Math.max(x,t.id),0);T=T.concat(treesArr.map(t=>Object.assign({},t,{id:++m})))} norm();saveActive(); }else throw 0; renderTabs();updateMapInfo();draw();mapCheck();updateModeLock();alert('بازیابی شد.'); }catch(x){alert('فایل معتبر نیست.')} e.target.value=''; };
 
 const R3=x=>+(+x).toFixed(3),say=(m,bad)=>document.querySelectorAll('.xs').forEach(e=>{e.textContent=m;e.style.color=bad?'#d33':''});
 async function mkX(sheets){ const wb=new ExcelJS.Workbook(),bd={style:'thin'}; sheets.forEach(([n,rows,mg,hr=1,tot])=>{ const ws=wb.addWorksheet(n,{views:[{rightToLeft:true}]}),W=rows[0].length; rows.forEach(r=>ws.addRow(r)); for(let i=1;i<=W;i++)ws.getColumn(i).width=n==='سیاهه'?14:18; for(let r=1;r<=rows.length;r++)for(let c=1;c<=W;c++){const x=ws.getCell(r,c);x.alignment={horizontal:'center',vertical:'middle',wrapText:true};x.border={top:bd,left:bd,bottom:bd,right:bd}; if(r<=hr){x.font={bold:true};x.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE3EEDF'}}}else if(tot&&r==rows.length)x.font={bold:true}} (mg||[]).forEach(([a,b,c,d])=>ws.mergeCells(a+1,b+1,c+1,d+1))}); return await wb.xlsx.writeBuffer()}
@@ -3060,37 +3162,63 @@ window.SB={api:(p,m,b,x)=>fresh().then(()=>api(p,m,b,x)),fresh,user:()=>S,url:SB
 
 async function sync(){
   if(!S||busy||!navigator.onLine)return false;
+  if(!S.uid){msg='⚠️ شناسه کاربر نامعتبر است؛ دوباره وارد شوید.';ui();return false;}
   busy=true;msg='در حال همگام‌سازی…';ui();
   try{
-    await fresh();saveActive();
+    await fresh();
+    if(!S||!S.uid)throw new Error('شناسه کاربر نامعتبر است');
+    // تضمین uid برای همه سربرگ‌های محلی
     const now=Date.now(),seen=new Set();
-    SHEETS.forEach(s=>{if(!s.uid||seen.has(s.uid))s.uid=rid();seen.add(s.uid);const h=shash(s);if(h!==s.h){s.h=h;s.ua=now}});
+    SHEETS.forEach(s=>{
+      if(!s.uid||seen.has(s.uid)) s.uid=rid();
+      seen.add(s.uid);
+      if(!s.ua) s.ua=now;
+      const h=shash(s);
+      if(h!==s.h){s.h=h;s.ua=now}
+    });
+    saveActive();
     const rows=await api('/rest/v1/sheets?select=*');
     const prevU=LS('sbu');
     if(prevU&&prevU!==S.uid)SHEETS=[];
     else if(!prevU&&rows.some(r=>!r.deleted)&&SHEETS.length===1&&!(SHEETS[0].trees||[]).length&&!SHEETS[0].map)SHEETS=[];
-    const del=prevU===S.uid?JSON.parse(LS('sbk')||'[]').filter(u=>!SHEETS.some(s=>s.uid===u)):[];
+    // فقط uidهای معتبر در لیست حذف
+    const del=(prevU===S.uid?JSON.parse(LS('sbk')||'[]'):[]).filter(u=>u && !SHEETS.some(s=>s.uid===u));
     const out=new Map();let chg=false;
-    del.forEach(u=>out.set(u,{user_id:S.uid,uid:u,name:'',data:null,ua:now,deleted:true}));
+    del.forEach(u=>{
+      if(!u) return;
+      out.set(u,{user_id:S.uid,uid:u,name:'',data:null,ua:now,deleted:true});
+    });
     for(const r of rows){
+      if(!r||!r.uid) continue;
       if(del.includes(r.uid))continue;
       const l=SHEETS.find(s=>s.uid===r.uid);
       if(r.deleted){if(l){SHEETS=SHEETS.filter(s=>s!==l);chg=true}continue}
       const d=r.data||{},tr=d.trees||[];
       if(!l){
-        let nm=r.name;while(SHEETS.some(x=>x.name===nm))nm+=' (حساب)';
-        const o={id:SHEETS.reduce((a,x)=>Math.max(a,x.id),0)+1,uid:r.uid,name:nm,trees:tr,ua:r.ua};
+        let nm=r.name||'سربرگ';while(SHEETS.some(x=>x.name===nm))nm+=' (حساب)';
+        const o={id:SHEETS.reduce((a,x)=>Math.max(a,x.id),0)+1,uid:r.uid,name:nm,trees:tr,ua:r.ua||now};
         if(d.map)o.map=d.map;if(d.mode)o.mode=d.mode;if(d.volClass)o.volClass=d.volClass;o.h=shash(o);SHEETS.push(o);chg=true;
-      }else if(r.ua>l.ua){
+      }else if((r.ua||0)>(l.ua||0)){
         l.name=r.name;l.trees=tr;if(d.map)l.map=d.map;else delete l.map;if(d.mode)l.mode=d.mode;if(d.volClass)l.volClass=d.volClass;l.ua=r.ua;l.h=shash(l);chg=true;
-      }else if(l.ua>r.ua)out.set(l.uid,row(l));
+      }else if((l.ua||0)>(r.ua||0)){
+        const rec=row(l); if(rec&&rec.uid) out.set(rec.uid,rec);
+      }
     }
-    const known=new Set(rows.map(r=>r.uid));
-    SHEETS.forEach(s=>{if(!known.has(s.uid))out.set(s.uid,row(s))});
+    const known=new Set(rows.filter(r=>r&&r.uid).map(r=>r.uid));
+    SHEETS.forEach(s=>{
+      if(!s.uid) s.uid=rid();
+      if(!known.has(s.uid)){ const rec=row(s); if(rec&&rec.uid) out.set(rec.uid,rec); }
+    });
     if(!SHEETS.length)SHEETS.push({id:1,name:'زمین ۱',trees:[],uid:rid(),ua:now});
-    if(out.size)await api('/rest/v1/sheets?on_conflict=user_id,uid','POST',[...out.values()],{Prefer:'resolution=merge-duplicates,return=minimal'});
+    // فقط رکوردهای دارای uid و user_id معتبر ارسال شوند
+    if(out.size){
+      const payload=[...out.values()].filter(r=>r && r.uid && r.user_id);
+      if(payload.length){
+        await api('/rest/v1/sheets?on_conflict=user_id,uid','POST',payload,{Prefer:'resolution=merge-duplicates,return=minimal'});
+      }
+    }
     if(!SHEETS.some(s=>s.id===activeId))activeId=SHEETS[0].id;
-    LS('sheets',JSON.stringify(SHEETS));LS('sbu',S.uid);LS('sbk',JSON.stringify(SHEETS.map(s=>s.uid)));
+    LS('sheets',JSON.stringify(SHEETS));LS('sbu',S.uid);LS('sbk',JSON.stringify(SHEETS.map(s=>s.uid).filter(Boolean)));
     if(chg)switchSheet(activeId,true);
     msg='همگام شد ✓ '+new Date().toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'});
     return true;
@@ -3098,7 +3226,19 @@ async function sync(){
   finally{busy=false;ui()}
 }
 
-const row=s=>({user_id:S.uid,uid:s.uid,name:s.name,data:{trees:s.trees||[],map:s.map||null,mode:s.mode||null,volClass:s.volClass||null},ua:s.ua,deleted:false});
+function row(s){
+  if(!s) return null;
+  if(!s.uid) s.uid=rid();
+  if(!S||!S.uid) return null;
+  return {
+    user_id: S.uid,
+    uid: s.uid,
+    name: s.name||'',
+    data: {trees:s.trees||[], map:s.map||null, mode:s.mode||null, volClass:s.volClass||null},
+    ua: s.ua||Date.now(),
+    deleted: false
+  };
+}
 
 function ui(){
   if(!S){
