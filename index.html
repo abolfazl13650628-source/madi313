@@ -2659,7 +2659,7 @@ function openQuickEntry(prefill, note) {
         
         if (isFw) {
           const newId = T.reduce((a, t) => Math.max(a, t.id), 0) + 1;
-          T.push({ id: newId, no: rowNo || '', sp: sp, g: (SP[sp] || [0,3])[1], ty: 'h', n: count, d: d, h: h, hManual, f: 0.5, v: v, ds: '', k: k, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: new Date().toISOString().slice(0,10) });
+          T.push({ id: newId, no: '', sp: sp, g: (SP[sp] || [0,3])[1], ty: 'h', n: count, d: d, h: h, hManual, f: 0.5, v: v, ds: '', k: k, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: new Date().toISOString().slice(0,10) });
           added += count;
         } else {
           for (let i = 0; i < count; i++) {
