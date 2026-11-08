@@ -783,7 +783,8 @@ body.home-mode #ownerHome{display:block}
       <div id="aiChips"></div>
       <div class="aiIn">
         <textarea id="aiIn" rows="1" placeholder="پیام…"></textarea>
-        <input type="file" id="aiCamFile" accept="image/*" capture="environment" class="hid">
+        <input type="file" id="aiCamFile" accept="image/*" class="hid">
+        <input type="file" id="aiCamCapture" accept="image/*" capture="environment" class="hid">
         <button id="aiCam" type="button" title="عکس برای تحلیل گونه و آسیب" aria-label="دوربین">📷</button>
         <button id="aiMic" type="button" title="تایپ با صدا" aria-label="میکروفن"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg></button>
         <button id="aiVoiceMode" type="button" title="گفتگوی صوتی" aria-label="گفتگوی صوتی"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2"/></svg></button>
@@ -3755,10 +3756,39 @@ async function aiHandlePhoto(file){
     busy=false; save(); render();
   }
 }
-const aiCamBtn=Q('#aiCam'), aiCamFile=Q('#aiCamFile');
+const aiCamBtn=Q('#aiCam'), aiCamFile=Q('#aiCamFile'), aiCamCapture=Q('#aiCamCapture');
 if(aiCamBtn&&aiCamFile){
-  aiCamBtn.onclick=()=>{ if(busy)return; aiCamFile.value=''; aiCamFile.click(); };
-  aiCamFile.onchange=()=>{ const f=aiCamFile.files&&aiCamFile.files[0]; if(f) aiHandlePhoto(f); aiCamFile.value=''; };
+  function pickPhotoSource(){
+    if(busy) return;
+    // منوی کوچک: دوربین یا گالری
+    const ov=document.createElement('div');
+    ov.style.cssText='position:fixed;inset:0;z-index:2000;background:#0008;display:flex;align-items:flex-end;justify-content:center;padding:16px';
+    ov.innerHTML='<div style="background:var(--sf);color:var(--tx);border-radius:16px;width:100%;max-width:360px;padding:12px;box-shadow:0 8px 30px rgba(0,0,0,.25)">'+
+      '<div style="font-weight:700;margin-bottom:8px;text-align:center">ارسال عکس</div>'+
+      '<button type="button" id="aiPickCam" style="width:100%;margin-bottom:8px;padding:12px">📷 دوربین</button>'+
+      '<button type="button" id="aiPickGal" class="o" style="width:100%;margin-bottom:8px;padding:12px">🖼️ انتخاب از گالری</button>'+
+      '<button type="button" id="aiPickCancel" class="o" style="width:100%;padding:10px">انصراف</button></div>';
+    document.body.appendChild(ov);
+    const close=()=>ov.remove();
+    ov.addEventListener('click',e=>{ if(e.target===ov) close(); });
+    ov.querySelector('#aiPickCancel').onclick=close;
+    ov.querySelector('#aiPickCam').onclick=()=>{
+      close();
+      if(aiCamCapture){ aiCamCapture.value=''; aiCamCapture.click(); }
+      else { aiCamFile.value=''; aiCamFile.click(); }
+    };
+    ov.querySelector('#aiPickGal').onclick=()=>{
+      close();
+      aiCamFile.value='';
+      aiCamFile.click();
+    };
+  }
+  aiCamBtn.onclick=pickPhotoSource;
+  const onFile=inp=>{
+    inp.onchange=()=>{ const f=inp.files&&inp.files[0]; if(f) aiHandlePhoto(f); inp.value=''; };
+  };
+  onFile(aiCamFile);
+  if(aiCamCapture) onFile(aiCamCapture);
 }
 
 async function send(text,o){
