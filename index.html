@@ -389,7 +389,11 @@ body[data-tab="a"] #sec-a:not(.hid){
 #aiVoiceSkip{padding:6px 12px;font-size:12px;border-radius:999px;background:var(--bg);color:var(--tx);border:1px solid var(--bd)}
 #aiVoiceEnd{width:40px;height:40px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#c62828;color:#fff}
 #aiVoiceEnd svg{width:16px;height:16px}
-
+/* ===== اعلان مالکیت (صفحهٔ ورود و صفحهٔ اول) ===== */
+.ownerMark{font-size:12px;line-height:2;text-align:center;font-weight:600}
+#splash .ownerMark{width:100%;max-width:360px;margin-top:16px;padding:10px 12px;color:rgba(255,255,255,.88);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:12px}
+#ownerHome{display:none;position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:40;max-width:520px;margin:0 auto;padding:10px 14px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7);background:rgba(16,26,19,.55);border:1px solid rgba(255,255,255,.25);border-radius:14px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);pointer-events:none}
+body.home-mode #ownerHome{display:block}
 /* SOS FAB - Circle at the bottom, not floating */
 #sosFab {
   position: static;
@@ -449,9 +453,13 @@ body[data-tab="a"] #sec-a:not(.hid){
     <button id="splashGuest" style="background:#5c6b5f">ورود مهمان (آفلاین)</button>
     <div class="m" style="margin-top:10px">با ورود مهمان، داده‌ها فقط روی گوشی ذخیره می‌شوند.</div>
   </div>
+    <div class="ownerMark">© <span class="ownYear"></span> هادی آقاحانی — پروژه در حال تکمیل.<br>همهٔ حقوق محفوظ است؛ کپی‌برداری یا استفادهٔ بدون اجازه پیگرد قانونی دارد.</div>
+    <script>document.currentScript.previousElementSibling.querySelector('.ownYear').textContent=new Date().toLocaleDateString('fa-IR',{year:'numeric'})</script>
 </div>
 
 <div id="app">
+  <div id="ownerHome" class="ownerMark">© <span class="ownYear"></span> هادی آقاحانی — پروژه در حال تکمیل.<br>همهٔ حقوق محفوظ است؛ کپی‌برداری یا استفادهٔ بدون اجازه پیگرد قانونی دارد.</div>
+  <script>document.currentScript.previousElementSibling.querySelector('.ownYear').textContent=new Date().toLocaleDateString('fa-IR',{year:'numeric'})</script>
   <div id="app-header">
     <h1>بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِیم</h1>
     <div class="meta">
