@@ -394,6 +394,16 @@ body[data-tab="a"] #sec-a:not(.hid){
 #splash .ownerMark{width:100%;max-width:360px;margin-top:16px;padding:10px 12px;color:rgba(255,255,255,.88);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:12px}
 #ownerHome{display:none;position:fixed;left:12px;right:12px;bottom:calc(90px + env(safe-area-inset-bottom,0px));z-index:40;max-width:520px;margin:0 auto;padding:10px 14px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7);background:rgba(16,26,19,.55);border:1px solid rgba(255,255,255,.25);border-radius:14px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);pointer-events:none}
 body.home-mode #ownerHome{display:block}
+/* دکمه‌های نوار صوتی: قطع میکروفن، تمام/قطع، پایان */
+#aiVoiceBar i{flex:0 0 40px}
+#aiVoiceBar:not([data-s=listen]) i{display:none}
+#aiVoiceBar span{line-height:1.6}
+#aiVoiceBar[data-s=mute] em{background:#c62828;animation:none}
+#aiVoiceMute{position:relative;width:40px;height:40px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--tx);border:1px solid var(--bd)}
+#aiVoiceMute svg{width:19px;height:19px}
+#aiVoiceMute.off{background:rgba(198,40,40,.12);color:#c62828;border-color:#c62828}
+#aiVoiceMute.off::after{content:"";position:absolute;width:26px;height:2.5px;background:#c62828;border-radius:2px;transform:rotate(-45deg)}
+#aiVoiceSkip{background:var(--ac);color:var(--ac2);border:0;font-weight:700}
 /* SOS FAB - Circle at the bottom, not floating */
 #sosFab {
   position: static;
@@ -3165,12 +3175,17 @@ const loadH=m=>{try{return JSON.parse(localStorage.getItem(HK(m))||'[]')}catch(e
 let hist=loadH(mode),busy=false;
 const save=()=>{try{localStorage.setItem(HK(mode),JSON.stringify(hist.slice(-24)))}catch(e){}};
 
-/* ---------- نوار صوتی (جای کادر پیام می‌نشیند) و عنوان حالت ---------- */
 const bar=document.createElement('div');bar.id='aiVoiceBar';bar.className='hid';
-bar.innerHTML='<em></em><span id="aiVoiceTxt"></span><i><b id="aiLevel"></b></i><button type="button" id="aiVoiceSkip" class="hid">✋ قطع</button><button type="button" id="aiVoiceEnd" aria-label="پایان"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="3"/></svg></button>';
+bar.innerHTML='<em></em><span id="aiVoiceTxt"></span><i><b id="aiLevel"></b></i><button type="button" id="aiVoiceMute" aria-label="قطع میکروفن" title="قطع / وصل میکروفن"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg></button><button type="button" id="aiVoiceSkip" class="hid">✔ تمام</button><button type="button" id="aiVoiceEnd" aria-label="پایان"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="3"/></svg></button>';
 Q('.aiIn').parentNode.insertBefore(bar,Q('.aiIn'));
-const vTxt=Q('#aiVoiceTxt'),vLvl=Q('#aiLevel'),vSkip=Q('#aiVoiceSkip'),vEnd=Q('#aiVoiceEnd');
-function setBar(s,txt){bar.classList.remove('hid');bar.dataset.s=s;vTxt.textContent=txt;vSkip.classList.toggle('hid',s!=='speak');if(s!=='listen')vLvl.style.width='0'}
+const vTxt=Q('#aiVoiceTxt'),vLvl=Q('#aiLevel'),vSkip=Q('#aiVoiceSkip'),vEnd=Q('#aiVoiceEnd'),vMute=Q('#aiVoiceMute');
+function setBar(s,txt){
+  bar.classList.remove('hid');bar.dataset.s=s;vTxt.textContent=txt;
+  vSkip.textContent=s==='speak'?'✋ قطع':'✔ تمام';
+  vSkip.classList.toggle('hid',s!=='speak'&&s!=='listen');
+  if(s!=='listen')vLvl.style.width='0';
+}
+
 const aiTitle=Q('#aiTitle');
 function renderModeBar(){
   aiTitle.textContent=MODES[mode].t+(mode!=='app'?'  ✕':'');
@@ -3238,13 +3253,15 @@ async function send(text,o){
 
 /* =====================================================================
    موتور صوتی
-   گفتگو:  گوش‌دادن (ضبط + تشخیص سکوت) → تبدیل گفتار به متن در سرور (Whisper فارسی)
-           → پاسخ کوتاه هوش مصنوعی → خواندن با صدای فارسی (Gemini TTS) → دوباره گوش‌دادن
+   🗣️ گفتگوی صوتی: گوش‌دادن → متن (Whisper فارسی) → پاسخ → خواندن با صدا → دوباره گوش‌دادن
+      هنگام خواندن پاسخ، میکروفن بسته است (صدای اضافه حرف را قطع نمی‌کند)؛
+      دکمهٔ «قطع میکروفن» برای بستن کامل میکروفن، «✋ قطع» برای ساکت کردن پاسخ، «✔ تمام» برای ارسال فوری
+   🎙️ دکمهٔ میکروفن: یک جمله را می‌شنود و مستقیم می‌فرستد؛ پاسخ فقط نوشته می‌شود
    پشتیبان: تشخیص گفتار مرورگر (SpeechRecognition) و صدای مرورگر (speechSynthesis)
    قابل‌جایگزینی در اپ اندروید:  window.hkVoiceIO = { record(opts), stt(rec), speak(text,sp) }
    ===================================================================== */
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-const V={on:false,tok:0,sp:0,speaking:false,noSpeech:0,errs:0,ttsFail:0,ttsOff:false,sttFail:0,useSR:false,stream:null,ac:null,an:null,cancel:null,player:null,playRes:null,state:'idle'};
+const V={on:false,once:false,muted:false,tok:0,sp:0,speaking:false,noSpeech:0,errs:0,ttsFail:0,ttsOff:false,ttsOffAt:0,sttFail:0,useSR:false,stream:null,ac:null,an:null,cancel:null,stopRec:null,player:null,playRes:null,note:''};
 const IO=window.hkVoiceIO=window.hkVoiceIO||{};
 const SILENT='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
 const alive=t=>V.on&&t===V.tok;
@@ -3275,11 +3292,12 @@ function recordUtterance(o){
     const chunks=[],buf=new Uint8Array(V.an.fftSize),calib=[];
     let speechAt=-1,lastVoice=0,floor=null,hf=0,done=false,reason='',iv=null;
     const t0=performance.now();
-    const finish=r=>{if(done)return;done=true;reason=r;clearInterval(iv);V.cancel=null;try{if(mr.state!=='inactive')mr.stop()}catch(e){resolve({blob:null,speechAt:-1,reason:r})}};
+    const finish=r=>{if(done)return;done=true;reason=r;clearInterval(iv);V.cancel=null;V.stopRec=null;try{if(mr.state!=='inactive')mr.stop()}catch(e){resolve({blob:null,speechAt:-1,reason:r})}};
     mr.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
     mr.onerror=()=>finish('error');
     mr.onstop=()=>resolve({blob:new Blob(chunks,{type:(mr.mimeType||mime||'audio/webm')}),speechAt,reason,ms:performance.now()-t0});
     V.cancel=()=>finish('cancel');
+    V.stopRec=()=>finish('manual'); // «تمام»: همین الان تمام کن و بفرست
     mr.start(250);
     iv=setInterval(()=>{
       V.an.getByteTimeDomainData(buf);let s=0;for(let i=0;i<buf.length;i++){const x=(buf[i]-128)/128;s+=x*x}
@@ -3287,8 +3305,9 @@ function recordUtterance(o){
       if(o.onLevel)o.onLevel(rms);
       if(now<500){calib.push(rms);return}
       if(floor===null)floor=calib.reduce((a,b)=>a+b,0)/Math.max(1,calib.length);
-      const thr=Math.max(0.03,floor*3);
-      if(rms>thr){hf++;lastVoice=now;if(speechAt<0&&hf>=2)speechAt=Math.max(0,now-450)}else hf=0;
+      const thr=Math.max(0.03,floor*3),talking=speechAt>=0;
+      // وسط صحبت آستانه پایین‌تر است تا انتهای آرام جمله یا مکث کوتاه به‌حساب سکوت نیاید
+      if(rms>(talking?thr*0.6:thr)){hf++;lastVoice=now;if(!talking&&hf>=2)speechAt=Math.max(0,now-450)}else hf=0;
       if(speechAt>=0&&now-lastVoice>o.silenceMs)finish('silence');
       else if(speechAt<0&&now>o.noSpeechMs)finish('nospeech');
       else if(now>o.maxMs)finish('max');
@@ -3325,12 +3344,13 @@ function listenSR(){
     let r;try{r=new SR()}catch(e){res({text:'',err:'no-sr'});return}
     r.lang='fa-IR';r.interimResults=true;r.continuous=false;
     let fin='',tmp='',err='',done=false;
-    const end=()=>{if(done)return;done=true;V.cancel=null;clearTimeout(wd);res({text:cleanStt(fin||tmp),err})};
+    const end=()=>{if(done)return;done=true;V.cancel=null;V.stopRec=null;clearTimeout(wd);res({text:cleanStt(fin||tmp),err})};
     r.onresult=e=>{fin='';tmp='';for(let i=0;i<e.results.length;i++){const x=e.results[i];if(x.isFinal)fin+=x[0].transcript;else tmp+=x[0].transcript}inp.value=(fin+' '+tmp).trim()};
     r.onerror=e=>{err=e.error||'error'};
     r.onend=end;
-    const wd=setTimeout(()=>{try{r.abort()}catch(e){}end()},30000);
+    const wd=setTimeout(()=>{try{r.abort()}catch(e){}end()},60000);
     V.cancel=()=>{try{r.abort()}catch(e){}end()};
+    V.stopRec=()=>{try{r.stop()}catch(e){end()}};
     try{r.start()}catch(e){err='start';end()}
   });
 }
@@ -3393,16 +3413,26 @@ async function speakBrowser(text,sp){
 }
 async function speak(text,sp0){
   const sp=sp0||++V.sp,clean=speechClean(text);
-  if(!clean)return;
-  V.speaking=true;
-  let ok=false;
+  if(!clean)return true;
+  V.speaking=true;V.note='';
+  let ok=false,why='';
   if(IO.speak){try{ok=!!(await IO.speak(clean,sp))}catch(e){}}
-  if(!ok&&!V.ttsOff){
-    try{await speakServer(clean,sp);ok=true;V.ttsFail=0}catch(e){V.ttsFail++;if(V.ttsFail>=2)V.ttsOff=true}
+  if(!ok&&(!V.ttsOff||Date.now()-V.ttsOffAt>120000)){
+    try{await speakServer(clean,sp);ok=true;V.ttsFail=0;V.ttsOff=false}
+    catch(e){
+      V.ttsFail++;
+      why=((String(e&&e.message||'').match(/\(([^()]*\d{3}[^()]*)\)\s*$/)||[])[1])||''; // کد خطای سرویس، مثل gemini… 429
+      if(V.ttsFail>=2){V.ttsOff=true;V.ttsOffAt=Date.now()}
+    }
   }
   if(!ok&&sp===V.sp){try{ok=await speakBrowser(clean,sp)}catch(e){}}
-  if(!ok&&sp===V.sp&&V.on)setBar('warn','🔇 خواندن با صدا ممکن نشد (اینترنت یا تنظیمات سرور)؛ فقط متن نمایش داده شد');
   if(sp===V.sp)V.speaking=false;
+  if(!ok&&sp===V.sp){
+    V.note='🔇 صدای پاسخ ممکن نشد'+(why?' ('+why+')':'');
+    if(!V.on){setBar('warn',V.note);setTimeout(()=>{if(!V.on)bar.classList.add('hid')},4000)} // دکمهٔ «🔊 خواندن»
+    return false;
+  }
+  return true;
 }
 function stopSpeak(){
   V.sp++;V.speaking=false;
@@ -3413,11 +3443,12 @@ function stopSpeak(){
 
 /* --- حلقهٔ گفتگوی صوتی --- */
 function endVoice(msg){
-  const was=V.on;V.on=false;V.tok++;
+  const was=V.on;V.on=false;V.once=false;V.muted=false;V.tok++;
   stopSpeak();if(V.cancel){try{V.cancel()}catch(e){}}
   releaseMic();
   const b=Q('#aiVoiceMode');if(b)b.className='';
   const m=Q('#aiMic');if(m)m.classList.remove('rec');
+  vMute.classList.remove('off');
   if(msg){setBar('warn',msg);setTimeout(()=>{if(!V.on)bar.classList.add('hid')},4500)}
   else bar.classList.add('hid');
   return was;
@@ -3431,15 +3462,17 @@ function micMsg(e){
 async function turn(tok){
   if(!alive(tok))return;
   if(sosBusy()){endVoice('در حالت اعلام خطر، گفتگوی صوتی غیرفعال است.');return}
+  if(V.muted){setBar('mute','🔇 میکروفن قطع است؛ برای ادامه دکمهٔ میکروفن را بزنید');return}
   let text='';
   try{
     if(!V.useSR){
-      setBar('listen','🎙️ گوش می‌دهم… صحبت کنید');
-      const rec=await IO.record({silenceMs:1400,noSpeechMs:9000,maxMs:25000,onLevel:l=>{vLvl.style.width=Math.min(100,Math.round(l*900))+'%'}});
+      setBar('listen','🎙️ گوش می‌دهم'+(V.note?' · '+V.note:''));
+      const rec=await IO.record({silenceMs:V.once?3000:2800,noSpeechMs:12000,maxMs:60000,onLevel:l=>{vLvl.style.width=Math.min(100,Math.round(l*900))+'%'}});
       if(!alive(tok))return;
       if(rec.reason==='cancel'||rec.reason==='error'&&!rec.blob)return;
       if(rec.text!==undefined)text=cleanStt(rec.text); // اپ بومی می‌تواند مستقیماً متن بدهد
       else if(rec.speechAt<0||!rec.blob){
+        if(V.once){endVoice('چیزی نشنیدم؛ دوباره 🎙️ را بزنید.');return}
         if(++V.noSpeech>=3){endVoice('چیزی نشنیدم؛ گفتگو پایان یافت. دوباره 🗣️ را بزنید.');return}
         setTimeout(()=>turn(tok),150);return;
       }else{
@@ -3447,14 +3480,16 @@ async function turn(tok){
         try{text=await IO.stt(rec);V.sttFail=0}
         catch(e){
           if(!alive(tok))return;
+          if(V.once){endVoice('تبدیل گفتار به متن انجام نشد: '+(e&&e.message||'خطا'));return}
           if(++V.sttFail>=2&&SR){V.useSR=true;setBar('warn','تشخیص گفتار سرور در دسترس نیست؛ از تشخیص مرورگر استفاده می‌شود.')}
           else if(V.sttFail>=3){endVoice('تبدیل گفتار به متن انجام نشد: '+(e&&e.message||'خطا'));return}
           await sleep(250);setTimeout(()=>turn(tok),100);return;
         }
       }
     }else{
-      setBar('listen','🎙️ گوش می‌دهم… (تشخیص مرورگر)');
+      setBar('listen','🎙️ گوش می‌دهم (تشخیص مرورگر)');
       const r=await listenSR();if(!alive(tok))return;
+      if(V.muted){return}
       if(r.err==='not-allowed'||r.err==='service-not-allowed'){endVoice(micMsg({name:'NotAllowedError'}));return}
       if(r.err==='network'){endVoice('برای تشخیص گفتار مرورگر اینترنت لازم است.');return}
       text=r.text;
@@ -3462,59 +3497,70 @@ async function turn(tok){
   }catch(e){if(alive(tok))endVoice(micMsg(e));return}
   if(!alive(tok))return;
   if(!text){
+    if(V.once){endVoice('چیزی تشخیص داده نشد؛ دوباره 🎙️ را بزنید.');return}
     if(++V.noSpeech>=3){endVoice('چیزی نشنیدم؛ گفتگو پایان یافت. دوباره 🗣️ را بزنید.');return}
     setTimeout(()=>turn(tok),150);return;
   }
   V.noSpeech=0;inp.value=text;
   setBar('think','⏳ در حال فکر کردن…');
-  const reply=await send(text,{voice:true});
+  const reply=await send(text,{voice:!V.once});
   if(!alive(tok))return;
+  if(V.once){endVoice();return}          // دکمهٔ میکروفن: فقط ارسال؛ پاسخ نوشته می‌شود
   if(!reply){
     if(++V.errs>=2){endVoice('خطا در دریافت پاسخ؛ گفتگو متوقف شد.');return}
     setTimeout(()=>turn(tok),700);return;
   }
   V.errs=0;
   setBar('speak','🔊 در حال پاسخ دادن…');
-  await speak(reply);
-  if(alive(tok))setTimeout(()=>turn(tok),350); // نوبت کاربر
+  const ok=await speak(reply);          // در این مدت میکروفن بسته است
+  if(!alive(tok))return;
+  if(ok===false){setBar('warn',V.note);await sleep(2800);if(!alive(tok))return}
+  setTimeout(()=>turn(tok),350);         // نوبت کاربر
 }
-function startVoice(){
-  if(!loggedIn()){hist.push({role:'assistant',content:'برای گفتگوی صوتی ابتدا وارد حساب کاربری شوید.',err:true});render();return}
+function startVoice(once){
+  if(V.on)return;
+  if(!loggedIn()){hist.push({role:'assistant',content:'برای استفاده از صدا ابتدا وارد حساب کاربری شوید.',err:true});render();return}
   if(sosBusy()){setBar('warn','در حالت اعلام خطر، گفتگوی صوتی غیرفعال است.');return}
   if(busy)return;
   unlockAudio();
-  V.on=true;V.tok++;V.noSpeech=0;V.errs=0;V.sttFail=0;V.ttsFail=0;V.ttsOff=false;
-  V.useSR=!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&typeof MediaRecorder!=='undefined')&&!!SR;
-  if(V.useSR===false&&!(navigator.mediaDevices&&typeof MediaRecorder!=='undefined')&&!SR){endVoice('این محیط از میکروفن پشتیبانی نمی‌کند.');return}
-  Q('#aiVoiceMode').className='active';
+  V.on=true;V.once=!!once;V.muted=false;V.tok++;V.noSpeech=0;V.errs=0;V.sttFail=0;V.ttsFail=0;V.ttsOff=false;V.note='';
+  vMute.classList.remove('off');vMute.classList.toggle('hid',!!once);
+  const canRec=!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&typeof MediaRecorder!=='undefined');
+  V.useSR=!canRec&&!!SR;
+  if(!canRec&&!SR){endVoice('این محیط از میکروفن پشتیبانی نمی‌کند.');return}
+  if(once)Q('#aiMic').classList.add('rec');else Q('#aiVoiceMode').className='active';
   turn(V.tok);
 }
-Q('#aiVoiceMode').onclick=()=>{V.on?endVoice():startVoice()};
+/* 🗣️ گفتگوی صوتی (دوطرفه) */
+Q('#aiVoiceMode').onclick=()=>{if(V.on&&!V.once)endVoice();else if(!V.on)startVoice(false)};
+/* 🎙️ میکروفن: بگو و بفرست (بدون خواندن پاسخ)؛ بار دوم زدن = تمام و ارسال */
+Q('#aiMic').title='گفتن و ارسال';
+Q('#aiMic').onclick=()=>{
+  if(V.on&&V.once){if(bar.dataset.s==='listen'&&V.stopRec)V.stopRec();else endVoice();return}
+  if(!V.on)startVoice(true);
+};
 vEnd.onclick=()=>endVoice();
-vSkip.onclick=()=>{stopSpeak()}; // پاسخ را قطع کن؛ حلقه بلافاصله به گوش‌دادن می‌رود
-
-/* --- میکروفن تکی: فقط متن را در کادر می‌نویسد (بدون ارسال خودکار) --- */
-let dict=false;
-Q('#aiMic').onclick=async()=>{
-  const mb=Q('#aiMic');
-  if(dict){dict=false;if(V.cancel)V.cancel();return}
-  if(V.on){return}
-  dict=true;mb.classList.add('rec');unlockAudio();
-  try{
-    let text='';
-    if(SR){const r=await listenSR();text=r.text;if(!text&&r.err==='not-allowed')alert(micMsg({name:'NotAllowedError'}))}
-    else{
-      const rec=await IO.record({silenceMs:1300,noSpeechMs:8000,maxMs:25000});
-      if(rec.reason!=='cancel'&&rec.blob&&rec.speechAt>=0)text=await IO.stt(rec);
-      releaseMic();
-    }
-    if(text)inp.value=(inp.value?inp.value+' ':'')+text;
-  }catch(e){releaseMic();alert(e&&e.name&&/NotAllowed|NotFound|NotSupported/.test(e.name)?micMsg(e):'تشخیص گفتار انجام نشد: '+(e&&e.message||'خطا'))}
-  dict=false;mb.classList.remove('rec');
+/* ✔ تمام (هنگام گوش‌دادن) / ✋ قطع (هنگام خواندن پاسخ) */
+vSkip.onclick=()=>{
+  const s=bar.dataset.s;
+  if(s==='speak')stopSpeak();                         // پاسخ را ساکت کن؛ بلافاصله نوبت شما
+  else if(s==='listen'&&V.stopRec)V.stopRec();        // همین الان تمام کن و بفرست
+};
+/* 🔇 قطع / وصل میکروفن در گفتگوی صوتی */
+vMute.onclick=()=>{
+  if(!V.on||V.once)return;
+  V.muted=!V.muted;vMute.classList.toggle('off',V.muted);
+  const s=bar.dataset.s;
+  if(V.muted){
+    if(s==='listen'&&V.cancel)V.cancel();             // ضبط را رها کن
+    releaseMic();                                     // چراغ میکروفن گوشی هم خاموش شود
+    if(s==='listen'||s==='warn')setBar('mute','🔇 میکروفن قطع است؛ برای ادامه دکمهٔ میکروفن را بزنید');
+  }else if(s==='mute'){turn(V.tok)}
 };
 document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.t!=='a')endVoice()}));
 const hd=document.getElementById('app-header');if(hd)hd.addEventListener('click',()=>endVoice());
 document.addEventListener('visibilitychange',()=>{if(document.hidden)endVoice()});
+
 
 /* ---------- گزینه‌های چهارگانه ---------- */
 const CHIPS=[['📊 تجزیه و تحلیل','analysis'],['📝 دریافت صورتجلسه','minutes'],['🌲 سؤال تخصصی جنگل و قوانین','specialist'],['💬 چت آزاد و عمومی','general']];
