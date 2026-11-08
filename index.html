@@ -437,6 +437,27 @@ body.home-mode #ownerHome{display:block}
 @media (min-width: 1200px) {
   #app, #acct, #sosCard, #saveBar .sbIn, #sosFab { max-width: 1150px !important; }
 }
+
+.h-wrap { position: relative; }
+.h-wrap .h-key {
+  position: absolute;
+  left: 4px; bottom: 4px;
+  width: 24px; height: 24px;
+  min-width: 24px; min-height: 24px;
+  padding: 0 !important;
+  border-radius: 6px;
+  background: rgba(47,107,60,.10);
+  border: 1px solid var(--bd);
+  font-size: 12px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; z-index: 2; color: var(--tx);
+}
+.h-wrap .h-key.unlocked {
+  background: rgba(255,193,7,.22);
+  border-color: #d19a00;
+}
+.h-wrap .h-key.hid { display: none; }
+.h-wrap input.tall-input { padding-left: 32px !important; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
@@ -625,7 +646,7 @@ body.home-mode #ownerHome{display:block}
         <label>کلاسه حجم</label>
         <select id="volClass">
           <option value="general">حجم عمومی</option>
-          <option value="tala" disabled>کلاسه درختان حوزه تالار (به‌زودی)</option>
+          <option value="tala">کلاسه درختان حوزه تالار</option>
           <option value="karsang" disabled>کلاسه درختان کارسنگ (به‌زودی)</option>
           <option value="babolak" disabled>کلاسه درختان بابلک (به‌زودی)</option>
         </select>
@@ -642,7 +663,11 @@ body.home-mode #ownerHome{display:block}
 
       <div class="r" style="margin-top:6px;">
         <div><label>قطر سینه (cm)</label><input id="d" type="text" inputmode="decimal" class="tall-input"></div>
-        <div><label>طول / ارتفاع (m)</label><input id="h" type="text" inputmode="decimal" class="tall-input"></div>
+        <div class="h-wrap">
+          <label>طول / ارتفاع (m)</label>
+          <input id="h" type="text" inputmode="decimal" class="tall-input">
+          <button type="button" id="hKey" class="h-key hid" title="خودکار / دستی">🔒</button>
+        </div>
         <div><label>دور تنه (cm)</label><input id="gi" type="text" inputmode="decimal" placeholder="اختیاری"></div>
       </div>
 
@@ -851,7 +876,11 @@ body.home-mode #ownerHome{display:block}
     
     <div class="r">
       <div><label>قطر (cm)</label><input id="emD" class="tall-input" type="text" inputmode="decimal"></div>
-      <div><label>طول (m)</label><input id="emH" class="tall-input" type="text" inputmode="decimal"></div>
+      <div class="h-wrap">
+        <label>طول (m)</label>
+        <input id="emH" class="tall-input" type="text" inputmode="decimal">
+        <button type="button" id="emHKey" class="h-key hid" title="خودکار / دستی">🔒</button>
+      </div>
       <div><label>دور تنه</label><input id="emGi" type="text" inputmode="decimal"></div>
     </div>
     
@@ -918,8 +947,48 @@ function tblV(VT,d,h){
   for(const k in VT)VT[k].forEach((v,i)=>{const q=((+k-d)/5)**2+(i-hi)**2;if(q<bd){bd=q;ff=v/(Math.PI/4*(k/100)**2*(i+1)*5)}});
   return vol(d,h,ff);
 }
+
+const VT_TALA = {
+  'راش': {10:[6.0,0.001],15:[9.1,0.109],20:[12.6,0.275],25:[15.4,0.507],30:[17.8,0.805],35:[19.9,1.172],40:[21.7,1.611],45:[23.2,2.119],50:[24.4,2.592],55:[25.5,3.330],60:[26.4,4.051],65:[27.2,4.833],70:[27.9,5.575],75:[28.3,6.502],80:[28.8,7.562],85:[29.1,8.590],90:[29.4,9.686],95:[29.7,10.954],100:[29.9,12.075],105:[30.0,13.342],110:[30.0,14.650],115:[30.0,16.018],120:[30.0,17.449],125:[30.0,18.939],130:[30.0,20.490],135:[30.0,22.102],140:[30.0,23.775],145:[30.0,25.509],150:[30.0,27.304]},
+  'ممرز': {10:[8.1,0.027],15:[13.1,0.103],20:[16.6,0.236],25:[19.1,0.430],30:[21.0,0.687],35:[22.4,1.007],40:[23.6,1.395],45:[24.6,1.853],50:[25.3,2.365],55:[26.0,2.956],60:[26.5,3.615],65:[27.1,4.341],70:[27.5,5.129],75:[27.9,5.993],80:[28.2,6.911],85:[28.5,7.912],90:[28.8,8.990],95:[29.0,10.112],100:[29.2,11.311],105:[29.4,12.586],110:[29.6,13.939],115:[29.7,15.312],120:[29.7,16.712],125:[29.7,18.162],130:[29.7,19.686],135:[29.7,21.255],140:[29.7,22.909],145:[29.7,24.614],150:[29.7,26.392]},
+  'بلوط': {10:[5.0,0.026],15:[9.4,0.087],20:[12.6,0.198],25:[15.1,0.367],30:[17.9,0.598],35:[19.9,0.892],40:[21.7,1.250],45:[23.2,1.668],50:[24.4,2.141],55:[25.5,2.678],60:[26.4,3.268],65:[27.2,3.918],70:[27.9,4.608],75:[28.3,5.347],80:[28.8,6.150],85:[29.1,6.973],90:[29.4,7.864],95:[29.7,8.792],100:[29.9,9.759],105:[30.0,10.746],110:[30.0,11.744],115:[30.0,12.784],120:[30.0,13.865],125:[30.0,14.989],130:[30.0,16.154],135:[30.0,17.361],140:[30.0,18.509],145:[30.0,19.898],150:[30.0,21.228]},
+  'توسکا': {10:[6.9,0.027],15:[12.1,0.101],20:[16.2,0.232],25:[19.2,0.419],30:[21.5,0.662],35:[23.4,0.956],40:[24.9,1.323],45:[26.1,1.725],50:[27.1,2.202],55:[28.0,2.728],60:[28.7,3.301],65:[29.3,3.927],70:[29.9,4.616],75:[30.4,5.353],80:[30.9,6.136],85:[31.2,6.979],90:[31.6,7.884],95:[31.9,8.825],100:[32.2,9.826],105:[32.5,10.886],110:[32.7,11.973],115:[32.9,13.116],120:[33.0,14.274],125:[33.0,15.437],130:[33.0,16.643],135:[33.0,17.893],140:[33.0,19.187],145:[33.0,20.521],150:[33.0,21.902]},
+  'سایر_کلاسه_۱': {10:[9.7,0.026],15:[12.5,0.110],20:[17.8,0.234],25:[19.5,0.626],30:[20.9,0.894],35:[21.7,1.201],40:[22.4,1.549],45:[22.9,1.935],50:[23.3,2.359],55:[23.5,2.809],60:[23.7,3.292],65:[23.9,3.814],70:[24.1,4.365],75:[24.2,4.940],80:[24.3,5.545],85:[24.4,6.185],90:[24.5,6.857],95:[24.6,7.562],100:[24.7,8.300],105:[24.8,9.070],110:[24.8,9.873],115:[24.8,10.700],120:[24.8,11.575],125:[24.8,12.474],130:[24.8,13.406],135:[24.9,14.369],140:[24.9,15.364],145:[24.9,16.412],150:[24.9,17.467]}
+};
+
+function talaLookup(sp, d) {
+  if (!(d > 0)) return null;
+  let table = null;
+  if (sp === 'راش') table = VT_TALA['راش'];
+  else if (sp === 'ممرز') table = VT_TALA['ممرز'];
+  else if (sp === 'بلوط') table = VT_TALA['بلوط'];
+  else if (sp === 'توسکا') table = VT_TALA['توسکا'];
+  else if (sp === 'لرگ' || sp === 'کلهو') table = VT_TALA['سایر_کلاسه_۱'];
+  if (!table) return null;
+  const keys = Object.keys(table).map(Number).sort((a,b)=>a-b);
+  if (d <= keys[0]) return { h: table[keys[0]][0], v: table[keys[0]][1] };
+  if (d >= keys[keys.length-1]) return { h: table[keys[keys.length-1]][0], v: table[keys[keys.length-1]][1] };
+  for (let i = 0; i < keys.length - 1; i++) {
+    const k1 = keys[i], k2 = keys[i+1];
+    if (d >= k1 && d <= k2) {
+      const t = (d - k1) / (k2 - k1);
+      return { h: table[k1][0] + (table[k2][0] - table[k1][0]) * t, v: table[k1][1] + (table[k2][1] - table[k1][1]) * t };
+    }
+  }
+  return null;
+}
+
 function volSp(sp,d,h){
-  if(!(d>0&&h>0))return 0;
+  if(!(d>0))return 0;
+  const sh = (typeof getActiveSheet === 'function') ? getActiveSheet() : null;
+  const vc = (sh && sh.volClass) || 'general';
+  if (vc === 'tala') {
+    const res = talaLookup(sp, d);
+    if (!res) return 0;
+    if (h > 0 && Math.abs(h - res.h) > 0.05) return res.v * (h / res.h);
+    return res.v;
+  }
+  if(!(h>0))return 0;
   if(sp==='راش')return tblV(VT_BEECH,d,h);
   if(sp==='بلوط')return tblV(VT_OAK,d,h);
   return tblV(VT_GENERAL,d,h);
@@ -934,6 +1003,18 @@ function taxOf(t){
   return Math.round(v*(TAX_RATE[cat]||TAX_RATE[3]));
 }
 
+
+let hAuto = true;
+function updateHKeyVisual() {
+  const k = document.getElementById('hKey');
+  if (!k) return;
+  const isTala = getActiveSheet()?.volClass === 'tala';
+  k.classList.toggle('hid', !isTala);
+  if (isTala) {
+    k.textContent = hAuto ? '🔒' : '🔓';
+    k.classList.toggle('unlocked', !hAuto);
+  }
+}
 let SHEETS=[];try{SHEETS=JSON.parse(localStorage.getItem('sheets')||'[]')}catch(e){}
 let activeId=null;try{activeId=+localStorage.getItem('activeSheet')||null}catch(e){}
 let T=[],MAPP=[],MAPZ=39,MAPNM='',TRACK=[];
@@ -991,6 +1072,8 @@ function loadActive(){
   const currentMode = sh.mode;
   document.getElementById('volClassRow').classList.toggle('hid', currentMode!=='forest');
   const vc=$('#volClass'); if(vc) vc.value=sh.volClass||'general';
+  hAuto = true;
+  updateHKeyVisual();
 }
 function saveActive(){const sh=getActiveSheet();if(!sh)return;sh.trees=T;if(MAPP.length)sh.map={p:MAPP,z:MAPZ,nm:MAPNM};else delete sh.map;if(TRACK.length>0)sh.track=TRACK;else delete sh.track;try{localStorage.setItem('sheets',JSON.stringify(SHEETS));stWarn(false)}catch(e){stWarn(true)}}
 function stWarn(bad){const e=document.getElementById('sw');if(!e)return;e.classList.toggle('hid',!bad);e.textContent='⛔ ذخیره‌سازی انجام نشد (حافظه پر است). پشتیبان بگیرید.'}
@@ -1620,6 +1703,7 @@ function clr(){
   $('#fi').value='';$('#im').removeAttribute('src');
   $('#photoArea').classList.add('hid');
   act=getDef()[0][0];setStep(1);calc();updateGpsUI();renderRecent();
+  hAuto = true; updateHKeyVisual();
 }
 
 let edId=null,lastSavedId=null,saveTimer=null;
@@ -1648,6 +1732,11 @@ function doSave(useCoords, forcedK){
   const d=N('#d'),h=N('#h'),sp=$('#sp').value;
   if(!sp){$('#msg').textContent='ابتدا گونه را انتخاب کنید.';return}
   if(!(d>0&&h>0)){$('#msg').textContent='قطر و ارتفاع را وارد کنید.';return}
+  const vc = (getActiveSheet() && getActiveSheet().volClass) || 'general';
+  if (vc === 'tala' && !talaLookup(sp, d)) {
+    $('#msg').textContent = 'این گونه در جدول کلاسه تالار موجود نیست (فقط راش، ممرز، بلوط، توسکا، لرگ، کلهو).';
+    return;
+  }
   let coords=null;
   if(useCoords){
     if(!cur){ $('#svHint').innerHTML='<span style="color:#d33">⛔ مختصات آماده نیست.</span>'; setTimeout(updateGpsUI,5000); return; }
@@ -1666,13 +1755,13 @@ function doSave(useCoords, forcedK){
   lastSavedId = startId;
   
   if (hz) {
-    const o={no:'',sp,g:+$('#gd').value,ty:'h',n:count,d,h,f:ff(),v:volSp(sp,d,h),ds:$('#ds').value};
+    const o={no:'',sp,g:+$('#gd').value,ty:'h',n:count,d,h,hManual:!hAuto,f:ff(),v:volSp(sp,d,h),ds:$('#ds').value};
     if(forcedK) o.k = forcedK;
     T.push(Object.assign({id:startId,...(coords||{lat:null,lng:null,ux:null,uy:null,uz:null,ua:null}),dt:new Date().toISOString().slice(0,10)},o));
   } else {
     const startNo = parseInt(toEn($('#no').value)) || (T.filter(t=>t.ty!='h').reduce((a,t)=>Math.max(a,(parseInt(t.no)||0)+(t.n||1)-1),0)+1);
     for (let c = 0; c < count; c++) {
-      const o={no:(startNo + c).toString(),sp,g:+$('#gd').value,ty:'i',n:1,d,h,f:ff(),v:volSp(sp,d,h),ds:$('#ds').value};
+      const o={no:(startNo + c).toString(),sp,g:+$('#gd').value,ty:'i',n:1,d,h,hManual:!hAuto,f:ff(),v:volSp(sp,d,h),ds:$('#ds').value};
       if(forcedK) o.k = forcedK;
       T.push(Object.assign({id:startId+c, ...(coords||{lat:null,lng:null,ux:null,uy:null,uz:null,ua:null}), dt:new Date().toISOString().slice(0,10)},o));
     }
@@ -1707,6 +1796,29 @@ $('#svNo').onclick=()=>{
 /* Inline Edit Logic */
 let emTyM = false;
 
+
+let emHAuto = true;
+function updateEmHKeyVisual() {
+  const k = document.getElementById('emHKey');
+  if (!k) return;
+  const isTala = getActiveSheet()?.volClass === 'tala';
+  k.classList.toggle('hid', !isTala);
+  if (isTala) {
+    k.textContent = emHAuto ? '🔒' : '🔓';
+    k.classList.toggle('unlocked', !emHAuto);
+  }
+}
+(function(){
+  const k = document.getElementById('emHKey');
+  if (k) k.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (getActiveSheet()?.volClass !== 'tala') return;
+    emHAuto = !emHAuto;
+    updateEmHKeyVisual();
+    calcEdit();
+  });
+})();
+
 window.ed=id=>{
   const t=T.find(x=>x.id==id);if(!t)return;
   edId=id;
@@ -1738,6 +1850,15 @@ window.ed=id=>{
     $('#emTaxBox').style.display='none';
   }
   
+  const isTala = getActiveSheet()?.volClass === 'tala';
+  if (isTala) {
+    const res = talaLookup(t.sp, t.d);
+    if (t.hManual === true) emHAuto = false;
+    else if (t.hManual === false) emHAuto = true;
+    else emHAuto = !(res && Math.abs((+t.h || 0) - res.h) < 0.05);
+  } else { emHAuto = false; }
+  updateEmHKeyVisual();
+  
   calcEdit();
   document.getElementById('editModal').classList.remove('hid');
 };
@@ -1747,39 +1868,51 @@ $('#emCancel').onclick = () => { document.getElementById('editModal').classList.
 function calcEdit() {
   const sp = $('#emSp').value;
   const d = +toEn($('#emD').value);
-  const h = +toEn($('#emH').value);
-  const ty = $('#emTy').value;
-  const g = +$('#emGd').value;
+  const isTala = getActiveSheet()?.volClass === 'tala';
   const n = Math.max(1, Math.round(toEn($('#emNn').value)) || 1);
-  const k = getActiveSheet().mode==='garden' ? $('#emK').value : 'natural';
-  
-  const v1 = volSp(sp, d, h);
-  const vTotal = v1 * n;
-  
-  $('#emV').textContent = vTotal > 0 ? fa(vTotal, 3) : '—';
-  
-  if(getActiveSheet().mode==='garden'){
-    const fakeTree = {sp, d, h, ty, g, n, k, v: v1};
+  const hInput = +toEn($('#emH').value);
+  let v1 = 0;
+  let hEff = hInput;
+
+  if (isTala) {
+    updateEmHKeyVisual();
+    const res = talaLookup(sp, d);
+    if (res) {
+      if (emHAuto) {
+        hEff = res.h;
+        $('#emH').value = toFa(res.h.toFixed(1));
+        v1 = res.v;
+      } else {
+        v1 = hInput > 0 ? res.v * (hInput / res.h) : 0;
+      }
+    }
+  } else {
+    v1 = volSp(sp, d, hInput);
+  }
+
+  $('#emV').textContent = v1 > 0 ? fa(v1 * n, 3) : '—';
+
+  if (getActiveSheet().mode === 'garden') {
+    const fakeTree = { sp, d, h: hEff, ty: $('#emTy').value, g: +$('#emGd').value, n, k: $('#emK').value, v: v1 };
     const tax = taxOf(fakeTree);
     $('#emTax').textContent = tax > 0 ? fa(tax, 0) : '—';
   }
 }
 
 ['#emSp','#emD','#emH','#emNn','#emGd','#emK'].forEach(sel => {
-  $(sel).addEventListener('input', () => {
-    if((sel==='#emD') && !emTyM) {
+  const onChange = () => {
+    if (sel === '#emH' && getActiveSheet()?.volClass === 'tala') {
+      emHAuto = false;
+      updateEmHKeyVisual();
+    }
+    if ((sel === '#emD') && !emTyM) {
       const d = +toEn($('#emD').value);
-      if(d > 0) $('#emTy').value = d < 20 ? 'h' : 'i';
+      if (d > 0) $('#emTy').value = d < 20 ? 'h' : 'i';
     }
     calcEdit();
-  });
-  $(sel).addEventListener('change', () => {
-    if((sel==='#emD') && !emTyM) {
-      const d = +toEn($('#emD').value);
-      if(d > 0) $('#emTy').value = d < 20 ? 'h' : 'i';
-    }
-    calcEdit();
-  });
+  };
+  $(sel).addEventListener('input', onChange);
+  $(sel).addEventListener('change', onChange);
 });
 
 $('#emTy').addEventListener('change', () => {
@@ -1803,6 +1936,7 @@ $('#emSave').onclick = () => {
   t.g = +$('#emGd').value;
   t.d = d;
   t.h = h;
+  t.hManual = !emHAuto;
   t.n = Math.max(1, Math.round(toEn($('#emNn').value)) || 1);
   t.ty = $('#emTy').value;
   t.no = t.ty==='h' ? '' : toEn($('#emNo').value);
@@ -2036,17 +2170,71 @@ $('#ga').onclick=e=>{if(e){e.preventDefault();e.stopPropagation()}if(gpsOn)stopG
 $('#volClass').addEventListener('change',()=>{
   const sh=getActiveSheet();
   sh.volClass=$('#volClass').value;
-  saveActive();
-  T.forEach(t=>{t.v=volSp(t.sp,t.d,t.h);if(t.d2)t.v2=volSp(t.sp,t.d2,t.h2)});
-  store();draw();
+  const vc = sh.volClass;
+
+  T.forEach(t=>{
+    if (vc === 'tala') {
+      const res = talaLookup(t.sp, t.d);
+      if (res) {
+        if (!t.hManual) { t.h = res.h; t.v = res.v; }
+        else { t.v = res.v * ((+t.h || 0) / res.h); }
+      } else { t.v = 0; }
+    } else {
+      t.v = volSp(t.sp, t.d, t.h);
+    }
+    if (t.d2) t.v2 = volSp(t.sp, t.d2, t.h2);
+  });
+
+  saveActive(); draw();
+  hAuto = true; updateHKeyVisual(); calc();
 });
 
 function calc(){
   autoTy();
-  const v=($('#sp').value?volSp($('#sp').value,N('#d'),N('#h')):0)*(Math.max(1,Math.round(N('#nn'))||1));
-  const t=v>0?fa(v,3):'—';const e=$('#vBar');if(e)e.textContent=t;
+  const sp = $('#sp').value;
+  const isTala = getActiveSheet()?.volClass === 'tala';
+  const d = N('#d');
+
+  if (isTala) {
+    updateHKeyVisual();
+    const res = talaLookup(sp, d);
+    if (res) {
+      if (hAuto) {
+        $('#h').value = toFa(res.h.toFixed(1));
+        $('#vBar').textContent = fa(res.v, 3);
+      } else {
+        const h = N('#h');
+        $('#vBar').textContent = h > 0 ? fa(res.v * (h / res.h), 3) : '—';
+      }
+    } else {
+      $('#vBar').textContent = '—';
+    }
+    return;
+  }
+
+  const v = (sp ? volSp(sp, d, N('#h')) : 0) * (Math.max(1, Math.round(N('#nn'))) || 1);
+  $('#vBar').textContent = v > 0 ? fa(v, 3) : '—';
+  updateHKeyVisual();
 }
-['#d','#h','#nn'].forEach(i=>$(i).addEventListener('input',calc));
+$('#d').addEventListener('input', calc);
+$('#nn').addEventListener('input', calc);
+$('#h').addEventListener('input', () => {
+  if (getActiveSheet()?.volClass === 'tala') {
+    hAuto = false;
+    updateHKeyVisual();
+  }
+  calc();
+});
+(function(){
+  const hk = document.getElementById('hKey');
+  if (hk) hk.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (getActiveSheet()?.volClass !== 'tala') return;
+    hAuto = !hAuto;
+    updateHKeyVisual();
+    calc();
+  });
+})();
 $('#gi').addEventListener('input',()=>{const g=N('#gi');if(g>0)$('#d').value=toFa((g/Math.PI).toFixed(1));calc()});
 $('#d').addEventListener('input',()=>{$('#gi').value=''});
 
