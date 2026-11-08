@@ -978,6 +978,30 @@ function talaLookup(sp, d) {
   return null;
 }
 
+
+/** Resolve height+volume for any entry path (form / import / quick).
+ *  If volClass=tala and h missing/0 → take table height & volume.
+ *  If volClass=tala and h given but different → scale volume.
+ *  Returns {h, v, hManual}.
+ */
+function resolveHV(sp, d, h) {
+  const sh = (typeof getActiveSheet === 'function') ? getActiveSheet() : null;
+  const vc = (sh && sh.volClass) || 'general';
+  d = +d || 0; h = +h || 0;
+  if (vc === 'tala') {
+    const res = talaLookup(sp, d);
+    if (!res) return { h: h || 0, v: 0, hManual: !!h };
+    if (h > 0 && Math.abs(h - res.h) > 0.05) {
+      return { h, v: res.v * (h / res.h), hManual: true };
+    }
+    // auto (or h matches table)
+    return { h: res.h, v: res.v, hManual: false };
+  }
+  // general / other
+  const v = (d > 0 && h > 0) ? volSp(sp, d, h) : 0;
+  return { h, v, hManual: true };
+}
+
 function volSp(sp,d,h){
   if(!(d>0))return 0;
   const sh = (typeof getActiveSheet === 'function') ? getActiveSheet() : null;
@@ -1731,12 +1755,17 @@ function askSaveType(callback){
 function doSave(useCoords, forcedK){
   const d=N('#d'),h=N('#h'),sp=$('#sp').value;
   if(!sp){$('#msg').textContent='ابتدا گونه را انتخاب کنید.';return}
-  if(!(d>0&&h>0)){$('#msg').textContent='قطر و ارتفاع را وارد کنید.';return}
+  if(!(d>0)){$('#msg').textContent='قطر را وارد کنید.';return}
   const vc = (getActiveSheet() && getActiveSheet().volClass) || 'general';
   if (vc === 'tala' && !talaLookup(sp, d)) {
     $('#msg').textContent = 'این گونه در جدول کلاسه تالار موجود نیست (فقط راش، ممرز، بلوط، توسکا، لرگ، کلهو).';
     return;
   }
+  // در حالت عمومی ارتفاع اجباری است؛ در تالار اگر خالی باشد از جدول پر می‌شود
+  if (vc !== 'tala' && !(h>0)){$('#msg').textContent='قطر و ارتفاع را وارد کنید.';return}
+  const hv = resolveHV(sp, d, h);
+  h = hv.h; // ممکن است از جدول آمده باشد
+  if (!(h>0) || !(hv.v>0)){$('#msg').textContent='ارتفاع یا حجم قابل محاسبه نیست.';return}
   let coords=null;
   if(useCoords){
     if(!cur){ $('#svHint').innerHTML='<span style="color:#d33">⛔ مختصات آماده نیست.</span>'; setTimeout(updateGpsUI,5000); return; }
@@ -1755,13 +1784,13 @@ function doSave(useCoords, forcedK){
   lastSavedId = startId;
   
   if (hz) {
-    const o={no:'',sp,g:+$('#gd').value,ty:'h',n:count,d,h,hManual:!hAuto,f:ff(),v:volSp(sp,d,h),ds:$('#ds').value};
+    const o={no:'',sp,g:+$('#gd').value,ty:'h',n:count,d,h,hManual:hv.hManual,f:ff(),v:hv.v,ds:$('#ds').value};
     if(forcedK) o.k = forcedK;
     T.push(Object.assign({id:startId,...(coords||{lat:null,lng:null,ux:null,uy:null,uz:null,ua:null}),dt:new Date().toISOString().slice(0,10)},o));
   } else {
     const startNo = parseInt(toEn($('#no').value)) || (T.filter(t=>t.ty!='h').reduce((a,t)=>Math.max(a,(parseInt(t.no)||0)+(t.n||1)-1),0)+1);
     for (let c = 0; c < count; c++) {
-      const o={no:(startNo + c).toString(),sp,g:+$('#gd').value,ty:'i',n:1,d,h,hManual:!hAuto,f:ff(),v:volSp(sp,d,h),ds:$('#ds').value};
+      const o={no:(startNo + c).toString(),sp,g:+$('#gd').value,ty:'i',n:1,d,h,hManual:hv.hManual,f:ff(),v:hv.v,ds:$('#ds').value};
       if(forcedK) o.k = forcedK;
       T.push(Object.assign({id:startId+c, ...(coords||{lat:null,lng:null,ux:null,uy:null,uz:null,ua:null}), dt:new Date().toISOString().slice(0,10)},o));
     }
@@ -2485,17 +2514,19 @@ function showImportPreview(data, note) {
     let currentMaxNo = T.filter(t=>t.ty!='h').reduce((max, t) => Math.max(max, parseInt(t.no) || 0), 0);
     rows.forEach(tr => {
       const no = tr.querySelector('.imp-no').value.trim(); let sp = tr.querySelector('.imp-sp').value.trim();
-      const d = parseNum(tr.querySelector('.imp-d').value); const h = parseNum(tr.querySelector('.imp-h').value) || 0; const ds = tr.querySelector('.imp-ds').value.trim();
+      const d = parseNum(tr.querySelector('.imp-d').value); const hRaw = parseNum(tr.querySelector('.imp-h').value) || 0; const ds = tr.querySelector('.imp-ds').value.trim();
       const n = Math.max(1, parseInt(toEn(tr.querySelector('.imp-n').value)) || 1);
       
       if (d > 0) {
         if (!sp) sp = 'نامشخص';
+        const hv = resolveHV(sp, d, hRaw);
+        const h = hv.h, v = hv.v, hManual = hv.hManual;
         let finalNo = no;
         const isFw = d < 20;
         
         if (isFw) {
           const newId = T.reduce((a, t) => Math.max(a, t.id), 0) + 1;
-          T.push({ id: newId, no: '', sp: sp, g: (SP[sp] || [0,3])[1], ty: 'h', n: n, d: d, h: h, f: 0.5, v: volSp(sp, d, h), ds: ds, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: new Date().toISOString().slice(0,10) });
+          T.push({ id: newId, no: '', sp: sp, g: (SP[sp] || [0,3])[1], ty: 'h', n: n, d: d, h: h, hManual, f: 0.5, v: v, ds: ds, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: new Date().toISOString().slice(0,10) });
           added += n;
         } else {
           for (let i = 0; i < n; i++) {
@@ -2503,7 +2534,7 @@ function showImportPreview(data, note) {
             else { currentMaxNo = Math.max(currentMaxNo, parseInt(finalNo) || 0); }
             
             const newId = T.reduce((a, t) => Math.max(a, t.id), 0) + 1;
-            T.push({ id: newId, no: finalNo, sp: sp, g: (SP[sp] || [0,3])[1], ty: 'i', n: 1, d: d, h: h, f: 0.5, v: volSp(sp, d, h), ds: ds, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: new Date().toISOString().slice(0,10) });
+            T.push({ id: newId, no: finalNo, sp: sp, g: (SP[sp] || [0,3])[1], ty: 'i', n: 1, d: d, h: h, hManual, f: 0.5, v: v, ds: ds, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: new Date().toISOString().slice(0,10) });
             added++;
             finalNo = (parseInt(finalNo) + 1).toString();
           }
@@ -2536,8 +2567,17 @@ function openQuickEntry(prefill, note) {
   document.body.append(ov);
   const tbody = ov.querySelector('#quickTbBody');
   const updV = () => tbody.querySelectorAll('tr').forEach(tr => {
-    const sp = tr.querySelector('.q-sp').value.trim(), d = parseNum(tr.querySelector('.q-d').value), h = parseNum(tr.querySelector('.q-h').value) || 0, n = parseInt(toEn(tr.querySelector('.q-count').value)) || 1;
-    const c = tr.querySelector('.q-v'); if (c) c.textContent = (d > 0 && h > 0) ? fa(volSp(sp, d, h) * n, 2) : '—';
+    const sp = tr.querySelector('.q-sp').value.trim(), d = parseNum(tr.querySelector('.q-d').value), hRaw = parseNum(tr.querySelector('.q-h').value) || 0, n = parseInt(toEn(tr.querySelector('.q-count').value)) || 1;
+    const c = tr.querySelector('.q-v');
+    if (!c) return;
+    if (!(d > 0)) { c.textContent = '—'; return; }
+    const hv = resolveHV(sp, d, hRaw);
+    c.textContent = hv.v > 0 ? fa(hv.v * n, 2) : '—';
+    // اگر کلاسه تالار و ارتفاع خالی بود، مقدار جدول را در فیلد نشان بده (فقط نمایش، بدون قفل)
+    if ((getActiveSheet()?.volClass === 'tala') && !hRaw && hv.h > 0) {
+      const hi = tr.querySelector('.q-h');
+      if (hi && !hi.value.trim()) hi.placeholder = toFa(hv.h.toFixed(1));
+    }
   });
   tbody.addEventListener('input', updV); tbody.addEventListener('change', updV); updV();
   ov.querySelector('#qAddRow').onclick = () => { tbody.insertAdjacentHTML('beforeend', quickRowHtml()); };
@@ -2546,21 +2586,23 @@ function openQuickEntry(prefill, note) {
     const rows = tbody.querySelectorAll('tr'); let added = 0;
     let currentMaxNo = T.filter(t=>t.ty!='h').reduce((max, t) => Math.max(max, parseInt(t.no) || 0), 0);
     rows.forEach(tr => {
-      let sp = matchSp(tr.querySelector('.q-sp').value.trim()); const d = parseNum(tr.querySelector('.q-d').value); const h = parseNum(tr.querySelector('.q-h').value) || 0; const count = parseInt(toEn(tr.querySelector('.q-count').value)) || 1;
+      let sp = matchSp(tr.querySelector('.q-sp').value.trim()); const d = parseNum(tr.querySelector('.q-d').value); const hRaw = parseNum(tr.querySelector('.q-h').value) || 0; const count = parseInt(toEn(tr.querySelector('.q-count').value)) || 1;
       const k = tr.querySelector('.q-ty').value; 
       
       if (d > 0) {
         if (!sp) sp = 'نامشخص';
+        const hv = resolveHV(sp, d, hRaw);
+        const h = hv.h, v = hv.v, hManual = hv.hManual;
         const isFw = d < 20;
         if (isFw) {
           const newId = T.reduce((a, t) => Math.max(a, t.id), 0) + 1;
-          T.push({ id: newId, no: '', sp: sp, g: (SP[sp] || [0,3])[1], ty: 'h', n: count, d: d, h: h, f: 0.5, v: volSp(sp, d, h), ds: '', k: k, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: new Date().toISOString().slice(0,10) });
+          T.push({ id: newId, no: '', sp: sp, g: (SP[sp] || [0,3])[1], ty: 'h', n: count, d: d, h: h, hManual, f: 0.5, v: v, ds: '', k: k, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: new Date().toISOString().slice(0,10) });
           added += count;
         } else {
           for (let i = 0; i < count; i++) {
             currentMaxNo++;
             const newId = T.reduce((a, t) => Math.max(a, t.id), 0) + 1;
-            T.push({ id: newId, no: currentMaxNo.toString(), sp: sp, g: (SP[sp] || [0,3])[1], ty: 'i', n: 1, d: d, h: h, f: 0.5, v: volSp(sp, d, h), ds: '', k: k, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: new Date().toISOString().slice(0,10) });
+            T.push({ id: newId, no: currentMaxNo.toString(), sp: sp, g: (SP[sp] || [0,3])[1], ty: 'i', n: 1, d: d, h: h, hManual, f: 0.5, v: v, ds: '', k: k, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: new Date().toISOString().slice(0,10) });
             added++;
           }
         }
