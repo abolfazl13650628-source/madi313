@@ -10,7 +10,7 @@
 <title>برآورد و استحصال چوب‌آلات هیرکانی</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Vazirmatn:wght@400;700&display=swap">
 <style>
-:root{--bg:#f4f7f2;--sf:#fff;--tx:#18241b;--mu:#5c6b5f;--ac:#2f6b3c;--ac2:#fff;--bd:#d5dfd3;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root{--bg:#f4f7f2;--sf:#fff;--tx:#18241b;--mu:#5c6b5f;--ac:#2f6b3c;--ac2:#fff;--bd:#d5dfd3;color-scheme:light;--sh1:0 1px 5px rgba(0,0,0,.08);--sh2:0 12px 40px rgba(0,0,0,.35);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101a13;--sf:#18251c;--tx:#e8f0e9;--mu:#9fb2a3;--ac:#5fb374;--ac2:#08140b;--bd:#2b3d30;color-scheme:dark}}
 :root[data-theme="dark"]{--bg:#101a13;--sf:#18251c;--tx:#e8f0e9;--mu:#9fb2a3;--ac:#5fb374;--ac2:#08140b;--bd:#2b3d30;color-scheme:dark}
 *{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
@@ -426,7 +426,7 @@ body.home-mode #ownerHome{display:block}
 }
 #sosFab span { display: block; }
 #sosFab.hid { display: none; }
-#sosFab.act { animation: pulse 1.2s infinite; }
+#sosFab.act { animation: aiPulse 1.2s infinite; }
 
 #minutesModal { position:fixed; inset:0; z-index:1005; background:#0009; display:flex; align-items:center; justify-content:center; padding:16px; }
 #minutesModal .bx { background:var(--sf); color:var(--tx); border-radius:16px; padding:16px; width:100%; max-width:400px; box-shadow:var(--sh2); }
@@ -464,13 +464,16 @@ body.home-mode #ownerHome{display:block}
 .h-wrap .h-key.hid { display: none; }
 .h-wrap input.tall-input { padding-left: 32px !important; }
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
-  if (typeof pdfjsLib !== 'undefined') pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+window.loadLib=(function(){const c={};return function(url){
+  if(c[url])return c[url];
+  return c[url]=new Promise((res,rej)=>{const e=document.createElement('script');e.src=url;e.onload=res;e.onerror=()=>{delete c[url];rej(new Error('بارگذاری کتابخانه ممکن نشد (اینترنت لازم است)'))};document.head.appendChild(e)});
+}})();
+window.needPdf=async()=>{if(typeof pdfjsLib==='undefined')await loadLib('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js');pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js'};
+window.needOcr=async()=>{if(typeof Tesseract==='undefined')await loadLib('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js')};
 </script>
 </head>
 <body>
@@ -925,10 +928,12 @@ body.home-mode #ownerHome{display:block}
 <script>
 const $=s=>document.querySelector(s),fa=(n,m=2)=>(n!==null&&n!==undefined&&n!==''&&isFinite(n))?Number(n).toLocaleString('fa-IR',{maximumFractionDigits:m}):'—';
 const toFa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]).replace(/\./g,'٫'),toEn=s=>String(s).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٫،,]/g,'.');
+const isoLocal=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 const N=id=>+toEn($(id).value),rad=x=>x*Math.PI/180,vol=(d,h,f)=>Math.PI/4*(d/100)**2*h*f;
 
 /* ===== قاعدهٔ واحد اعتبارسنجی قطر و طول ===== */
 const RULES={minD:10,maxD:250,stepD:5,maxH:50};
+const snapD=x=>Math.min(RULES.maxD,Math.max(RULES.minD,Math.round(x/RULES.stepD)*RULES.stepD));
 
 const SP={
   'سرخدار':[.5,1],'زربین':[.5,1],'ارس':[.5,1],'شمشاد':[.5,1],'گردو':[.5,1],'آزاد':[.5,1],
@@ -1028,10 +1033,11 @@ function resolveHV(sp, d, h) {
   return { h, v, hManual: true };
 }
 
+let VC_OVERRIDE=null;
 function volSp(sp,d,h){
   if(!(d>0))return 0;
   const sh = (typeof getActiveSheet === 'function') ? getActiveSheet() : null;
-  const vc = (sh && sh.volClass) || 'general';
+  const vc = VC_OVERRIDE || (sh && sh.volClass) || 'general';
   if (vc === 'tala') {
     const res = talaLookup(sp, d);
     if (!res) return 0;
@@ -1109,7 +1115,7 @@ let SHEETS=[];try{SHEETS=JSON.parse(localStorage.getItem('sheets')||'[]')}catch(
 let activeId=null;try{activeId=+localStorage.getItem('activeSheet')||null}catch(e){}
 let T=[],MAPP=[],MAPZ=39,MAPNM='',TRACK=[];
 let walkMeters=0,lastWalkFix=null;
-let trackOn=false;try{trackOn=localStorage.getItem('trkOn')==='1'}catch(e){}
+let trackOn=false;try{localStorage.setItem('trkOn','0')}catch(e){}
 
 if(!SHEETS.length){
   let oldT=[],oldMap=null;
@@ -1173,10 +1179,26 @@ function loadActive(){
   hAuto = true;
   updateHKeyVisual();
 }
-function saveActive(){const sh=getActiveSheet();if(!sh)return;sh.trees=T;if(MAPP.length)sh.map={p:MAPP,z:MAPZ,nm:MAPNM};else delete sh.map;if(TRACK.length>0)sh.track=TRACK;else delete sh.track;try{localStorage.setItem('sheets',JSON.stringify(SHEETS));stWarn(false)}catch(e){stWarn(true)}}
-function stWarn(bad){const e=document.getElementById('sw');if(!e)return;e.classList.toggle('hid',!bad);e.textContent='⛔ ذخیره‌سازی انجام نشد (حافظه پر است). پشتیبان بگیرید.'}
+const HKDB={
+  open:()=>new Promise((res,rej)=>{const r=indexedDB.open('hkmirror',1);r.onupgradeneeded=()=>r.result.createObjectStore('m');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}),
+  async put(v){const d=await this.open();return new Promise((res,rej)=>{const t=d.transaction('m','readwrite');t.objectStore('m').put(v,'sheets');t.oncomplete=res;t.onerror=()=>rej(t.error)})},
+  async get(){const d=await this.open();return new Promise((res,rej)=>{const r=d.transaction('m').objectStore('m').get('sheets');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+};
+let mirrorT=null;
+function mirror(fail){clearTimeout(mirrorT);mirrorT=setTimeout(()=>{try{HKDB.put({t:Date.now(),json:JSON.stringify(SHEETS),fail:!!fail}).catch(()=>{})}catch(e){}},fail?200:3000)}
+function saveActive(){const sh=getActiveSheet();if(!sh)return;sh.trees=T;if(MAPP.length)sh.map={p:MAPP,z:MAPZ,nm:MAPNM};else delete sh.map;if(TRACK.length>0)sh.track=TRACK;else delete sh.track;try{localStorage.setItem('sheets',JSON.stringify(SHEETS));stWarn(false);mirror(false)}catch(e){stWarn(true);mirror(true)}}
+function stWarn(bad){const e=document.getElementById('sw');if(!e)return;e.classList.toggle('hid',!bad);e.textContent='⛔ حافظهٔ مرورگر پر است. یک نسخهٔ اضطراری جداگانه ذخیره شد، ولی همین حالا از تب «سیاهه» پشتیبان (JSON) بگیرید.'}
 const norm=()=>T.forEach(t=>{if(t.sp=='زبان‌گنجشک')t.sp='ون';if(!t.g)t.g=(SP[t.sp]||[0])[1]||0;if(t.d>0){if(isFirewood(t.d)){t.ty='h';t.no='';}else if(!t.ty)t.ty='i';}if(!t.ty)t.ty=isFirewood(t.d)?'h':'i';if(SP[t.sp]){t.v=volSp(t.sp,t.d,t.h);if(t.d2)t.v2=volSp(t.sp,t.d2,t.h2)}if(t.lat&&!t.ux){const u=utm(t.lat,t.lng);t.ux=u.E;t.uy=u.N;t.uz=u.z}});
 loadActive();norm();
+(async()=>{try{
+  if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();
+  const m=await HKDB.get();if(!m||!m.fail||!m.json)return;
+  let ms;try{ms=JSON.parse(m.json)}catch(e){return}
+  const cn=a=>(a||[]).reduce((x,q)=>x+(q.trees||[]).length,0);
+  if(Array.isArray(ms)&&ms.length&&cn(ms)>cn(SHEETS)&&confirm('دفعهٔ قبل حافظهٔ اصلی پر شد و ذخیره کامل نشد. نسخهٔ اضطراری کامل‌تر پیدا شد ('+toFa(cn(ms))+' درخت). بازیابی شود؟')){
+    SHEETS=ms;activeId=SHEETS[0].id;switchSheet(activeId,true);alert('بازیابی شد. لطفاً بلافاصله پشتیبان (JSON) بگیرید.');
+  }
+}catch(e){}})();
 const store=()=>{saveActive();bnr();try{if(window.syncSoon)window.syncSoon()}catch(e){}};
 
 document.getElementById('btnModeGarden').onclick = () => {
@@ -1746,8 +1768,8 @@ function compute(){
       if(refPx<3){S.textContent='شیء مرجع خیلی کوچیکه.';return}
       const dia=(trPx/refPx)*refCm;
       if(!(dia>0&&isFinite(dia))){S.textContent='نشانگرها نامعتبرند.';return}
-      R.textContent='قطر: '+fa(dia,1)+' سانتی‌متر';
-      $('#d').value=toFa(dia.toFixed(1));calc();
+      R.textContent='قطر: '+fa(dia,1)+' سانتی‌متر (ثبت: '+toFa(snapD(dia))+')';
+      $('#d').value=toFa(snapD(dia));calc();
     }else{
       const refPx=Math.abs(m.rB-m.rT)*H,trPx=Math.abs(m.rB-m.tT)*H;
       if(refPx<3){S.textContent='شیء مرجع خیلی کوچیکه.';return}
@@ -1763,8 +1785,8 @@ function compute(){
       const sn=Math.sin(Math.abs(Math.atan((m.tR-.5)*W/f)-Math.atan((m.tL-.5)*W/f))/2);
       const dia=2*D*sn/(1-sn);
       if(!(dia>0&&isFinite(dia))){S.textContent='نشانگرها نامعتبرند.';return}
-      R.textContent='قطر: '+fa(dia,1)+' سانتی‌متر';
-      $('#d').value=toFa(dia.toFixed(1));calc();
+      R.textContent='قطر: '+fa(dia,1)+' سانتی‌متر (ثبت: '+toFa(snapD(dia))+')';
+      $('#d').value=toFa(snapD(dia));calc();
     }else{
       const D=N('#D1')*100;if(!(D>0)){S.textContent='فاصله را وارد کنید.';return}
       const r=Math.max(0,N('#d')/2),th=y=>Math.atan((.5-y)*H/f);
@@ -1882,14 +1904,14 @@ function doSave(useCoords, forcedK){
   if (fw) {
     const o={no:'',sp,g:gVal,ty:'h',n:count,d,h,hManual:hv.hManual,f:ff(),v:hv.v,ds:$('#ds').value};
     if(forcedK) o.k = forcedK;
-    T.push(Object.assign({id:startId,...(coords||{lat:null,lng:null,ux:null,uy:null,uz:null,ua:null}),dt:new Date().toISOString().slice(0,10)},o));
+    T.push(Object.assign({id:startId,...(coords||{lat:null,lng:null,ux:null,uy:null,uz:null,ua:null}),dt:isoLocal()},o));
   } else {
     let startNo = parseInt(toEn($('#no').value), 10);
     if (!startNo) startNo = nextIndustrialNo();
     for (let c = 0; c < count; c++) {
       const o={no:String(startNo + c),sp,g:gVal,ty:'i',n:1,d,h,hManual:hv.hManual,f:ff(),v:hv.v,ds:$('#ds').value};
       if(forcedK) o.k = forcedK;
-      T.push(Object.assign({id:startId+c, ...(coords||{lat:null,lng:null,ux:null,uy:null,uz:null,ua:null}), dt:new Date().toISOString().slice(0,10)},o));
+      T.push(Object.assign({id:startId+c, ...(coords||{lat:null,lng:null,ux:null,uy:null,uz:null,ua:null}), dt:isoLocal()},o));
     }
   }
   
@@ -2069,6 +2091,10 @@ $('#emSave').onclick = () => {
     if(res) h = res.h;
   }
   if(!(h>0)) { alert('قطر و ارتفاع را وارد کنید.'); return; }
+  if (d !== +t.d || h !== +t.h) {
+    const chk = checkTree({ sp, d: String(d), h: String(h) });
+    if (chk.block) { alert('ثبت نشد: ' + chk.msg.join('، ')); return; }
+  }
   
   t.sp = sp;
   t.g = +$('#emGd').value || 0;
@@ -2361,7 +2387,7 @@ $('#h').addEventListener('input', () => {
     calc();
   });
 })();
-$('#gi').addEventListener('input',()=>{const g=N('#gi');if(g>0)$('#d').value=toFa((g/Math.PI).toFixed(1));calc()});
+$('#gi').addEventListener('input',()=>{const g=N('#gi');if(g>0)$('#d').value=toFa(snapD(g/Math.PI));calc()});
 $('#d').addEventListener('input',()=>{$('#gi').value=''});
 
 const autoNo=()=>{
@@ -2534,19 +2560,19 @@ document.getElementById('smartImportFile').onchange = async (e) => {
       btn.innerHTML = '⏳ در حال خواندن ورد...';
       const zip = await JSZip.loadAsync(await file.arrayBuffer()); const docXml = await zip.file('word/document.xml').async('string');
       const text = normalizeOcrText(docXml.replace(/<[^>]+>/g, ' ')); const matches = text.match(/\d+(\.\d+)?\s+\d+(\.\d+)?/g) || [];
-      matches.forEach(m => { const nums = m.trim().split(/\s+/).map(Number); if (nums.length >= 2) extractedData.push({ no:'', sp: '', d: nums[0], h: nums[1], ds: '' }); });
+      matches.forEach(m => { const nums = m.trim().split(/\s+/).map(Number); if (nums.length >= 2 && plausDH(nums[0], nums[1])) extractedData.push({ no:'', sp: '', d: nums[0], h: nums[1], ds: '' }); });
     } else if (fext === 'doc') {
       btn.innerHTML = originalText; alert('فرمت .doc قدیمی پشتیبانی نمی‌شود. لطفاً به .docx تبدیل کنید.'); return;
     } else if (fext === 'pdf') {
       btn.innerHTML = '⏳ در حال خواندن PDF...';
-      const arrayBuffer = await file.arrayBuffer(); const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      await needPdf(); const arrayBuffer = await file.arrayBuffer(); const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       let fullText = '';
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i); const textContent = await page.getTextContent();
         fullText += textContent.items.map(item => item.str).join(' ') + '\n';
       }
       const lines = normalizeOcrText(fullText).split('\n');
-      lines.forEach(line => { const matches = line.match(/\d+(?:\.\d+)?/g); if (matches && matches.length >= 2) extractedData.push({ no:'', sp: '', d: parseFloat(matches[0]), h: parseFloat(matches[1]), ds: 'PDF' }); });
+      lines.forEach(line => { if (looksDate(line)) return; const matches = line.match(/\d+(?:\.\d+)?/g); if (matches && matches.length >= 2 && plausDH(parseFloat(matches[0]), parseFloat(matches[1]))) extractedData.push({ no:'', sp: '', d: parseFloat(matches[0]), h: parseFloat(matches[1]), ds: 'PDF' }); });
     } else if (file.type.startsWith('image/') || ['jpg','jpeg','png','webp','gif','bmp','heic','heif','tif','tiff'].includes(fext)) {
       let aiDone = false;
       if (!(window.hkAiLoggedIn && window.hkAiLoggedIn())) {
@@ -2565,6 +2591,7 @@ document.getElementById('smartImportFile').onchange = async (e) => {
       if (!aiDone) {
       btn.innerHTML = '⏳ در حال خواندن عکس...';
       const ocrImage = await prepareOcrImage(file);
+      await needOcr();
       const result = await Tesseract.recognize(ocrImage, 'fas+eng', { logger: m => { if(m.status==='recognizing text' && m.progress) btn.innerHTML='⏳ خواندن عکس '+Math.round(m.progress*100)+'٪'; } });
       const ocrText = normalizeOcrText(result.data.text || '');
       const lines = ocrText.split('\n');
@@ -2588,6 +2615,8 @@ document.getElementById('smartImportFile').onchange = async (e) => {
   } catch (err) { btn.innerHTML = originalText; alert('خطا: ' + err.message); }
 };
 
+const plausDH=(d,h)=>d>=RULES.minD&&d<=RULES.maxD&&h>0&&h<=RULES.maxH;
+const looksDate=l=>/\d{1,4}[\/\-.]\d{1,2}[\/\-.]\d{1,4}/.test(l);
 function showImportPreview(data, note, extra) {
   const ov = document.createElement('div');
   ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#0009;display:flex;flex-direction:column;padding:12px;';
@@ -2736,7 +2765,7 @@ function showImportPreview(data, note, extra) {
         
         if (isFirewood(d)) {
           const newId = T.reduce((a, t) => Math.max(a, t.id), 0) + 1;
-          T.push({ id: newId, no: '', sp: sp, g: g, ty: 'h', n: n, d: d, h: h, hManual, f: 0.5, v: v, ds: ds, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: new Date().toISOString().slice(0,10) });
+          T.push({ id: newId, no: '', sp: sp, g: g, ty: 'h', n: n, d: d, h: h, hManual, f: 0.5, v: v, ds: ds, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: isoLocal() });
           added += n;
         } else {
           let finalNo = noRaw;
@@ -2744,7 +2773,7 @@ function showImportPreview(data, note, extra) {
             if (!finalNo) { currentMaxNo++; finalNo = String(currentMaxNo); }
             else { currentMaxNo = Math.max(currentMaxNo, parseInt(finalNo, 10) || 0); }
             const newId = T.reduce((a, t) => Math.max(a, t.id), 0) + 1;
-            T.push({ id: newId, no: finalNo, sp: sp, g: g, ty: 'i', n: 1, d: d, h: h, hManual, f: 0.5, v: v, ds: ds, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: new Date().toISOString().slice(0,10) });
+            T.push({ id: newId, no: finalNo, sp: sp, g: g, ty: 'i', n: 1, d: d, h: h, hManual, f: 0.5, v: v, ds: ds, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: isoLocal() });
             added++;
             finalNo = String((parseInt(finalNo, 10) || 0) + 1);
           }
@@ -2890,7 +2919,7 @@ function openQuickEntry(prefill, note) {
         
         if (isFirewood(d)) {
           const newId = T.reduce((a, t) => Math.max(a, t.id), 0) + 1;
-          T.push({ id: newId, no: '', sp: spFinal, g: g, ty: 'h', n: count, d: d, h: h, hManual, f: 0.5, v: v, ds: '', k: k, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: new Date().toISOString().slice(0,10) });
+          T.push({ id: newId, no: '', sp: spFinal, g: g, ty: 'h', n: count, d: d, h: h, hManual, f: 0.5, v: v, ds: '', k: k, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: isoLocal() });
           added += count;
         } else {
           for (let i = 0; i < count; i++) {
@@ -2898,7 +2927,7 @@ function openQuickEntry(prefill, note) {
             if (!finalNo) { currentMaxNo++; finalNo = String(currentMaxNo); }
             else { currentMaxNo = Math.max(currentMaxNo, parseInt(finalNo, 10) || 0); }
             const newId = T.reduce((a, t) => Math.max(a, t.id), 0) + 1;
-            T.push({ id: newId, no: finalNo, sp: spFinal, g: g, ty: 'i', n: 1, d: d, h: h, hManual, f: 0.5, v: v, ds: '', k: k, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: new Date().toISOString().slice(0,10) });
+            T.push({ id: newId, no: finalNo, sp: spFinal, g: g, ty: 'i', n: 1, d: d, h: h, hManual, f: 0.5, v: v, ds: '', k: k, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: isoLocal() });
             added++;
             rowNo = String((parseInt(finalNo, 10) || 0) + 1);
           }
@@ -3045,8 +3074,8 @@ function buildTaxSheet(){
   return ['عوارض',rows,[[0,0,0,5]],2];
 }
 
-function fnm(){return String(getActiveSheet().name).replace(/[\\\/:*?"<>|]/g,'-').trim()+'-'+new Date().toISOString().slice(0,10)}
-const today=()=>new Date().toISOString().slice(0,10);
+function fnm(){return String(getActiveSheet().name).replace(/[\\\/:*?"<>|]/g,'-').trim()+'-'+isoLocal()}
+const today=()=>isoLocal();
 async function shareBlob(fn,blob){
   try{
     const file=new File([blob],fn,{type:blob.type||'application/octet-stream'});
@@ -3076,7 +3105,9 @@ function allSheets(){
   try{ 
     SHEETS.forEach((sh, idx)=>{
       T=sh.trees||[];
+      VC_OVERRIDE=sh.volClass||'general';
       norm();
+      VC_OVERRIDE=null;
       let sn = sh.name || ('زمین '+(idx+1));
       sn = sn.replace(/[\\\/\?\*\[\]:]/g,'-').substring(0, 25);
       let finalSn = sn;
@@ -3099,7 +3130,7 @@ function allSheets(){
        taxSheet[0] = taxSn;
        out.push(taxSheet);
     }
-  }finally{T=o} 
+  }finally{T=o;VC_OVERRIDE=null} 
   return out;
 }
 
@@ -3242,7 +3273,7 @@ let busy=false,tm=null,msg='';
 const em=u=>u.trim().toLowerCase()+'@hirkani.app';
 const rid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36);
 const hs=s=>{let h=5381;for(let i=0;i<s.length;i++)h=(h*33^s.charCodeAt(i))>>>0;return h+':'+s.length};
-const shash=s=>hs(JSON.stringify([s.name,s.trees||[],s.map||null]));
+const shash=s=>hs(JSON.stringify([s.name,s.trees||[],s.map||null,s.mode||null,s.volClass||null,(s.track||[]).length]));
 
 async function api(p,m,b,x){
   const au=p.startsWith('/auth/')||!S?SB_KEY:S.access_token;
@@ -3324,9 +3355,9 @@ async function sync(){
       if(!l){
         let nm=r.name||'سربرگ';while(SHEETS.some(x=>x.name===nm))nm+=' (حساب)';
         const o={id:SHEETS.reduce((a,x)=>Math.max(a,x.id),0)+1,uid:r.uid,name:nm,trees:tr,ua:r.ua||now};
-        if(d.map)o.map=d.map;if(d.mode)o.mode=d.mode;if(d.volClass)o.volClass=d.volClass;o.h=shash(o);SHEETS.push(o);chg=true;
+        if(d.map)o.map=d.map;if(d.mode)o.mode=d.mode;if(d.volClass)o.volClass=d.volClass;if(d.track)o.track=d.track;o.h=shash(o);SHEETS.push(o);chg=true;
       }else if((r.ua||0)>(l.ua||0)){
-        l.name=r.name;l.trees=tr;if(d.map)l.map=d.map;else delete l.map;if(d.mode)l.mode=d.mode;if(d.volClass)l.volClass=d.volClass;l.ua=r.ua;l.h=shash(l);chg=true;
+        l.name=r.name;l.trees=tr;if(d.map)l.map=d.map;else delete l.map;if(d.mode)l.mode=d.mode;if(d.volClass)l.volClass=d.volClass;if(d.track)l.track=d.track;else delete l.track;l.ua=r.ua;l.h=shash(l);chg=true;
       }else if((l.ua||0)>(r.ua||0)){
         const rec=row(l); if(rec&&rec.uid) out.set(rec.uid,rec);
       }
@@ -3360,7 +3391,7 @@ function row(s){
     user_id: S.uid,
     uid: s.uid,
     name: s.name||'',
-    data: {trees:s.trees||[], map:s.map||null, mode:s.mode||null, volClass:s.volClass||null},
+    data: {trees:s.trees||[], map:s.map||null, mode:s.mode||null, volClass:s.volClass||null, track:(s.track&&s.track.length)?s.track:null},
     ua: s.ua||Date.now(),
     deleted: false
   };
@@ -3400,8 +3431,8 @@ function login(){
 async function logout(){
   const ok=await sync();
   if(!confirm(ok?'خروج؟':'تغییرات سینک نشده پاک می‌شوند! خروج؟'))return;
-  S=null;['sbs','sbu','sbk'].forEach(k=>LS(k,null));
-  SHEETS=[{id:1,name:'زمین ۱',trees:[]}];activeId=1;LS('sheets',JSON.stringify(SHEETS));
+  S=null;['sbs','sbu','sbk','aiChat','aiChat_specialist','aiChat_general','sosCfg','sosActive','sosLast','sosDis'].forEach(k=>LS(k,null));
+  SHEETS=[{id:1,name:'زمین ۱',trees:[]}];activeId=1;LS('sheets',JSON.stringify(SHEETS));try{HKDB.put({t:0,json:'',fail:false})}catch(e){}
   switchSheet(1,true);msg='';ui();
 }
 
@@ -3485,12 +3516,19 @@ function searchBulletins(query, maxChars) {
   if (!terms.length) return [];
   const nums = (q.match(/\d{3,}/g) || []);
 
+  if (!DOCS._idx) {
+    DOCS._idx = [];
+    for (const doc of DOCS) {
+      const nd = normFa(doc.name);
+      for (const page of (doc.pages || [])) {
+        String(page.text || '').split(/\n+/).map(p => p.trim()).filter(p => p.length > 15).forEach(para => DOCS._idx.push({ doc, nd, page, para, np: normFa(para) }));
+      }
+    }
+  }
   const chunks = [];
-  for (const doc of DOCS) {
-    for (const page of (doc.pages || [])) {
-      const paras = String(page.text || '').split(/\n+/).map(p => p.trim()).filter(p => p.length > 15);
-      for (const para of paras) {
-        const np = normFa(para);
+  {
+    for (const { doc, nd, page, para, np } of DOCS._idx) {
+      {
         let score = 0, matched = 0;
         for (const t of terms) {
           const c = np.split(t).length - 1;
@@ -3499,7 +3537,7 @@ function searchBulletins(query, maxChars) {
         if (!matched) continue;
         if (np.includes(q)) score += 10;
         for (const n of nums) if (np.includes(n)) score += 6;
-        if (normFa(doc.name).includes(q)) score += 4;
+        if (nd.includes(q)) score += 4;
         score = score / Math.sqrt(para.length / 80);
         chunks.push({ docName: doc.name, page: page.n, text: para, score });
       }
@@ -3760,18 +3798,18 @@ function renderAlerts(list){
   if(!list.length){alOv.style.display='none';alOv.innerHTML='';return}
   alOv.style.display='flex';
   alOv.innerHTML='<div style="width:100%;max-width:440px;max-height:94vh;overflow:auto">'+list.map(a=>{
-    if(a.active===false)return '<div style="background:var(--sf);color:var(--tx);border:3px solid #2f6b3c;border-radius:16px;padding:14px;margin-bottom:10px;line-height:1.9"><div style="font-size:18px;font-weight:700;color:#2f6b3c">✅ '+esc(a.name||'کاربر')+' در امان است</div><div style="font-size:13px">خطر برطرف شد · '+ago(a.safe_at||a.updated_at)+'</div><button data-x="'+a.id+':s" type="button" style="width:100%;margin-top:8px">باشه</button></div>';
+    if(a.active===false)return '<div style="background:var(--sf);color:var(--tx);border:3px solid #2f6b3c;border-radius:16px;padding:14px;margin-bottom:10px;line-height:1.9"><div style="font-size:18px;font-weight:700;color:#2f6b3c">✅ '+esc(a.name||'کاربر')+' در امان است</div><div style="font-size:13px">خطر برطرف شد · '+ago(a.safe_at||a.updated_at)+'</div><button data-x="'+esc(a.id)+':s" type="button" style="width:100%;margin-top:8px">باشه</button></div>';
     const d=(cur&&a.lat!=null)?gdist(cur.lat,cur.lng,a.lat,a.lng):null;
     return '<div style="background:var(--sf);color:var(--tx);border:3px solid #c62828;border-radius:16px;padding:14px;margin-bottom:10px;line-height:1.9;font-size:13.5px">'
      +'<div style="font-size:18px;font-weight:700;color:#c62828">🆘 '+esc(a.name||'کاربر')+' در خطر است</div>'
      +'شروع: '+new Date(a.started_at).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'})+' · آخرین به‌روزرسانی: '+ago(a.updated_at)
      +(d!=null?'<br>فاصله از شما: '+(d<1000?toFa(Math.round(d))+' متر':toFa((d/1000).toFixed(1))+' کیلومتر'):'')
-     +'<canvas data-id="'+a.id+'" width="360" height="220" style="width:100%;border-radius:10px;background:#e9efe7;margin:6px 0"></canvas>'
+     +'<canvas data-id="'+esc(a.id)+'" width="360" height="220" style="width:100%;border-radius:10px;background:#e9efe7;margin:6px 0"></canvas>'
      +'<div style="font-size:11.5px;color:var(--mu)">🔴 موقعیت فعلی · 🟢 شروع مسیر · 🔵 شما</div>'
-     +'<div style="display:flex;gap:8px;margin-top:6px">'+(a.lat!=null?'<a href="https://www.google.com/maps?q='+a.lat+','+a.lng+'" target="_blank" rel="noopener" style="flex:1;text-align:center;background:#c62828;color:#fff;border-radius:10px;padding:10px;text-decoration:none;font-weight:700">🗺️ باز کردن در نقشه</a>':'')
-     +'<button data-x="'+a.id+'" type="button" class="o">بستن</button></div></div>';
+     +'<div style="display:flex;gap:8px;margin-top:6px">'+(a.lat!=null?'<a href="https://www.google.com/maps?q='+(+a.lat)+','+(+a.lng)+'" target="_blank" rel="noopener" style="flex:1;text-align:center;background:#c62828;color:#fff;border-radius:10px;padding:10px;text-decoration:none;font-weight:700">🗺️ باز کردن در نقشه</a>':'')
+     +'<button data-x="'+esc(a.id)+'" type="button" class="o">بستن</button></div></div>';
   }).join('')+'</div>';
-  list.forEach(a=>{if(a.active===false)return;const cv=alOv.querySelector('canvas[data-id="'+a.id+'"]');if(cv)drawMap(cv,a)});
+  list.forEach(a=>{if(a.active===false)return;const cv=alOv.querySelector('canvas[data-id="'+CSS.escape(String(a.id))+'"]');if(cv)drawMap(cv,a)});
 }
 alOv.onclick=e=>{const b=e.target.closest('[data-x]');if(!b)return;dis.add(b.dataset.x);jset('sosDis',[...dis].slice(-50));poll()};
 async function poll(){
@@ -3811,7 +3849,7 @@ let mode='app';try{const m=localStorage.getItem('aiMode');if(MODES[m])mode=m}cat
 const HK=m=>m==='app'?'aiChat':'aiChat_'+m;
 const loadH=m=>{try{return JSON.parse(localStorage.getItem(HK(m))||'[]')}catch(e){return[]}};
 let hist=loadH(mode),busy=false;
-const save=()=>{try{localStorage.setItem(HK(mode),JSON.stringify(hist.slice(-24)))}catch(e){}};
+const save=()=>{try{localStorage.setItem(HK(mode),JSON.stringify(hist.slice(-24).map(m=>{if(!m.img)return m;const c=Object.assign({},m);delete c.img;return c})))}catch(e){}};
 
 const bar=document.createElement('div');bar.id='aiVoiceBar';bar.className='hid';
 bar.innerHTML='<em></em><span id="aiVoiceTxt"></span><i><b id="aiLevel"></b></i><button type="button" id="aiVoiceMute" aria-label="قطع میکروفن" title="قطع / وصل میکروفن"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg></button><button type="button" id="aiVoiceSkip" class="hid">✔ تمام</button><button type="button" id="aiVoiceEnd" aria-label="پایان"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="3"/></svg></button>';
@@ -3984,7 +4022,7 @@ async function send(text,o){
   if(o.mode&&o.mode!==mode)setMode(o.mode);
   hist.push({role:'user',content:text.slice(0,3000)});inp.value='';busy=true;render();
   try{
-    const chat={mode,voice:!!o.voice,messages:hist.filter(m=>!m.err).slice(-8).map(m=>({role:m.role,content:m.content.slice(0,2000)}))};
+    const chat={mode,voice:!!o.voice,messages:hist.filter(m=>!m.err).slice(-8).map(m=>({role:m.role,content:m.content.slice(0,2000)})).reduce((a,m)=>{const l=a[a.length-1];if(l&&l.role===m.role)l.content=(l.content+'\n'+m.content).slice(0,2000);else a.push(m);return a},[])};
     if(mode==='app'){
       const c=o.context||ctx();
       if(!c.knowledge&&window.searchBulletins){
@@ -4364,7 +4402,7 @@ async function makeDocx(text){
 }
 Q('#aiWord').onclick=async()=>{
   const t=lastAssistantText();if(!t)return;
-  const day=new Date().toISOString().slice(0,10);let blob=null,name='صورتجلسه-'+day+'.docx';
+  const day=isoLocal();let blob=null,name='صورتجلسه-'+day+'.docx';
   try{blob=await makeDocx(t)}catch(e){}
   if(!blob){
     const html='<html dir="rtl"><head><meta charset="utf-8"><style>body{font-family:"B Nazanin","Vazirmatn",Tahoma;font-size:14pt;line-height:1.9;padding:2cm}</style></head><body>'+t.split(/\n+/).map(l=>'<p>'+esc(l.trim())+'</p>').join('')+'</body></html>';
