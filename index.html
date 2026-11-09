@@ -4422,5 +4422,256 @@ renderModeBar();render();fit();grow();
   setInterval(chk,300000);
 })();
 </script>
+
+<script>
+// =========================================================
+// اصلاحیه نهایی (حل مشکل ستون‌های خالی و ادغام‌های جدول خلاصه)
+// =========================================================
+(function() {
+  const originalBuildInventorySheet = window.buildInventorySheet;
+
+  window.buildForestInventorySheet = function(title, allTrees) {
+    const list = (allTrees || invTrees()).slice();
+    // حل مشکل شماره ۳۸ (تبدیل اعداد فارسی قبل از مرتب‌سازی)
+    list.sort((a, b) => {
+      const noA = (a.ty === 'h' || a.no === '' || a.no == null) ? 999999 : (parseInt(toEn(a.no)) || 999999);
+      const noB = (b.ty === 'h' || b.no === '' || b.no == null) ? 999999 : (parseInt(toEn(b.no)) || 999999);
+      if (noA === noB) return a.id - b.id;
+      return noA - noB;
+    });
+
+    const industrial = list.filter(t => t.ty !== 'h');
+    const firewood  = list.filter(t => t.ty === 'h');
+    const C = 12;
+    const pad = (arr) => arr.concat(Array(Math.max(0, C - arr.length)).fill(''));
+
+    const rows = [];
+    
+    // --- بخش ۱: سیاهه ---
+    rows.push(pad([]));
+    rows.push(pad(['سیاهه درختان' + (title ? ' — ' + title : '')]));
+    rows.push(pad(['درختان صنعتی','','','','','','درختان هیزمی','','','','','']));
+    rows.push(pad(['شماره درخت','جنس','ابعاد','','حجم متر مکعب','توضیحات','جنس','ابعاد','','حجم یک اصله','تعداد','حجم']));
+    rows.push(pad(['','','قطرcm','طول m','','','','قطرcm','طول m','','','']));
+
+    const maxRows = Math.max(industrial.length, firewood.length);
+    for (let i = 0; i < maxRows; i++) {
+      const ind = industrial[i];
+      const fw  = firewood[i];
+      const row = [];
+      if (ind) {
+        row.push(ind.no || '', ind.sp || '', ind.d || '', ind.h || '', R3(tv(ind)), ind.ds || '');
+      } else {
+        row.push('','','','','','');
+      }
+      if (fw) {
+        const c  = fw.n || 1;
+        const v1 = fw.v || 0;
+        row.push(fw.sp || '', fw.d || '', fw.h || '', R3(v1), c, R3(v1 * c));
+      } else {
+        row.push('','','','','','');
+      }
+      rows.push(pad(row));
+    }
+
+    const indCount = industrial.reduce((a,t)=>a+(t.n||1),0);
+    const indVol   = industrial.reduce((a,t)=>a+(t.n||1)*(t.v||0),0);
+    const fwCount  = firewood.reduce((a,t)=>a+(t.n||1),0);
+    const fwVol    = firewood.reduce((a,t)=>a+(t.n||1)*(t.v||0),0);
+
+    rows.push(pad(['جمع','','','', indVol ? R3(indVol) : '', '', '', '', '', '', fwCount || '', fwVol ? R3(fwVol) : '']));
+    rows.push(pad([`مجموع درختان : ( صنعتی شماره دار ${toFa(indCount)} اصله به حجم ${R3(indVol)} متر مکعب و درختان هیزمی فاقد شماره ${toFa(fwCount)} اصله به حجم ${R3(fwVol)} متر مکعب)`]));
+
+    // --- بخش ۲: خلاصه وضعیت (گونه‌ها) ---
+    rows.push(pad([]));
+    rows.push(pad(['خلاصه وضعیت درختان مورد نشانه گذاری شده']));
+    rows.push(pad(['ردیف','دسته بندی درختان نشانه گذاری شده','','','','درختان صنعتی','','درختان هیزمی','','','','']));
+    rows.push(pad(['','','','','','تعداد','حجم','تعداد','حجم','','','']));
+
+    const spMap = new Map();
+    list.forEach(t => {
+      const sp = t.sp || 'نامشخص';
+      if (!spMap.has(sp)) spMap.set(sp, [0,0,0,0]);
+      const e = spMap.get(sp);
+      const c = t.n || 1;
+      const v = (t.v || 0) * c;
+      if (t.ty === 'h') { e[2] += c; e[3] += v; }
+      else              { e[0] += c; e[1] += v; }
+    });
+    const ordered = [...spMap.entries()].sort((a,b) => {
+      const ca = (SP[a[0]] || [0,3])[1], cb = (SP[b[0]] || [0,3])[1];
+      if (ca !== cb) return ca - cb;
+      return a[0].localeCompare(b[0], 'fa');
+    });
+
+    ordered.forEach(([sp, e], i) => {
+      rows.push(pad([
+        i + 1, sp, '', '', '',
+        e[0] || '', e[1] ? R3(e[1]) : '',
+        e[2] || '', e[3] ? R3(e[3]) : '',
+        '', '', ''
+      ]));
+    });
+
+    rows.push(pad(['مجموع','','','','', indCount || '', indVol ? R3(indVol) : '', fwCount || '', fwVol ? R3(fwVol) : '', '', '', '']));
+
+    // --- بخش ۳: خلاصه بر اساس دسته ---
+    rows.push(pad([]));
+    rows.push(pad(['خلاصه وضعیت درختان بر اساس دسته']));
+    rows.push(pad(['ردیف','دسته بندی درختان','','','','درختان صنعتی','','درختان هیزمی','','','','']));
+    rows.push(pad(['','','','','','تعداد','حجم','تعداد','حجم','','','']));
+
+    const catData = {
+      1: { ind: {n:0, v:0}, fw: {n:0, v:0} },
+      2: { ind: {n:0, v:0}, fw: {n:0, v:0} },
+      3: { ind: {n:0, v:0}, fw: {n:0, v:0} },
+      unk: { ind: {n:0, v:0}, fw: {n:0, v:0} }
+    };
+
+    list.forEach(t => {
+      const c = t.n || 1;
+      const v = (t.v || 0) * c;
+      const cat = catOf(t) || 'unk';
+      const target = catData[cat] || catData.unk;
+      if (t.ty === 'h') {
+        target.fw.n += c; target.fw.v += v;
+      } else {
+        target.ind.n += c; target.ind.v += v;
+      }
+    });
+
+    const catNames = { 1: 'دسته اول', 2: 'دسته دوم', 3: 'دسته سوم', unk: 'نامشخص' };
+    [1, 2, 3].forEach((cat, i) => {
+      const d = catData[cat];
+      rows.push(pad([
+        i + 1, catNames[cat], '', '', '',
+        d.ind.n || '', d.ind.v ? R3(d.ind.v) : '',
+        d.fw.n || '', d.fw.v ? R3(d.fw.v) : '',
+        '', '', ''
+      ]));
+    });
+
+    if (catData.unk.ind.n > 0 || catData.unk.fw.n > 0) {
+      const d = catData.unk;
+      rows.push(pad([
+        4, catNames.unk, '', '', '',
+        d.ind.n || '', d.ind.v ? R3(d.ind.v) : '',
+        d.fw.n || '', d.fw.v ? R3(d.fw.v) : '',
+        '', '', ''
+      ]));
+    }
+
+    let cIndN = 0, cIndV = 0, cFwN = 0, cFwV = 0;
+    Object.values(catData).forEach(d => {
+      cIndN += d.ind.n; cIndV += d.ind.v; cFwN += d.fw.n; cFwV += d.fw.v;
+    });
+    rows.push(pad(['مجموع','','','','', cIndN || '', cIndV ? R3(cIndV) : '', cFwN || '', cFwV ? R3(cFwV) : '', '', '', '']));
+
+    // ====== تنظیم ادغام‌ها (حل مشکل ستون‌های خالی C, D, E) ======
+    const mg = [
+      [1, 0, 1, 11],
+      [2, 0, 2, 5],
+      [2, 6, 2, 11],
+      [3, 2, 3, 3],
+      [3, 7, 3, 8],
+    ];
+
+    let inSummary = false;
+    for (let i = 0; i < rows.length; i++) {
+      const firstCol = String(rows[i][0]);
+      
+      if (firstCol.includes('خلاصه وضعیت')) {
+        inSummary = true;
+      }
+
+      if (inSummary) {
+        if (firstCol === 'ردیف') {
+          // سطر عنوان جدول خلاصه
+          mg.push([i, 1, i, 4]);
+          mg.push([i, 5, i, 6]);
+          mg.push([i, 7, i, 8]);
+        } else if (firstCol === 'مجموع' || firstCol === 'جمع' || (!isNaN(parseInt(firstCol)) && parseInt(firstCol) > 0)) {
+          // سطرهای داده در جدول خلاصه (ادغام ستون‌های B تا E تا خالی نباشند)
+          mg.push([i, 1, i, 4]);
+        }
+      }
+    }
+
+    return ['سیاهه', rows, mg, 5];
+  };
+
+  window.buildInventorySheet = function(title, allTrees, modeOverride) {
+    const _mode = modeOverride || (typeof getActiveSheet === 'function' ? getActiveSheet().mode : 'garden') || 'garden';
+    if (_mode === 'forest') return window.buildForestInventorySheet(title, allTrees);
+    return originalBuildInventorySheet.call(this, title, allTrees, modeOverride);
+  };
+
+  window.mkX = async function(sheets) {
+    const wb = new ExcelJS.Workbook();
+    const bd = { style: 'thin' };
+    const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE3EEDF' } };
+    
+    sheets.forEach(([n, rows, mg, hr = 1, tot]) => {
+      const ws = wb.addWorksheet(n, { views: [{ rightToLeft: true }] });
+      const W = rows[0].length;
+      rows.forEach(r => ws.addRow(r));
+      
+      const isForest = Array.isArray(rows[2]) && rows[2][0] === 'درختان صنعتی';
+      
+      if (isForest) {
+        const widths = [11, 12, 9, 9, 13, 28, 12, 9, 9, 13, 8, 12];
+        for (let i = 1; i <= Math.min(W, widths.length); i++) ws.getColumn(i).width = widths[i - 1];
+      } else {
+        for (let i = 1; i <= W; i++) ws.getColumn(i).width = n === 'سیاهه' ? 14 : 18;
+      }
+      
+      const boldRows = new Set(), headerRows = new Set();
+      if (isForest) {
+        headerRows.add(3); headerRows.add(4); headerRows.add(5);
+        for (let i = 0; i < rows.length; i++) {
+          if (rows[i][0] === 'ردیف') {
+            headerRows.add(i + 1);
+            headerRows.add(i + 2);
+          }
+          if (rows[i][0] === 'جمع' || rows[i][0] === 'مجموع') boldRows.add(i + 1);
+        }
+      }
+      
+      for (let r = 1; r <= rows.length; r++) {
+        for (let c = 1; c <= W; c++) {
+          const x = ws.getCell(r, c);
+          x.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+          x.border = { top: bd, left: bd, bottom: bd, right: bd };
+          
+          if (isForest) {
+            const isHdr = (r === 2 || headerRows.has(r));
+            const isBold = boldRows.has(r);
+            x.font = { name: 'Tahoma', size: 10, family: 2, charset: 178, bold: isHdr || isBold };
+            if (isHdr) x.fill = headerFill;
+          } else {
+            if (r <= hr) { x.font = { bold: true }; x.fill = headerFill; }
+            else if (tot && r === rows.length) x.font = { bold: true };
+          }
+        }
+      }
+      
+      if (isForest) {
+        try {
+          ws.getRow(2).height = 28;
+          ws.getRow(3).height = 20;
+          ws.getRow(4).height = 22;
+          ws.getRow(5).height = 22;
+        } catch(e) {}
+      }
+      
+      (mg || []).forEach(([a, b, c, d]) => {
+        try { ws.mergeCells(a + 1, b + 1, c + 1, d + 1); } catch(e) {}
+      });
+    });
+    
+    return await wb.xlsx.writeBuffer();
+  };
+})();
+</script>
 </body>
 </html>
