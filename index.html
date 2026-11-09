@@ -3230,6 +3230,224 @@ window.addEventListener('beforeunload',()=>{try{saveActive()}catch(e){}});
 <div id="sosCard" class="hid"></div>
 
 <script>
+(function(){
+const SB_URL='https://hgzdghjkwzufdhmjcfaz.supabase.co'.trim();
+const SB_KEY='sb_publishable_fyx5I2qUxDUXEW86i8KUsw_xBGRbye7'.trim();
+const A=document.getElementById('acct');
+if(!A)return;
+
+const LS=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);v===null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}};
+let S=null;try{S=JSON.parse(LS('sbs')||'null')}catch(e){}
+let busy=false,tm=null,msg='';
+const em=u=>u.trim().toLowerCase()+'@hirkani.app';
+const rid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36);
+const hs=s=>{let h=5381;for(let i=0;i<s.length;i++)h=(h*33^s.charCodeAt(i))>>>0;return h+':'+s.length};
+const shash=s=>hs(JSON.stringify([s.name,s.trees||[],s.map||null]));
+
+async function api(p,m,b,x){
+  const au=p.startsWith('/auth/')||!S?SB_KEY:S.access_token;
+  const r=await fetch(SB_URL+p,{method:m||'GET',headers:Object.assign({apikey:SB_KEY,'Content-Type':'application/json',Authorization:'Bearer '+au},x||{}),body:b?JSON.stringify(b):undefined});
+  const t=await r.text();let j=null;try{j=t?JSON.parse(t):null}catch(e){}
+  if(!r.ok)throw Object.assign(new Error((j&&(j.msg||j.error_description||j.message))||('HTTP '+r.status)),{st:r.status});
+  return j}
+
+function setS(j,name){
+  const oldUid=S&&S.uid;
+  S={ name, access_token:j.access_token, refresh_token:j.refresh_token, exp:Date.now()+(j.expires_in||3600)*1000-60000, uid:(j.user&&j.user.id)||oldUid||null };
+  LS('sbs',JSON.stringify(S));
+}
+
+async function fresh(){
+  if(S&&Date.now()>S.exp){
+    try{ const j=await api('/auth/v1/token?grant_type=refresh_token','POST',{refresh_token:S.refresh_token}); setS(j,S.name); }
+    catch(e){ if(e.st>=400&&e.st<500){S=null;LS('sbs',null);ui()} throw e; }
+  }
+}
+
+window.hkAiLoggedIn=()=>!!S;
+
+window.hkAiCall=async(body)=>{
+  if(!S)throw new Error('ابتدا وارد حساب کاربری شوید');
+  await fresh();
+  let r;
+  try{r=await fetch(SB_URL+'/functions/v1/read-table',{method:'POST',headers:{'Content-Type':'application/json',apikey:SB_KEY,Authorization:'Bearer '+S.access_token},body:JSON.stringify(body),signal:(AbortSignal.timeout?AbortSignal.timeout(body&&(body.tts||body.stt)?30000:(body&&body.chat?70000:110000)):undefined)})}
+  catch(e){throw new Error(e&&(e.name==='TimeoutError'||e.name==='AbortError')?(body&&body.image?'زمان خواندن تصویر تمام شد؛ عکس واضح‌تر یا کوچک‌تر را امتحان کنید':'پاسخ‌گویی سرور بیش از حد طول کشید؛ دوباره امتحان کنید'):'اتصال به سرور برقرار نشد')}
+  const j=await r.json().catch(()=>({}));
+  if(r.status===404)throw new Error('سرویس هوشمند هنوز روی سرور نصب نشده');
+  if(!r.ok)throw new Error((j.error||('خطای سرور '+r.status))+(j.hint?'\n'+j.hint:''));
+  return j;
+};
+
+const fe=e=>{
+  const m=e.message||'';
+  if(/Invalid login/i.test(m))return 'نام کاربری یا رمز عبور اشتباه است.';
+  if(/already/i.test(m))return 'این نام کاربری قبلاً ثبت شده.';
+  if(/Failed to fetch|NetworkError|Load failed/i.test(m))return 'اتصال به سرور برقرار نشد.';
+  if(/Confirm/i.test(m))return 'تایید ایمیل در Supabase خاموش نیست.';
+  return m;
+};
+
+window.SB={api:(p,m,b,x)=>fresh().then(()=>api(p,m,b,x)),fresh,user:()=>S,url:SB_URL,key:SB_KEY,token:()=>S&&S.access_token};
+
+async function sync(){
+  if(!S||busy||!navigator.onLine)return false;
+  if(!S.uid){msg='⚠️ شناسه کاربر نامعتبر است؛ دوباره وارد شوید.';ui();return false;}
+  busy=true;msg='در حال همگام‌سازی…';ui();
+  try{
+    await fresh();
+    if(!S||!S.uid)throw new Error('شناسه کاربر نامعتبر است');
+    const now=Date.now(),seen=new Set();
+    SHEETS.forEach(s=>{
+      if(!s.uid||seen.has(s.uid)) s.uid=rid();
+      seen.add(s.uid);
+      if(!s.ua) s.ua=now;
+      const h=shash(s);
+      if(h!==s.h){s.h=h;s.ua=now}
+    });
+    saveActive();
+    const rows=await api('/rest/v1/sheets?select=*');
+    const prevU=LS('sbu');
+    if(prevU&&prevU!==S.uid)SHEETS=[];
+    else if(!prevU&&rows.some(r=>!r.deleted)&&SHEETS.length===1&&!(SHEETS[0].trees||[]).length&&!SHEETS[0].map)SHEETS=[];
+    const del=(prevU===S.uid?JSON.parse(LS('sbk')||'[]'):[]).filter(u=>u && !SHEETS.some(s=>s.uid===u));
+    const out=new Map();let chg=false;
+    del.forEach(u=>{
+      if(!u) return;
+      out.set(u,{user_id:S.uid,uid:u,name:'',data:null,ua:now,deleted:true});
+    });
+    for(const r of rows){
+      if(!r||!r.uid) continue;
+      if(del.includes(r.uid))continue;
+      const l=SHEETS.find(s=>s.uid===r.uid);
+      if(r.deleted){if(l){SHEETS=SHEETS.filter(s=>s!==l);chg=true}continue}
+      const d=r.data||{},tr=d.trees||[];
+      if(!l){
+        let nm=r.name||'سربرگ';while(SHEETS.some(x=>x.name===nm))nm+=' (حساب)';
+        const o={id:SHEETS.reduce((a,x)=>Math.max(a,x.id),0)+1,uid:r.uid,name:nm,trees:tr,ua:r.ua||now};
+        if(d.map)o.map=d.map;if(d.mode)o.mode=d.mode;if(d.volClass)o.volClass=d.volClass;o.h=shash(o);SHEETS.push(o);chg=true;
+      }else if((r.ua||0)>(l.ua||0)){
+        l.name=r.name;l.trees=tr;if(d.map)l.map=d.map;else delete l.map;if(d.mode)l.mode=d.mode;if(d.volClass)l.volClass=d.volClass;l.ua=r.ua;l.h=shash(l);chg=true;
+      }else if((l.ua||0)>(r.ua||0)){
+        const rec=row(l); if(rec&&rec.uid) out.set(rec.uid,rec);
+      }
+    }
+    const known=new Set(rows.filter(r=>r&&r.uid).map(r=>r.uid));
+    SHEETS.forEach(s=>{
+      if(!s.uid) s.uid=rid();
+      if(!known.has(s.uid)){ const rec=row(s); if(rec&&rec.uid) out.set(rec.uid,rec); }
+    });
+    if(!SHEETS.length)SHEETS.push({id:1,name:'زمین ۱',trees:[],uid:rid(),ua:now});
+    if(out.size){
+      const payload=[...out.values()].filter(r=>r && r.uid && r.user_id);
+      if(payload.length){
+        await api('/rest/v1/sheets?on_conflict=user_id,uid','POST',payload,{Prefer:'resolution=merge-duplicates,return=minimal'});
+      }
+    }
+    if(!SHEETS.some(s=>s.id===activeId))activeId=SHEETS[0].id;
+    LS('sheets',JSON.stringify(SHEETS));LS('sbu',S.uid);LS('sbk',JSON.stringify(SHEETS.map(s=>s.uid).filter(Boolean)));
+    if(chg)switchSheet(activeId,true);
+    msg='همگام شد ✓ '+new Date().toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'});
+    return true;
+  }catch(e){msg='⚠️ '+fe(e);return false}
+  finally{busy=false;ui()}
+}
+
+function row(s){
+  if(!s) return null;
+  if(!s.uid) s.uid=rid();
+  if(!S||!S.uid) return null;
+  return {
+    user_id: S.uid,
+    uid: s.uid,
+    name: s.name||'',
+    data: {trees:s.trees||[], map:s.map||null, mode:s.mode||null, volClass:s.volClass||null},
+    ua: s.ua||Date.now(),
+    deleted: false
+  };
+}
+
+function ui(){
+  if(!S){
+    A.innerHTML='<button id="aIn" class="o">☁️ ورود / ثبت‌نام</button>';
+    A.querySelector('#aIn').onclick=login;return;
+  }
+  A.innerHTML='<span>☁️ '+esc(S.name)+' · '+esc(msg)+'</span><button id="aSy" class="o">همگام‌سازی</button><button id="aOut" class="o">خروج</button>';
+  A.querySelector('#aSy').onclick=sync;
+  A.querySelector('#aOut').onclick=logout;
+}
+
+function login(){
+  const o=document.createElement('div');o.id='aov';
+  o.innerHTML='<div class="bx"><b>حساب کاربری</b><input id="aU" placeholder="نام کاربری" autocomplete="username"><input id="aP" type="password" placeholder="رمز عبور"><div id="aer"></div><div class="r"><button id="aL">ورود</button><button id="aR" class="o">ثبت‌نام</button><button id="aC" class="o">انصراف</button></div></div>';
+  document.body.append(o);
+  const go=async su=>{
+    const u=o.querySelector('#aU').value.trim().toLowerCase();
+    const p=o.querySelector('#aP').value,er=o.querySelector('#aer');
+    if(!/^[a-z0-9._-]{3,30}$/.test(u)){er.textContent='نام کاربری انگلیسی ۳-۳۰ حرف';return}
+    if(p.length<6){er.textContent='رمز کوتاه است.';return}
+    er.textContent='…';
+    try{
+      const j=await api(su?'/auth/v1/signup':'/auth/v1/token?grant_type=password','POST',{email:em(u),password:p});
+      if(!j.access_token)throw new Error('تایید ایمیل خاموش نیست.');
+      setS(j,u);o.remove();msg='';ui();sync();
+    }catch(e){er.textContent=fe(e)}
+  };
+  o.querySelector('#aL').onclick=()=>go(false);
+  o.querySelector('#aR').onclick=()=>go(true);
+  o.querySelector('#aC').onclick=()=>o.remove();
+}
+
+async function logout(){
+  const ok=await sync();
+  if(!confirm(ok?'خروج؟':'تغییرات سینک نشده پاک می‌شوند! خروج؟'))return;
+  S=null;['sbs','sbu','sbk'].forEach(k=>LS(k,null));
+  SHEETS=[{id:1,name:'زمین ۱',trees:[]}];activeId=1;LS('sheets',JSON.stringify(SHEETS));
+  switchSheet(1,true);msg='';ui();
+}
+
+window.syncSoon=()=>{if(S){clearTimeout(tm);tm=setTimeout(sync,4000)}};
+addEventListener('online',sync);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
+setInterval(sync,90000);
+ui();
+
+window.splashGo = async (su) => {
+  const u = document.getElementById('splashUser').value.trim().toLowerCase();
+  const p = document.getElementById('splashPass').value;
+  const er = document.getElementById('splashErr');
+  if(!/^[a-z0-9._-]{3,30}$/.test(u)){er.textContent='نام کاربری انگلیسی ۳-۳۰ حرف';return}
+  if(p.length<6){er.textContent='رمز کوتاه است.';return}
+  er.textContent='…';
+  try{
+    const j=await api(su?'/auth/v1/signup':'/auth/v1/token?grant_type=password','POST',{email:em(u),password:p});
+    if(!j.access_token)throw new Error('تایید ایمیل خاموش نیست.');
+    setS(j,u);
+    document.getElementById('splash').style.display='none';
+    document.getElementById('app').style.display='block';
+    document.body.classList.add('home-mode');
+    ui(); sync();
+  }catch(e){er.textContent=fe(e)}
+};
+
+window.splashGuest = () => {
+  document.getElementById('splash').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.body.classList.add('home-mode');
+};
+
+if(S) {
+  document.getElementById('splash').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.body.classList.add('home-mode');
+  sync();
+}
+})();
+
+document.getElementById('splashLogin').onclick = () => window.splashGo(false);
+document.getElementById('splashSignup').onclick = () => window.splashGo(true);
+document.getElementById('splashGuest').onclick = () => window.splashGuest();
+</script>
+<script>
 /* ===== جستجو در بخشنامه‌ها (آفلاین) ===== */
 (function(){
 const normFa = s => String(s || '')
@@ -3242,17 +3460,15 @@ const normFa = s => String(s || '')
 let DOCS = null;
 function tryLoad() {
   try {
-    const c = localStorage.getItem('bulletinsCache_v3'); // نسخه جدید کش
+    const c = localStorage.getItem('bulletinsCache');
     if (c) { const j = JSON.parse(c); if (j && Array.isArray(j)) DOCS = j; }
   } catch(e) {}
-  
-  // دور زدن کش مرورگر و سرویس ورکر
-  fetch('bulletins.json?t=' + Date.now(), { cache: 'no-store' })
+  fetch('bulletins.json', { cache: 'force-cache' })
     .then(r => r.ok ? r.json() : null)
     .then(j => {
       if (j && Array.isArray(j.documents) && j.documents.length) {
         DOCS = j.documents;
-        try { localStorage.setItem('bulletinsCache_v3', JSON.stringify(DOCS)); } catch(e) {}
+        try { localStorage.setItem('bulletinsCache', JSON.stringify(DOCS)); } catch(e) {}
       }
     })
     .catch(()=>{});
@@ -3270,7 +3486,7 @@ function searchBulletins(query, maxChars) {
   const chunks = [];
   for (const doc of DOCS) {
     for (const page of (doc.pages || [])) {
-      const paras = String(page.text || '').split(/\n+/).map(p => p.trim()).filter(p => p.length > 15);
+      const paras = String(page.text || '').split(/\n+/).map(p => p.trim()).filter(p => p.length > 20);
       for (const para of paras) {
         const np = normFa(para);
         let score = 0, matched = 0;
@@ -3768,13 +3984,13 @@ async function send(text,o){
   try{
     const chat={mode,voice:!!o.voice,messages:hist.filter(m=>!m.err).slice(-8).map(m=>({role:m.role,content:m.content.slice(0,2000)}))};
     if(mode==='app'){
-      const c=o.context||ctx();
-      if(!c.knowledge&&window.searchBulletins){
-        const k=window.searchBulletins(text,3500);
-        if(k.length)c.knowledge=k;
-      }
-      chat.context=c;
-    }
+  const c=o.context||ctx();
+  if(!c.knowledge&&window.searchBulletins){
+    const k=window.searchBulletins(text,3500);
+    if(k.length)c.knowledge=k;
+  }
+  chat.context=c;
+}
     const j=await window.hkAiCall({chat});
     const reply=String(j.reply||'').trim()||'پاسخی دریافت نشد؛ دوباره امتحان کنید.';
     hist.push({role:'assistant',content:reply});busy=false;save();render();return reply;
