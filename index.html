@@ -3447,6 +3447,80 @@ document.getElementById('splashLogin').onclick = () => window.splashGo(false);
 document.getElementById('splashSignup').onclick = () => window.splashGo(true);
 document.getElementById('splashGuest').onclick = () => window.splashGuest();
 </script>
+<script>
+/* ===== جستجو در بخشنامه‌ها (آفلاین) ===== */
+(function(){
+const normFa = s => String(s || '')
+  .replace(/ي/g, 'ی').replace(/ك/g, 'ک')
+  .replace(/[آأإ]/g, 'ا')
+  .replace(/[\u200c\u200e\u200f\u064b-\u0652]/g, '')
+  .replace(/[^\w\u0600-\u06FF0-9\s]/g, ' ')
+  .replace(/\s+/g, ' ').toLowerCase().trim();
+
+let DOCS = null;
+function tryLoad() {
+  try {
+    const c = localStorage.getItem('bulletinsCache');
+    if (c) { const j = JSON.parse(c); if (j && Array.isArray(j)) DOCS = j; }
+  } catch(e) {}
+  fetch('bulletins.json', { cache: 'force-cache' })
+    .then(r => r.ok ? r.json() : null)
+    .then(j => {
+      if (j && Array.isArray(j.documents) && j.documents.length) {
+        DOCS = j.documents;
+        try { localStorage.setItem('bulletinsCache', JSON.stringify(DOCS)); } catch(e) {}
+      }
+    })
+    .catch(()=>{});
+}
+
+function searchBulletins(query, maxChars) {
+  maxChars = maxChars || 3500;
+  if (!DOCS || !DOCS.length) return [];
+  const q = normFa(query);
+  if (!q || q.length < 2) return [];
+  const terms = [...new Set(q.split(' ').filter(t => t.length >= 2))];
+  if (!terms.length) return [];
+  const nums = (q.match(/\d{3,}/g) || []);
+
+  const chunks = [];
+  for (const doc of DOCS) {
+    for (const page of (doc.pages || [])) {
+      const paras = String(page.text || '').split(/\n+/).map(p => p.trim()).filter(p => p.length > 20);
+      for (const para of paras) {
+        const np = normFa(para);
+        let score = 0, matched = 0;
+        for (const t of terms) {
+          const c = np.split(t).length - 1;
+          if (c > 0) { score += c * (t.length >= 4 ? 2 : 1); matched++; }
+        }
+        if (!matched) continue;
+        if (np.includes(q)) score += 10;
+        for (const n of nums) if (np.includes(n)) score += 6;
+        if (normFa(doc.name).includes(q)) score += 4;
+        score = score / Math.sqrt(para.length / 80);
+        chunks.push({ docName: doc.name, page: page.n, text: para, score });
+      }
+    }
+  }
+  chunks.sort((a, b) => b.score - a.score);
+  const top = []; let total = 0; const seen = new Set();
+  for (const c of chunks) {
+    const k = c.docName + ':' + c.page + ':' + c.text.slice(0, 40);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    if (total + c.text.length > maxChars) break;
+    top.push({ source: c.docName, page: c.page, text: c.text });
+    total += c.text.length;
+    if (top.length >= 5) break;
+  }
+  return top;
+}
+
+window.searchBulletins = searchBulletins;
+tryLoad();
+})();
+</script>
 
 <script>
 (function(){
@@ -3909,7 +3983,14 @@ async function send(text,o){
   hist.push({role:'user',content:text.slice(0,3000)});inp.value='';busy=true;render();
   try{
     const chat={mode,voice:!!o.voice,messages:hist.filter(m=>!m.err).slice(-8).map(m=>({role:m.role,content:m.content.slice(0,2000)}))};
-    if(mode==='app')chat.context=o.context||ctx();
+    if(mode==='app'){
+  const c=o.context||ctx();
+  if(!c.knowledge&&window.searchBulletins){
+    const k=window.searchBulletins(text,3500);
+    if(k.length)c.knowledge=k;
+  }
+  chat.context=c;
+}
     const j=await window.hkAiCall({chat});
     const reply=String(j.reply||'').trim()||'پاسخی دریافت نشد؛ دوباره امتحان کنید.';
     hist.push({role:'assistant',content:reply});busy=false;save();render();return reply;
