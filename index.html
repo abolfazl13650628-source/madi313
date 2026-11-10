@@ -377,6 +377,15 @@ body[data-tab="a"] #sec-a:not(.hid){
 #aiSend:disabled{opacity:.45}
 .aiIn.has #aiSend{display:flex}
 .aiIn.has #aiVoiceMode{display:none}
+#aiVoiceCfg{position:relative;width:40px;height:40px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--tx);border:1px solid var(--bd);font-size:17px}
+#aiVoicePop{position:fixed;left:12px;right:12px;bottom:84px;z-index:60;background:var(--sf);color:var(--tx);border:1px solid var(--bd);border-radius:18px;padding:12px 14px;box-shadow:0 6px 28px rgba(0,0,0,.22);font-size:13px;max-width:420px;margin:0 auto}
+#aiVoicePop.hid{display:none}
+#aiVoicePop b{display:block;margin:10px 0 6px;font-size:12px;color:var(--mu)}
+#aiVoicePop b:first-child{margin-top:0}
+#aiVoicePop .row{display:flex;flex-wrap:wrap;gap:6px}
+#aiVoicePop .vc{padding:7px 12px;border-radius:999px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font-size:13px}
+#aiVoicePop .vc.on{background:var(--ac);color:var(--ac2);border-color:var(--ac)}
+#aiVoicePop small{display:block;margin-top:8px;color:var(--mu);line-height:1.7;font-size:12px}
 @keyframes aiPulse{50%{opacity:.6}}
 
 /* حالت مکالمهٔ صوتی: نوار صوتی جای کادر پیام می‌نشیند */
@@ -4644,7 +4653,7 @@ function openChatList(){
 
 
 const bar=document.createElement('div');bar.id='aiVoiceBar';bar.className='hid';
-bar.innerHTML='<em></em><span id="aiVoiceTxt"></span><i><b id="aiLevel"></b></i><button type="button" id="aiVoiceMute" aria-label="قطع میکروفن" title="قطع / وصل میکروفن"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg></button><button type="button" id="aiVoiceSkip" class="hid">✔ تمام</button><button type="button" id="aiVoiceEnd" aria-label="پایان"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="3"/></svg></button>';
+bar.innerHTML='<em></em><span id="aiVoiceTxt"></span><i><b id="aiLevel"></b></i><button type="button" id="aiVoiceCfg" aria-label="تنظیم صدا" title="تنظیم صدا">⚙️</button><button type="button" id="aiVoiceMute" aria-label="قطع میکروفن" title="قطع / وصل میکروفن"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg></button><button type="button" id="aiVoiceSkip" class="hid">✔ تمام</button><button type="button" id="aiVoiceEnd" aria-label="پایان"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="3"/></svg></button>';
 Q('.aiIn').parentNode.insertBefore(bar,Q('.aiIn'));
 const vTxt=Q('#aiVoiceTxt'),vLvl=Q('#aiLevel'),vSkip=Q('#aiVoiceSkip'),vEnd=Q('#aiVoiceEnd'),vMute=Q('#aiVoiceMute');
 function setBar(s,txt){
@@ -4945,12 +4954,23 @@ function ttsChunks(t){
   const rest=s.join(' ').trim();if(rest)out.push(...splitSmart(rest,600));
   return out;
 }
-function unlockAudio(){try{if(!V.player)V.player=new Audio();V.player.src=SILENT;const p=V.player.play();if(p&&p.catch)p.catch(()=>{})}catch(e){}}
-async function ttsFetch(text){
+
+/*AUDIO-START*/
+/* پخش بدون فاصله با WebAudio: هر تکه درست در لحظهٔ پایان تکهٔ قبل زمان‌بندی می‌شود */
+function pctx(){
+  const AC=window.AudioContext||window.webkitAudioContext;
+  if(!V.pc||V.pc.state==='closed'){V.pc=new AC();V.pEnd=0;V.pSrc=new Set()}
+  return V.pc;
+}
+function unlockAudio(){
+  try{if(!V.player)V.player=new Audio();V.player.src=SILENT;const p=V.player.play();if(p&&p.catch)p.catch(()=>{})}catch(e){}
+  try{const c=pctx();if(c.state==='suspended')c.resume();const b=c.createBuffer(1,1,22050),x=c.createBufferSource();x.buffer=b;x.connect(c.destination);x.start(0)}catch(e){}
+}
+async function ttsBlob(text){
   const j=await window.hkAiCall({tts:{text}});
   if(!j||!j.audio)throw new Error('no-audio');
   const bin=atob(j.audio),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
-  return URL.createObjectURL(new Blob([u],{type:j.mime||'audio/wav'}));
+  return new Blob([u],{type:j.mime||'audio/wav'});
 }
 function playUrl(url){
   return new Promise(res=>{
@@ -4960,27 +4980,53 @@ function playUrl(url){
     const p=a.play();if(p&&p.catch)p.catch(()=>done(false));
   });
 }
-/* ── لایه ۱: سرویس سرور (با پیش‌دریافت تکه بعدی)؛ خروجی = تکه‌هایی که خوانده نشدند ── */
-async function speakServer(parts,sp){
-  const get=p=>ttsFetch(p).then(u=>({u}),e=>({e}));
-  let next=get(parts[0]);
-  for(let i=0;i<parts.length;i++){
-    const r=await next;next=null;
-    if(r.e){if(i===0)throw r.e;return{rest:parts.slice(i),err:r.e}}
-    if(sp!==V.sp){URL.revokeObjectURL(r.u);return{rest:[]}}
-    if(i+1<parts.length)next=get(parts[i+1]);
-    const ok=await playUrl(r.u);URL.revokeObjectURL(r.u);
-    if(sp!==V.sp){if(next)next.then(x=>x.u&&URL.revokeObjectURL(x.u));return{rest:[]}}
-    if(!ok){
-      if(next)next.then(x=>x.u&&URL.revokeObjectURL(x.u));
-      if(i===0)throw new Error('play-failed');
-      return{rest:parts.slice(i),err:new Error('play-failed')};
-    }
+/* زمان‌بندی تکه؛ بلافاصله برمی‌گردد و {ended} در پایان پخش حل می‌شود */
+async function playBlob(blob){
+  try{
+    const c=pctx();if(c.state==='suspended'){try{await c.resume()}catch(e){}}
+    const ab=await blob.arrayBuffer();
+    const buf=await new Promise((res,rej)=>{const p=c.decodeAudioData(ab,res,rej);if(p&&p.catch)p.catch(rej)});
+    const x=c.createBufferSource();x.buffer=buf;x.connect(c.destination);
+    const t=Math.max(c.currentTime+0.03,V.pEnd||0);x.start(t);V.pEnd=t+buf.duration;V.pSrc.add(x);
+    return{ended:new Promise(r=>{x.onended=()=>{V.pSrc.delete(x);r(true)}})};
+  }catch(e){
+    const u=URL.createObjectURL(blob),ok=await playUrl(u);URL.revokeObjectURL(u);   // راه‌حل جایگزین: المنت audio
+    if(!ok)throw new Error('play-failed');
+    return{ended:Promise.resolve(true)};
   }
+}
+/*AUDIO-END*/
+
+/* ── تنظیمات صدا (ذخیره در حافظهٔ دستگاه) ── */
+const OFF_VOICES={'fa_IR-amir-medium':'امیر','fa_IR-gyro-medium':'ژیرو'};   // فقط صداهایی که فایلشان را در گیت‌هاب گذاشته‌اید
+const VC=(()=>{let c={};try{c=JSON.parse(localStorage.getItem('hkVoiceCfg')||'{}')||{}}catch(e){}
+  if(!['auto','app','ai'].includes(c.mode))c.mode='auto';
+  if(!OFF_VOICES[c.voice])c.voice=Object.keys(OFF_VOICES)[0];
+  return c})();
+const saveVC=()=>{try{localStorage.setItem('hkVoiceCfg',JSON.stringify(VC))}catch(e){}};
+
+/* ── لایه سرور: با مهلت زمانی؛ اگر دیر رسید، فوراً صدای برنامه ── */
+async function speakServer(parts,sp,deadline){
+  const get=p=>ttsBlob(p).then(b=>({b}),e=>({e}));
+  let next=get(parts[0]);const ends=[];
+  for(let i=0;i<parts.length;i++){
+    let r;
+    if(i===0&&deadline){
+      r=await Promise.race([next,sleep(deadline).then(()=>null)]);
+      if(!r)return{rest:parts,err:new Error('slow')};
+    }else r=await next;
+    next=null;
+    if(r.e){if(i===0)throw r.e;await Promise.all(ends);return{rest:parts.slice(i),err:r.e}}
+    if(sp!==V.sp)return{rest:[]};
+    if(i+1<parts.length)next=get(parts[i+1]);
+    let h;try{h=await playBlob(r.b)}catch(e){if(i===0)throw e;await Promise.all(ends);return{rest:parts.slice(i),err:e}}
+    ends.push(h.ended);
+  }
+  await Promise.all(ends);
   return{rest:[]};
 }
 
-/* ── لایه ۲: صدای خود مرورگر/دستگاه (رایگان) ── */
+/* ── لایه مرورگر ── */
 async function persianVoice(){
   const sy=window.speechSynthesis;if(!sy)return null;
   let v=sy.getVoices();
@@ -5001,7 +5047,7 @@ async function speakBrowser(parts,sp){
       u.lang=voice.lang||'fa-IR';u.voice=voice;
       const done=v=>{if(fin)return;fin=true;clearTimeout(t);res(v)};
       const t=setTimeout(()=>done(false),Math.max(6000,x.length*250));
-      u.onend=()=>done(x.length<8||performance.now()-t0>200);   // پایان آنی بدون صدا = شکست
+      u.onend=()=>done(x.length<8||performance.now()-t0>200);
       u.onerror=()=>done(false);
       try{sy.speak(u)}catch(e){done(false)}
     });
@@ -5011,69 +5057,89 @@ async function speakBrowser(parts,sp){
   return[];
 }
 
-/* ── لایه ۳: صدای آفلاین Piper (فارسی، رایگان، بدون محدودیت) ──
-   فقط وقتی لازم شود و با اجازهٔ کاربر، یک‌بار حدود ۶۰ مگابایت دانلود و در مرورگر ذخیره می‌شود. */
-const OFF={tts:null,loading:null,ready:false,failed:false,errs:0,id:'fa_IR-amir-medium',alt:'fa_IR-gyro-medium'};
+/* ── لایه «صدای برنامه»: Piper آفلاین، مدل از گیت‌هاب خودتان ── */
+const OFF={tts:null,have:{},loading:{},failed:{},warm:{},errs:0};
 const OFF_LIB='https://cdn.jsdelivr.net/npm/@diffusionstudio/vits-web@1.0.3/+esm';
+/* آدرس GitHub Pages خودتان (بدون اسلش آخر)؛ فایل‌های fa_IR-*.onnx و fa_IR-*.onnx.json داخل آن */
+const OFF_BASE='https://YOUR-USERNAME.github.io/YOUR-REPO/voices';
+(function(){
+  if(window.__hkFetchPatched||/YOUR-USERNAME/.test(OFF_BASE))return;
+  window.__hkFetchPatched=true;
+  const of=window.fetch.bind(window);
+  window.fetch=function(u,o){
+    try{
+      const url=typeof u==='string'?u:(u&&u.url)||'';
+      const m=/huggingface\.co\/.*?(fa_IR-[\w-]+\.onnx(?:\.json)?)(?:\?.*)?$/.exec(url);
+      if(m)return of(OFF_BASE+'/'+m[1],o&&typeof u==='string'?o:undefined);
+    }catch(e){}
+    return of(u,o);
+  };
+})();
 function offNote(t){
   V.note=t;
   try{if(V.on&&bar.dataset.s==='listen')vTxt.textContent='🎙️ گوش می‌دهم'+(t?' · '+t:'')}catch(e){}
 }
-function offlineInit(){
-  if(OFF.ready)return Promise.resolve(true);
-  if(OFF.failed)return Promise.resolve(false);
-  if(OFF.loading)return OFF.loading;
-  OFF.loading=(async()=>{
+async function offLib(){
+  if(OFF.tts)return OFF.tts;
+  const m=await import(OFF_LIB);OFF.tts=(m.predict?m:m.default)||m;return OFF.tts;
+}
+function offlineInit(id){
+  id=id||VC.voice;
+  if(OFF.have[id])return Promise.resolve(true);
+  if(OFF.failed[id]&&Date.now()-OFF.failed[id]<60000)return Promise.resolve(false);
+  if(OFF.loading[id])return OFF.loading[id];
+  OFF.loading[id]=(async()=>{
     try{
-      const m=await import(OFF_LIB),tts=(m.predict?m:m.default)||m;
-      let stored=[];try{stored=(await tts.stored())||[]}catch(e){}
-      const have=stored.includes(OFF.id)||stored.includes(OFF.alt);
-      if(stored.includes(OFF.alt)&&!stored.includes(OFF.id))OFF.id=OFF.alt;
-      if(!have){
-        let a=null;try{a=localStorage.getItem('hkOffTts')}catch(e){}
-        if(a===null){
-          a=confirm('برای صدای رایگان و بدون محدودیت، یک بستهٔ صوتی حدود ۶۰ مگابایتی فقط یک‌بار دانلود می‌شود. ادامه می‌دهید؟')?'1':'0';
-          try{localStorage.setItem('hkOffTts',a)}catch(e){}
-        }
-        if(a!=='1'){OFF.failed=true;return false}
-        offNote('⬇️ دانلود صدای آفلاین…');
-        await tts.download(OFF.id,p=>{
-          if(p&&p.total)offNote('⬇️ دانلود صدای آفلاین '+Math.round(p.loaded*100/p.total).toLocaleString('fa-IR')+'٪');
+      const tts=await offLib();
+      let st=[];try{st=(await tts.stored())||[]}catch(e){}
+      if(!st.includes(id)){
+        offNote('⬇️ دانلود صدای برنامه…');
+        await tts.download(id,p=>{
+          if(p&&p.total)offNote('⬇️ دانلود صدای برنامه '+Math.round(p.loaded*100/p.total).toLocaleString('fa-IR')+'٪');
         });
       }
-      OFF.tts=tts;OFF.ready=true;offNote('');return true;
-    }catch(e){
-      OFF.failed=true;OFF.loading=null;offNote('');return false;
-    }
+      OFF.have[id]=true;offNote('');return true;
+    }catch(e){OFF.failed[id]=Date.now();offNote('');return false}
+    finally{delete OFF.loading[id]}
   })();
-  return OFF.loading;
+  return OFF.loading[id];
+}
+/* آماده‌سازی از قبل: دانلود + ساخت نشست مدل، تا اولین جواب بدون تأخیر خوانده شود */
+async function offlineWarm(){
+  const id=VC.voice;
+  if(OFF.warm[id])return;
+  if(await offlineInit(id)){OFF.warm[id]=1;try{await OFF.tts.predict({text:'سلام',voiceId:id})}catch(e){}}
 }
 async function speakOffline(parts,sp){
-  const p=offlineInit();
-  if(!OFF.ready)await Promise.race([p,sleep(1500)]);   // اگر دانلود لازم باشد، مکالمه منتظر نمی‌ماند
-  if(!OFF.ready)return parts;
-  const pieces=[];parts.forEach(q=>splitSmart(q,220).forEach(x=>pieces.push(x)));
-  const synth=x=>OFF.tts.predict({text:x,voiceId:OFF.id}).then(b=>({b}),e=>({e}));
-  let next=synth(pieces[0]);
+  const id=VC.voice,p=offlineInit(id);
+  if(!OFF.have[id])await Promise.race([p,sleep(1500)]);
+  if(!OFF.have[id])return parts;
+  const pieces=[];parts.forEach((q,qi)=>splitSmart(q,qi===0?70:200).forEach(x=>pieces.push(x)));  // تکهٔ اول کوتاه = شروع سریع‌تر
+  const synth=x=>OFF.tts.predict({text:x,voiceId:id}).then(b=>({b}),e=>({e}));
+  let next=synth(pieces[0]);const ends=[];
   for(let i=0;i<pieces.length;i++){
     const r=await next;next=null;
-    if(sp!==V.sp)return[];
-    if(r.e){if(++OFF.errs>=3)OFF.failed=true;return pieces.slice(i)}
+    if(sp!==V.sp){await Promise.all(ends);return[]}
+    if(r.e){if(++OFF.errs>=3)OFF.failed[id]=Date.now();await Promise.all(ends);return pieces.slice(i)}
     if(i+1<pieces.length)next=synth(pieces[i+1]);
-    const u=URL.createObjectURL(r.b),ok=await playUrl(u);URL.revokeObjectURL(u);
-    if(sp!==V.sp)return[];
-    if(!ok)return pieces.slice(i);
-    OFF.errs=0;
+    let h;try{h=await playBlob(r.b)}catch(e){await Promise.all(ends);return pieces.slice(i)}
+    ends.push(h.ended);OFF.errs=0;
   }
+  await Promise.all(ends);
   return[];
 }
 
-/* ── زنجیرهٔ کامل: سرور ← مرورگر ← آفلاین؛ هر لایه فقط باقی‌ماندهٔ متن را می‌خواند ── */
-async function speak(text,sp0){
+/* ── زنجیرهٔ کامل ──
+   خودکار: سرور (مهلت ۲٫۵ ثانیه) ← مرورگر ← برنامه
+   صدای برنامه: برنامه ← سرور ← مرورگر
+   صدای هوشمند: سرور ← مرورگر ← برنامه */
+async function speak(text,sp0,force){
   const sp=sp0||++V.sp,clean=speechClean(text);
   if(!clean)return true;
   V.speaking=true;
-  if(!(OFF.loading&&!OFF.ready&&!OFF.failed))V.note='';
+  if(!Object.keys(OFF.loading).length)V.note='';
+  const mode=force||VC.mode;
+  const order=mode==='app'?['off','srv','br']:['srv','br','off'];
   let parts=ttsChunks(clean),why='';
   const srvFail=e=>{
     V.ttsFail++;
@@ -5081,14 +5147,18 @@ async function speak(text,sp0){
     if(V.ttsFail>=2){V.ttsOff=true;V.ttsOffAt=Date.now()}
   };
   if(IO.speak){try{if(await IO.speak(clean,sp))parts=[]}catch(e){}}
-  if(parts.length&&sp===V.sp&&(!V.ttsOff||Date.now()-V.ttsOffAt>120000)){
+  for(const t of order){
+    if(!parts.length||sp!==V.sp)break;
     try{
-      const r=await speakServer(parts,sp);parts=r.rest;
-      if(r.err)srvFail(r.err);else{V.ttsFail=0;V.ttsOff=false}
-    }catch(e){srvFail(e)}
+      if(t==='srv'){
+        if(V.ttsOff&&Date.now()-V.ttsOffAt<=120000)continue;
+        const r=await speakServer(parts,sp,mode==='auto'&&OFF.have[VC.voice]?2500:0);
+        parts=r.rest;
+        if(r.err)srvFail(r.err);else{V.ttsFail=0;V.ttsOff=false}
+      }else if(t==='br')parts=await speakBrowser(parts,sp);
+      else parts=await speakOffline(parts,sp);
+    }catch(e){if(t==='srv')srvFail(e)}
   }
-  if(parts.length&&sp===V.sp){try{parts=await speakBrowser(parts,sp)}catch(e){}}
-  if(parts.length&&sp===V.sp){try{parts=await speakOffline(parts,sp)}catch(e){}}
   if(sp===V.sp)V.speaking=false;
   if(parts.length&&sp===V.sp){
     V.note='🔇 صدای پاسخ ممکن نشد'+(why?' ('+why+')':'');
@@ -5097,8 +5167,48 @@ async function speak(text,sp0){
   }
   return true;
 }
+
+/* ── پنل انتخاب صدا: دکمهٔ ⚙️ در نوار صوتی، یا نگه‌داشتن طولانی دکمهٔ گفتگوی صوتی ── */
+const vPop=document.createElement('div');vPop.id='aiVoicePop';vPop.className='hid';document.body.appendChild(vPop);
+function renderPop(){
+  const chip=(k,v,l)=>'<button type="button" class="vc'+(VC[k]===v?' on':'')+'" data-k="'+k+'" data-v="'+v+'">'+l+'</button>';
+  vPop.innerHTML='<b>منبع صدا</b><div class="row">'+chip('mode','auto','خودکار')+chip('mode','app','صدای برنامه')+chip('mode','ai','صدای هوشمند')+'</div>'
+   +'<b>گوینده (صدای برنامه)</b><div class="row">'+Object.keys(OFF_VOICES).map(id=>chip('voice',id,OFF_VOICES[id])).join('')+'</div>'
+   +(V.on?'':'<div class="row" style="margin-top:10px"><button type="button" class="vc" data-test="1">🔊 تست صدا</button></div>')
+   +'<small>خودکار: صدای هوشمند؛ اگر دیر رسید بلافاصله صدای برنامه.<br>صدای برنامه: همیشه روی خود دستگاه، بدون محدودیت و سریع.</small>';
+}
+function togglePop(show){
+  if(show===undefined)show=vPop.classList.contains('hid');
+  if(show)renderPop();
+  vPop.classList.toggle('hid',!show);
+}
+vPop.addEventListener('click',e=>{
+  const b=e.target.closest('.vc');if(!b)return;
+  if(b.dataset.test){
+    unlockAudio();stopSpeak();
+    const sp=++V.sp;speak('سلام، من دستیار شما هستم. صدای من این‌طوری است.',sp,VC.mode==='auto'?'app':VC.mode);return;
+  }
+  VC[b.dataset.k]=b.dataset.v;saveVC();renderPop();
+  if(VC.mode!=='ai')offlineWarm();
+});
+document.addEventListener('click',e=>{
+  if(vPop.classList.contains('hid'))return;
+  if(e.target.closest('#aiVoicePop')||e.target.closest('#aiVoiceCfg'))return;
+  vPop.classList.add('hid');
+},true);
+(function(){
+  const cfg=Q('#aiVoiceCfg');if(cfg)cfg.onclick=()=>togglePop();
+  const vm=Q('#aiVoiceMode');if(!vm)return;
+  let tm=null,lp=false;
+  const st=()=>{lp=false;tm=setTimeout(()=>{lp=true;togglePop(true)},550)},en=()=>{clearTimeout(tm)};
+  vm.addEventListener('touchstart',st,{passive:true});vm.addEventListener('touchend',en);vm.addEventListener('touchmove',en);vm.addEventListener('touchcancel',en);
+  vm.addEventListener('mousedown',st);vm.addEventListener('mouseup',en);vm.addEventListener('mouseleave',en);
+  vm.addEventListener('contextmenu',e=>e.preventDefault());
+  vm.addEventListener('click',e=>{if(lp){e.stopImmediatePropagation();e.preventDefault();lp=false}},true);
+})();
 function stopSpeak(){
   V.sp++;V.speaking=false;
+  try{V.pSrc&&V.pSrc.forEach(x=>{try{x.stop()}catch(e){}});V.pEnd=0}catch(e){}
   try{V.player&&V.player.pause()}catch(e){}
   if(V.playRes)V.playRes(false);
   try{window.speechSynthesis&&window.speechSynthesis.cancel()}catch(e){}
@@ -5186,7 +5296,7 @@ function startVoice(once){
   if(!loggedIn()){hist.push({role:'assistant',content:'برای استفاده از صدا ابتدا وارد حساب کاربری شوید.',err:true});render();return}
   if(sosBusy()){setBar('warn','در حالت اعلام خطر، گفتگوی صوتی غیرفعال است.');return}
   if(busy)return;
-  unlockAudio();
+  unlockAudio();try{if(VC.mode!=='ai')offlineWarm()}catch(e){}
   V.on=true;V.once=!!once;V.muted=false;V.tok++;V.noSpeech=0;V.errs=0;V.sttFail=0;V.ttsFail=0;V.ttsOff=false;V.note='';
   vMute.classList.remove('off');vMute.classList.toggle('hid',!!once);
   const canRec=!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&typeof MediaRecorder!=='undefined');
