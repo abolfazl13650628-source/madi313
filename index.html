@@ -661,11 +661,11 @@ window.needOcr=async()=>{if(typeof Tesseract==='undefined')await loadLib('https:
           <div class="ctl-t">🗺️ محدوده نقشه</div>
           <div class="ctlrow-4">
             <button id="mb" class="o">📂 بارگذاری</button>
-            <button id="btnManualCoord" class="o">✍️ دستی</button>
             <button id="mbAdd" class="o">➕ پلیگون</button>
+            <button id="btnManualCoord" class="o">✍️ دستی</button>
             <button id="mbDel" class="o" style="color:#b3261e;border-color:#b3261e">🗑 حذف</button>
           </div>
-          <div class="ctl-t" style="margin-top:12px;">🥾 مسیر پیمایش <span id="trkState"></span></div>
+          <div class="ctl-t" style="margin-top:12px;"><span id="trkState"></span></div>
           <div class="ctlrow-3">
             <button type="button" id="trkToggle" style="background:#2f6b3c;color:#fff;border:none">▶️ شروع مسیر</button>
             <button type="button" class="o" id="resetWalk">↺ ریست مسیر</button>
@@ -682,11 +682,10 @@ window.needOcr=async()=>{if(typeof Tesseract==='undefined')await loadLib('https:
         </div>
         <div class="m" id="mi" style="margin-top:6px">نقشه‌ای بارگذاری نشده است.</div><div class="m" style="margin-top:4px;font-size:10px">نکته: DXF باید مختصات واقعی UTM یا طول/عرض جغرافیایی داشته باشد.</div>
         <canvas id="mc2" width="640" height="400" class="hid"></canvas>
-        <div id="mapLegend" class="m hid" style="margin-top:4px;font-size:10px">● <span style="color:#1b7a34">صنعتی</span> ● <span style="color:#e08a00">هیزمی</span> ● <span style="color:#d33">خارج از محدوده</span> ● <span style="color:#2196f3">مسیر پیمایش</span></div>
+        <div id="mapLegend" class="m hid" style="margin-top:4px;font-size:10px">● <span style="color:#1b7a34">صنعتی</span> ● <span style="color:#e08a00">هیزمی</span> ● <span style="color:#d33">خارج از محدوده</span> ● <span style="color:#2196f3">مسیر</span></div>
         <div id="ms" class="gbox hid"><b id="mst"></b><div class="ac" id="msd"></div></div>
         <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="mal" checked style="width:auto"> هشدار صوتی هنگام خروج از محدوده</label>
       </div>
-      <div class="map-hint">برای مشاهده در Google Earth: فایل KMZ را در Google Earth → Projects → Import کنید.</div>
       <div class="gbox" id="walkBox">
         <div class="gx">
           <div><small>مسافت</small><b id="walkDistance">۰ متر</b></div>
@@ -2481,7 +2480,11 @@ try{if(localStorage.getItem('cmpOn')==='1'){$('#compassWrap').classList.remove('
 
 $('#openEarth').onclick=()=>runExport('kmz',false);
 $('#resetWalk').onclick=()=>{
-  if(TRACK.length>1&&!confirm('مسیر پیمایش‌شده هم پاک شود؟ ('+toFa(TRACK.length)+' نقطه)'))return;
+  const n=TRACK.length;
+  const msg = n>0
+    ? ('مسیر ثبت‌شده پاک شود؟ ('+toFa(n)+' نقطه'+(walkMeters>0?'، حدود '+toFa(Math.round(walkMeters))+' متر':'')+')')
+    : 'مسافت و مسیر ریست شود؟';
+  if(!confirm(msg)) return;
   walkMeters=0;lastWalkFix=cur?{lat:cur.lat,lng:cur.lng}:null;TRACK=[];updateWalkUI();saveActive();mapCheck();
 };
 updateWalkUI();
