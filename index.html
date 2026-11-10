@@ -4979,17 +4979,87 @@ async function speak(text,sp0){
   const sp=sp0||++V.sp,clean=speechClean(text);
   if(!clean)return true;
   V.speaking=true;V.note='';
-  let ok=false,why='';
-  if(IO.speak){try{ok=!!(await IO.speak(clean,sp))}catch(e){}}
-  if(!ok&&(!V.ttsOff||Date.now()-V.ttsOffAt>120000)){
-    try{await speakServer(clean,sp);ok=true;V.ttsFail=0;V.ttsOff=false}
-    catch(e){
-      V.ttsFail++;
-      why=((String(e&&e.message||'').match(/\(([^()]*\d{3}[^()]*)\)\s*$/)||[])[1])||'';
-      if(V.ttsFail>=2){V.ttsOff=true;V.ttsOffAt=Date.now()}
-    }
+  
+  // ─── بهینه‌سازی ۱: متن‌های کوتاه (زیر ۸۰ کاراکتر) مستقیم با صدای مرورگر ───
+  if(clean.length<80){
+    try{
+      const browserOk=await speakBrowser(clean,sp);
+      if(browserOk&&sp===V.sp){V.speaking=false;return true;}
+    }catch(e){/* اگر صدای فارسی مرورگر نبود، به مسیر عادی برو */}
   }
-  if(!ok&&sp===V.sp){try{ok=await speakBrowser(clean,sp)}catch(e){}}
+  
+  let ok=false,why='';
+  let state='idle'; // idle | browser | browser-done | server
+  let browserTimerId=null;
+  
+  // ─── لغو صدای مرورگر (اگر در حال پخش است) ───
+  const cancelBrowser=()=>{
+    if(browserTimerId!==null){clearTimeout(browserTimerId);browserTimerId=null;}
+    if(state==='browser'){
+      try{window.speechSynthesis?.cancel()}catch(e){}
+      state='idle';
+    }
+  };
+  
+  // ─── بهینه‌سازی ۲: تایمر ۱.۵ ثانیه‌ای ───
+  browserTimerId=setTimeout(async()=>{
+    if(state!=='idle'||V.sp!==sp)return;
+    state='browser';
+    try{
+      await speakBrowser(clean,sp);
+      if(state==='browser')state='browser-done';
+    }catch(e){
+      if(state==='browser')state='idle';
+    }
+  },1500);
+  
+  try{
+    // ─── مسیر ۱: IO.speak (اگر تعریف شده باشد) ───
+    if(IO.speak){try{ok=!!(await IO.speak(clean,sp))}catch(e){}}
+    
+    // ─── مسیر ۲: Gemini TTS (صدای باکیفیت) ───
+    if(!ok&&(!V.ttsOff||Date.now()-V.ttsOffAt>120000)){
+      cancelBrowser();
+      
+      if(state!=='browser-done'){
+        try{
+          await speakServer(clean,sp);
+          ok=true;
+          state='server';
+          V.ttsFail=0;
+          V.ttsOff=false;
+        }catch(e){
+          V.ttsFail++;
+          why=((String(e&&e.message||'').match(/\(([^()]*\d{3}[^()]*)\)\s*$/)||[])[1])||'';
+          if(V.ttsFail>=2){V.ttsOff=true;V.ttsOffAt=Date.now()}
+          
+          if(state==='idle'&&V.sp===sp){
+            state='browser';
+            try{ok=await speakBrowser(clean,sp)}catch(e2){ok=false}
+          }else{
+            ok=true;
+          }
+        }
+      }else{
+        ok=true; // مرورگر قبلاً پاسخ داده بود (تکرار نکن)
+      }
+    }
+    // ─── مسیر ۳: TTS off است (قبلاً خطا داده) ───
+    else if(!ok){
+      cancelBrowser();
+      if(state==='idle'&&V.sp===sp){
+        state='browser';
+        try{ok=await speakBrowser(clean,sp)}catch(e){ok=false}
+      }else if(state==='browser-done'){
+        ok=true;
+      }
+    }
+  }catch(e){
+    // خطای غیرمنتظره
+  }finally{
+    if(browserTimerId!==null){clearTimeout(browserTimerId);browserTimerId=null;}
+  }
+  
   if(sp===V.sp)V.speaking=false;
   if(!ok&&sp===V.sp){
     V.note='🔇 صدای پاسخ ممکن نشد'+(why?' ('+why+')':'');
