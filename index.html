@@ -4983,52 +4983,67 @@ async function speak(text, sp0) {
   V.speaking = true;
   V.note = '';
 
-  try {
-    // ۱. تلاش برای استفاده از سرویس باکیفیت مایکروسافت (Edge TTS)
-    // ما از CDN استفاده می‌کنیم تا نیازی به نصب پکیج نداشته باشیم
-    const { EdgeTTS } = await import('https://esm.sh/@edge-tts/universal@1.4.0/browser');
-    
-    // انتخاب صدای فارسی خانم دلارا
-    const voice = 'fa-IR-DilaraNeural'; 
-    const tts = new EdgeTTS(clean, voice);
-    
-    // دریافت فایل صوتی از مایکروسافت
-    const result = await tts.synthesize();
-    
-    if (V.player) V.player.pause(); // توقف هر صدای قبلی
-    
-    const audioUrl = URL.createObjectURL(result.audio);
-    V.player = new Audio(audioUrl);
+  // تابعی برای تکه‌تکه کردن متن طولانی (چون گوگل محدودیت کاراکتر دارد)
+  function splitText(t, maxLength = 150) {
+    const sentences = t.match(/[^.!?؟
+]+[.!?؟
+]*/g) || [t];
+    const chunks = [];
+    let currentChunk = '';
+    for (const sentence of sentences) {
+      if ((currentChunk + sentence).length > maxLength) {
+        if (currentChunk) chunks.push(currentChunk.trim());
+        currentChunk = sentence;
+      } else {
+        currentChunk += sentence;
+      }
+    }
+    if (currentChunk) chunks.push(currentChunk.trim());
+    return chunks;
+  }
 
-    return new Promise((resolve) => {
-      V.player.onended = () => {
-        URL.revokeObjectURL(audioUrl);
-        V.speaking = false;
-        resolve(true);
-      };
-      V.player.onerror = () => {
-        URL.revokeObjectURL(audioUrl);
-        V.speaking = false;
-        resolve(false);
-      };
-      V.player.play().catch(err => {
-        console.error("خطای پخش مایکروسافت:", err);
-        V.speaking = false;
-        resolve(false);
+  const chunks = splitText(clean);
+  
+  try {
+    // توقف هر صدایی که از قبل در حال پخش است
+    if (V.player) {
+      V.player.pause();
+    }
+
+    // پخش تکه‌ها به صورت پشت سر هم
+    for (let i = 0; i < chunks.length; i++) {
+      if (sp !== V.sp) return false; // اگر کاربر لغو کرد، متوقف شو
+
+      const chunk = chunks[i];
+      const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(chunk)}&tl=fa&client=tw-ob`;
+
+      await new Promise((resolve, reject) => {
+        V.player = new Audio(url);
+        V.player.crossOrigin = "anonymous";
+        
+        V.player.onended = resolve;
+        V.player.onerror = () => reject(new Error("Google TTS Failed"));
+        
+        V.player.play().catch(reject);
       });
-    });
+    }
+
+    if (sp === V.sp) V.speaking = false;
+    return true;
 
   } catch (error) {
-    // ۲. اگر مایکروسافت خطا داد (مثلاً تحریم بود یا اینترنت قطع شد)، برو سراغ صدای خود گوشی
-    console.warn("مایکروسافت در دسترس نیست، استفاده از صدای گوشی:", error);
+    console.error("خطا در پخش صدای گوگل:", error);
     
+    // اگر گوگل هم کار نکرد، به عنوان آخرین راه‌حل از صدای گوشی استفاده کن
     try {
       const fallbackOk = await speakBrowser(clean, sp);
       V.speaking = false;
       return fallbackOk;
     } catch (e) {
       V.speaking = false;
-      V.note = '🔇 پخش صدا ممکن نشد.';
+      V.note = '🔇 پخش صدا ممکن نشد. (اینترنت یا VPN را بررسی کنید)';
+      setBar('warn', V.note);
+      setTimeout(()=>{ if(!V.on) bar.classList.add('hid') }, 4000);
       return false;
     }
   }
