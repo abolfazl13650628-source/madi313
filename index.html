@@ -556,6 +556,25 @@ body.home-mode #ownerHome{display:block}
 .auth-box .pw-wrap{margin-bottom:10px}
 #aov .pw-wrap{margin:4px 0 10px}
 #aov .pw-wrap input{margin:0}
+
+#leafletWrap{position:relative;width:100%;margin-top:8px;border-radius:10px;overflow:hidden;border:1px solid var(--bd)}
+#leafletWrap.hid{display:none!important}
+#leafletMap{width:100%;height:340px;z-index:1;background:#1a2a1c;border:0;margin:0;border-radius:0}
+#btnSatLocateFab{position:absolute;right:10px;bottom:10px;z-index:500;width:42px;height:42px;border-radius:50%;border:0;background:#fff;color:#1a1a1a;font-size:18px;box-shadow:0 2px 10px rgba(0,0,0,.28);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+#btnSatLocateFab:active{transform:scale(.96)}
+.sat-drawer{margin-top:6px;padding:8px 10px;background:var(--sf);border:1px solid var(--bd);border-radius:12px;display:flex;flex-direction:column;gap:4px}
+.sat-drawer.hid{display:none!important}
+.sat-opt{display:flex;align-items:center;gap:8px;padding:8px 6px;border-radius:8px;font-size:13px;cursor:pointer}
+.sat-opt:active{background:rgba(47,107,60,.08)}
+.sat-opt input{width:18px;height:18px;accent-color:var(--ac)}
+#mc2{display:none!important}
+.leaflet-container{font:inherit;background:#1a2a1c}
+.sat-ctl{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.sat-ctl button{flex:1;min-width:120px;padding:8px 10px;font-size:12.5px}
+#satCacheStatus{font-size:11px;color:var(--mu);margin-top:4px;min-height:16px}
+.sat-layer.on{background:var(--ac)!important;color:var(--ac2)!important;border-color:var(--ac)!important}
+.sat-ctl .sat-layer{font-size:11.5px;padding:7px 8px}
+
 </style>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
@@ -680,7 +699,27 @@ window.needOcr=async()=>{if(typeof Tesseract==='undefined')await loadLib('https:
             <button id="applyManualCoord" style="flex:1">رسم روی نقشه</button>
           </div>
         </div>
-        <div class="m" id="mi" style="margin-top:6px">نقشه‌ای بارگذاری نشده است.</div><div class="m" style="margin-top:4px;font-size:10px">نکته: DXF باید مختصات واقعی UTM یا طول/عرض جغرافیایی داشته باشد.</div>
+        <div class="m" id="mi" style="margin-top:6px">نقشه‌ای بارگذاری نشده است.</div>
+        <div class="m" style="margin-top:4px;font-size:10px">نکته: DXF باید مختصات واقعی UTM یا طول/عرض جغرافیایی داشته باشد.</div>
+        <div class="sat-ctl">
+          <button type="button" id="btnSatLayers" class="o">🛰️ نقشه ماهواره‌ای ▾</button>
+          <button type="button" id="btnSatRoute" class="o">🧭 مسیریابی تا محدوده</button>
+        </div>
+        <div id="satLayerDrawer" class="sat-drawer hid">
+          <label class="sat-opt"><input type="radio" name="satLayerPick" value="google" checked> ماهواره HD</label>
+          <label class="sat-opt"><input type="radio" name="satLayerPick" value="hybrid"> ماهواره + برچسب</label>
+          <label class="sat-opt"><input type="radio" name="satLayerPick" value="esri"> Esri</label>
+          <label class="sat-opt"><input type="radio" name="satLayerPick" value="osm"> نقشه راه‌ها (OSM)</label>
+          <label class="sat-opt"><input type="radio" name="satLayerPick" value="mapir_sat"> مپ ماهواره</label>
+          <label class="sat-opt"><input type="radio" name="satLayerPick" value="mapir_hyb"> مپ برچسب</label>
+          <label class="sat-opt"><input type="radio" name="satLayerPick" value="mapir_str"> مپ راه‌ها</label>
+          <button type="button" class="o" id="btnMapirKey" style="margin-top:6px;width:100%">🔑 کلید مپ</button>
+        </div>
+        <div id="satCacheStatus"></div>
+        <div id="leafletWrap" class="hid">
+          <div id="leafletMap"></div>
+          <button type="button" id="btnSatLocateFab" title="موقعیت من">📍</button>
+        </div>
         <canvas id="mc2" width="640" height="400" class="hid"></canvas>
         <div id="mapLegend" class="m hid" style="margin-top:4px;font-size:10px">● <span style="color:#1b7a34">صنعتی</span> ● <span style="color:#e08a00">هیزمی</span> ● <span style="color:#d33">خارج از محدوده</span> ● <span style="color:#2196f3">مسیر</span></div>
         <div id="ms" class="gbox hid"><b id="mst"></b><div class="ac" id="msd"></div></div>
@@ -1623,8 +1662,19 @@ function mdraw(sel,u,pts){
 
 function mapCheck(quiet){
   const box=$('#ms'),cv=$('#mc2'),leg=$('#mapLegend'),pts=treePts();
-  if(!MAPP.length&&!pts.length&&!TRACK.length){if(box)box.classList.add('hid');if(cv)cv.classList.add('hid');if(leg)leg.classList.add('hid');return}
-  cv.classList.remove('hid');box.classList.remove('hid');if(leg)leg.classList.toggle('hid',!pts.length&&!TRACK.length);
+  // فقط نقشه ماهواره‌ای — بوم قدیمی نمایش داده نمی‌شود
+  if(cv){ cv.classList.add('hid'); cv.style.display='none'; }
+  try{
+    if(typeof satOn!=='undefined' && satOn){
+      refreshSatOverlays();
+      const wrap=document.getElementById('leafletWrap');
+      if(wrap) wrap.classList.remove('hid');
+      if(leg) leg.classList.toggle('hid', !pts.length && !(TRACK&&TRACK.length));
+    }
+  }catch(e){}
+
+  if(!MAPP.length&&!pts.length&&!TRACK.length){if(box)box.classList.add('hid');if(leg)leg.classList.add('hid');return}
+  if(box) box.classList.remove('hid'); if(leg)leg.classList.toggle('hid',!pts.length&&!TRACK.length);
   if(!MAPP.length){
     const u=cur?utm(cur.lat,cur.lng,treeZone()):null;if(u)u.in=true;
     mdraw([],u,pts);box.className='gbox';
@@ -1772,7 +1822,460 @@ function ll(E,N,z){const a=6378137,f=1/298.257223563,k=.9996,e2=f*(2-f),ep=e2/(1
 const esc=x=>String(x==null?'':x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function insideLL(lat,lng){const u=utm(lat,lng,MAPZ);return mtest(MAPP,u.E,u.N).in}
 
-function setMap(p,z,nm,save){MAPP=p;MAPZ=z;MAPNM=nm;updateMapInfo();if(save)store();mapCheck()}
+
+
+/* ===== نقشه ماهواره‌ای Leaflet + کش آفلاین ===== */
+let satMap=null, satLayer=null, satOverlays=null, satOn=false, satLayerKey='google';
+const SAT_LAYERS={
+  mapir_sat:{
+    url:'https://map.ir/raster/xyz/1.0.0/google:s@EPSG:900913@png/{z}/{x}/{y}.png',
+    attr:'© Map.ir',
+    maxZ:20,
+    mapir:true
+  },
+  mapir_hyb:{
+    url:'https://map.ir/raster/xyz/1.0.0/google:y@EPSG:900913@png/{z}/{x}/{y}.png',
+    attr:'© Map.ir',
+    maxZ:20,
+    mapir:true
+  },
+  mapir_str:{
+    url:'https://map.ir/raster/xyz/1.0.0/google:p@EPSG:900913@png/{z}/{x}/{y}.png',
+    attr:'© Map.ir',
+    maxZ:20,
+    mapir:true
+  },
+  google:{
+    url:'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+    attr:'© Google',
+    maxZ:20
+  },
+  esri:{
+    url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attr:'Tiles © Esri',
+    maxZ:19
+  },
+  hybrid:{
+    url:'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+    attr:'© Google',
+    maxZ:20
+  },
+  osm:{
+    url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attr:'© OpenStreetMap',
+    maxZ:19
+  }
+};
+function getMapirKey(){ try{return localStorage.getItem('mapirKey')||''}catch(e){return''} }
+function setMapirKey(k){ try{localStorage.setItem('mapirKey',(k||'').trim())}catch(e){} }
+function satUrlTemplate(){
+  return (SAT_LAYERS[satLayerKey]||SAT_LAYERS.google).url;
+}
+
+function loadLeaflet(){
+  return new Promise((resolve,reject)=>{
+    if(window.L){resolve(window.L);return}
+    if(!document.getElementById('leafletCss')){
+      const l=document.createElement('link');l.id='leafletCss';l.rel='stylesheet';
+      l.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';document.head.appendChild(l);
+    }
+    const s=document.createElement('script');
+    s.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    s.onload=()=>resolve(window.L);
+    s.onerror=()=>reject(new Error('بارگذاری Leaflet ناموفق بود (اینترنت لازم است)'));
+    document.head.appendChild(s);
+  });
+}
+
+const SAT_DB='hyrcan_sat_tiles', SAT_STORE='tiles';
+function satOpenDb(){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open(SAT_DB,1);
+    r.onupgradeneeded=()=>{const db=r.result; if(!db.objectStoreNames.contains(SAT_STORE)) db.createObjectStore(SAT_STORE)};
+    r.onsuccess=()=>res(r.result);
+    r.onerror=()=>rej(r.error);
+  });
+}
+async function satGetTile(key){
+  try{
+    const db=await satOpenDb();
+    return await new Promise((res,rej)=>{
+      const q=db.transaction(SAT_STORE,'readonly').objectStore(SAT_STORE).get(key);
+      q.onsuccess=()=>res(q.result||null);
+      q.onerror=()=>rej(q.error);
+    });
+  }catch(e){return null}
+}
+async function satPutTile(key, blob){
+  try{
+    const db=await satOpenDb();
+    await new Promise((res,rej)=>{
+      const q=db.transaction(SAT_STORE,'readwrite').objectStore(SAT_STORE).put(blob,key);
+      q.onsuccess=()=>res();
+      q.onerror=()=>rej(q.error);
+    });
+  }catch(e){}
+}
+
+function satMakeTileLayer(L){
+  const conf=SAT_LAYERS[satLayerKey]||SAT_LAYERS.google;
+  let url=conf.url;
+  if(conf.mapir){
+    const key=getMapirKey();
+    if(!key){
+      alert('برای لایهٔ Map.ir ابتدا «🔑 کلید مپ» را بزن و API Key را وارد کن.');
+      satLayerKey='google';
+      return satMakeTileLayer(L);
+    }
+    url = url + (url.indexOf('?')>=0?'&':'?') + 'x-api-key=' + encodeURIComponent(key);
+  }
+  return L.tileLayer(url,{
+    maxZoom: conf.maxZ||19,
+    attribution: conf.attr||'',
+    crossOrigin: true
+  });
+}
+
+function utmToLatLng(E,N,z){
+  try{ if(typeof ll==='function'){ const p=ll(E,N,z); return [p[0],p[1]]; } }catch(e){}
+  return null;
+}
+function collectMapBoundsLatLng(){
+  const pts=[];
+  const z=MAPZ||39;
+  (MAPP||[]).forEach(p=>{(p.o||[]).forEach(q=>{const llpt=utmToLatLng(q[0],q[1],z); if(llpt) pts.push(llpt);});});
+  (T||[]).forEach(t=>{ if(t.lat&&t.lng) pts.push([t.lat,t.lng]); });
+  (TRACK||[]).forEach(t=>{ if(t.lat&&t.lng) pts.push([t.lat,t.lng]); });
+  if(typeof cur!=='undefined' && cur && cur.lat) pts.push([cur.lat,cur.lng]);
+  return pts;
+}
+
+function refreshSatOverlays(){
+  if(!satMap||!window.L) return;
+  if(satOverlays){ try{satMap.removeLayer(satOverlays)}catch(e){} }
+  satOverlays=L.layerGroup();
+  const z=MAPZ||39;
+  (MAPP||[]).forEach(p=>{
+    const latlngs=[];
+    (p.o||[]).forEach(q=>{ const llpt=utmToLatLng(q[0],q[1],z); if(llpt) latlngs.push(llpt); });
+    if(latlngs.length>=3) L.polygon(latlngs,{color:'#2e9d4f',weight:2,fillColor:'#2e9d4f',fillOpacity:0.15}).addTo(satOverlays);
+  });
+  const track=[];
+  (TRACK||[]).forEach(t=>{ if(t.lat&&t.lng) track.push([t.lat,t.lng]); });
+  if(track.length>=2) L.polyline(track,{color:'#2196f3',weight:3,opacity:0.9}).addTo(satOverlays);
+  (T||[]).forEach(t=>{
+    if(!t.lat||!t.lng) return;
+    const col=t.ty==='h'?'#e08a00':'#1b7a34';
+    L.circleMarker([t.lat,t.lng],{radius:5,color:'#fff',weight:1,fillColor:col,fillOpacity:0.95})
+      .bindPopup((t.no?('ش '+t.no+' — '):'')+(t.sp||'')+(t.d?(' Ø'+t.d):''))
+      .addTo(satOverlays);
+  });
+  if(typeof cur!=='undefined' && cur && cur.lat){
+    L.circleMarker([cur.lat,cur.lng],{radius:8,color:'#fff',weight:2,fillColor:'#1976d2',fillOpacity:1})
+      .bindPopup('موقعیت فعلی شما').addTo(satOverlays);
+  }
+  satOverlays.addTo(satMap);
+}
+
+function fitSatView(preferUser){
+  if(!satMap) return;
+  const polyPts=[];
+  const z=MAPZ||39;
+  (MAPP||[]).forEach(p=>{(p.o||[]).forEach(q=>{const llpt=utmToLatLng(q[0],q[1],z); if(llpt) polyPts.push(llpt);});});
+  if(polyPts.length>=2){
+    try{ satMap.fitBounds(polyPts,{padding:[30,30],maxZoom:17}); return; }catch(e){}
+  }
+  if(preferUser!==false && typeof cur!=='undefined' && cur && cur.lat){
+    satMap.setView([cur.lat,cur.lng], 16);
+    return;
+  }
+  const pts=collectMapBoundsLatLng();
+  if(pts.length){
+    try{ satMap.fitBounds(pts,{padding:[28,28],maxZoom:17}); return; }catch(e){ satMap.setView(pts[0], 15); return; }
+  }
+  satMap.setView([36.25, 53.05], 9);
+}
+
+function applySatLayer(){
+  if(!satMap||!window.L) return;
+  if(satLayer){ try{satMap.removeLayer(satLayer)}catch(e){} }
+  satLayer=satMakeTileLayer(L);
+  satLayer.addTo(satMap);
+  document.querySelectorAll('.sat-layer').forEach(b=>{
+    b.classList.toggle('on', b.dataset.layer===satLayerKey);
+  });
+}
+
+async function ensureSatMap(){
+  try{ if(getMapirKey() && (!satLayerKey || satLayerKey==='google')) satLayerKey='mapir_sat'; }catch(e){}
+  const Llib=await loadLeaflet();
+  const el=document.getElementById('leafletMap');
+  if(!el) return;
+  const wrap=document.getElementById('leafletWrap');
+  if(wrap) wrap.classList.remove('hid');
+  if(!satMap){
+    satMap=Llib.map(el,{zoomControl:true,attributionControl:true,maxZoom:20});
+    applySatLayer();
+  } else {
+    applySatLayer();
+  }
+  refreshSatOverlays();
+  fitSatView(true);
+  setTimeout(()=>{ try{ satMap.invalidateSize(); fitSatView(true); }catch(e){} }, 250);
+}
+
+async function toggleSatMap(forceOn){
+  if(forceOn===true) satOn=true;
+  else if(forceOn===false) satOn=false;
+  else satOn=!satOn;
+  const wrap=document.getElementById('leafletWrap');
+  const cv=$('#mc2');
+  if(satOn){
+    try{
+      try{ if(typeof gpsOn!=='undefined' && !gpsOn && typeof startGPS==='function') startGPS(); }catch(e){}
+      await ensureSatMap();
+      if(wrap) wrap.classList.remove('hid');
+      if(cv){ cv.classList.add('hid'); cv.style.display='none'; }
+    }catch(e){
+      satOn=false;
+      if(wrap) wrap.classList.add('hid');
+      console.warn(e);
+      const st=$('#satCacheStatus'); if(st) st.textContent=e.message||'خطا در نقشه';
+    }
+  } else {
+    if(wrap) wrap.classList.add('hid');
+  }
+}
+
+async function goToMyLocation(){
+  try{
+    if(typeof gpsOn!=='undefined' && !gpsOn && typeof startGPS==='function') startGPS();
+  }catch(e){}
+  const tryFocus=()=>{
+    if(typeof cur!=='undefined' && cur && cur.lat){
+      if(!satOn){
+        satOn=true;
+        ensureSatMap().then(()=>{
+          if(satMap) satMap.setView([cur.lat,cur.lng], 17);
+          refreshSatOverlays();
+        });
+        return true;
+      }
+      if(satMap){ satMap.setView([cur.lat,cur.lng], 17); refreshSatOverlays(); }
+      return true;
+    }
+    return false;
+  };
+  if(tryFocus()) return;
+  // wait briefly for GPS fix
+  const st=$('#satCacheStatus');
+  if(st) st.textContent='در حال دریافت موقعیت…';
+  let n=0;
+  const t=setInterval(()=>{
+    n++;
+    if(tryFocus() || n>20){
+      clearInterval(t);
+      if(n>20 && st) st.textContent='موقعیت دریافت نشد. مختصات را روشن کنید.';
+      else if(st) st.textContent='';
+    }
+  }, 400);
+}
+
+function tileRange(z, lat, lng){
+  const n=Math.pow(2,z);
+  const x=Math.floor((lng+180)/360*n);
+  const latRad=lat*Math.PI/180;
+  const y=Math.floor((1-Math.log(Math.tan(latRad)+1/Math.cos(latRad))/Math.PI)/2*n);
+  return {x,y};
+}
+
+async function cacheSatArea(silent){
+  const st=$('#satCacheStatus');
+  const set=m=>{ if(st) st.textContent=m; };
+  const pts=collectMapBoundsLatLng();
+  if(pts.length<1){ if(!silent) alert('ابتدا محدوده، درخت یا مختصات داشته باشید.'); return; }
+  let minLat=90,maxLat=-90,minLng=180,maxLng=-180;
+  pts.forEach(([la,ln])=>{ minLat=Math.min(minLat,la); maxLat=Math.max(maxLat,la); minLng=Math.min(minLng,ln); maxLng=Math.max(maxLng,ln); });
+  const pad=0.008; minLat-=pad; maxLat+=pad; minLng-=pad; maxLng+=pad;
+  if(!silent && !confirm('تایل‌های لایهٔ فعلی برای آفلاین ذخیره شوند؟')) return;
+  const conf=SAT_LAYERS[satLayerKey]||SAT_LAYERS.google;
+  const zooms=[13,14,15,16];
+  let jobs=[];
+  zooms.forEach(z=>{
+    const a=tileRange(z,maxLat,minLng), b=tileRange(z,minLat,maxLng);
+    const x0=Math.min(a.x,b.x), x1=Math.max(a.x,b.x), y0=Math.min(a.y,b.y), y1=Math.max(a.y,b.y);
+    for(let x=x0;x<=x1;x++) for(let y=y0;y<=y1;y++) jobs.push({z,x,y});
+  });
+  if(jobs.length>900 && !confirm(toFa(jobs.length)+' تایل — ادامه؟')) return;
+  set('ذخیره: ۰ / '+toFa(jobs.length));
+  let ok=0, fail=0;
+  for(let i=0;i<jobs.length;i++){
+    const {z,x,y}=jobs[i];
+    const key=satLayerKey+':'+z+'/'+y+'/'+x;
+    const url=conf.url.replace('{z}',z).replace('{y}',y).replace('{x}',x);
+    try{
+      if(await satGetTile(key)){ ok++; }
+      else{
+        const r=await fetch(url,{mode:'cors'});
+        if(!r.ok) throw 0;
+        await satPutTile(key, await r.blob());
+        ok++;
+      }
+    }catch(e){ fail++; }
+    if(i%8===0||i===jobs.length-1) set('ذخیره: '+toFa(ok+fail)+' / '+toFa(jobs.length)+(fail?(' | ناموفق '+toFa(fail)):''));
+    if(i%20===0) await new Promise(r=>setTimeout(r,25));
+  }
+  set('تمام: '+toFa(ok)+' تایل'+(fail?('، ناموفق '+toFa(fail)):''));
+  try{ if(!satOn) await toggleSatMap(); else { await ensureSatMap(); refreshSatOverlays(); } }catch(e){}
+}
+
+function bindSatUi(){
+  const bLayers=document.getElementById('btnSatLayers');
+  const bRoute=document.getElementById('btnSatRoute');
+  const bKey=document.getElementById('btnMapirKey');
+  const bFab=document.getElementById('btnSatLocateFab');
+  const drawer=document.getElementById('satLayerDrawer');
+
+  if(bLayers && !bLayers.dataset.sat){
+    bLayers.dataset.sat='1';
+    bLayers.onclick=()=>{
+      if(!drawer) return;
+      drawer.classList.toggle('hid');
+      bLayers.textContent = drawer.classList.contains('hid') ? '🛰️ نقشه ماهواره‌ای ▾' : '🛰️ نقشه ماهواره‌ای ▴';
+    };
+  }
+  document.querySelectorAll('input[name="satLayerPick"]').forEach(inp=>{
+    if(inp.dataset.bound) return;
+    inp.dataset.bound='1';
+    inp.onchange=()=>{
+      const layer=inp.value;
+      if((SAT_LAYERS[layer]||{}).mapir && !getMapirKey()){
+        alert('ابتدا «🔑 کلید مپ» را از انتهای همین فهرست وارد کن.');
+        inp.checked=false;
+        const g=document.querySelector('input[name="satLayerPick"][value="google"]');
+        if(g){ g.checked=true; satLayerKey='google'; }
+        return;
+      }
+      satLayerKey=layer;
+      if(satOn) applySatLayer();
+      // فوراً کشو را ببند
+      const dr=document.getElementById('satLayerDrawer');
+      const bl=document.getElementById('btnSatLayers');
+      if(dr) dr.classList.add('hid');
+      if(bl) bl.textContent='🛰️ نقشه ماهواره‌ای ▾';
+    };
+  });
+  if(bFab && !bFab.dataset.sat){ bFab.dataset.sat='1'; bFab.onclick=()=>goToMyLocation(); }
+  if(bRoute && !bRoute.dataset.sat){ bRoute.dataset.sat='1'; bRoute.onclick=()=>routeToBoundary(); }
+  if(bKey && !bKey.dataset.sat){
+    bKey.dataset.sat='1';
+    bKey.onclick=()=>{
+      const cur=getMapirKey();
+      const k=prompt('API Key مربوط به Map.ir را وارد کنید:', cur||'');
+      if(k===null) return;
+      setMapirKey(k);
+      alert((k||'').trim() ? 'کلید ذخیره شد.' : 'کلید پاک شد.');
+    };
+  }
+
+  // فقط وقتی کشوی محدوده باز است نقشه نشان داده شود
+  const det=document.getElementById('mapDetails');
+  if(det && !det.dataset.satBound){
+    det.dataset.satBound='1';
+    det.addEventListener('toggle', async ()=>{
+      if(det.open){
+        satOn=true;
+        try{ await ensureSatMap(); }catch(e){ console.warn(e); }
+      } else {
+        // نقشه را مخفی کن ولی وضعیت را نگه دار
+        const wrap=document.getElementById('leafletWrap');
+        if(wrap) wrap.classList.add('hid');
+        const drawerEl=document.getElementById('satLayerDrawer');
+        if(drawerEl) drawerEl.classList.add('hid');
+        const bl=document.getElementById('btnSatLayers');
+        if(bl) bl.textContent='🛰️ نقشه ماهواره‌ای ▾';
+      }
+    });
+  }
+}
+function routeToBoundary(){
+  const z=MAPZ||39;
+  let pts=[];
+  (MAPP||[]).forEach(p=>{(p.o||[]).forEach(q=>{const llpt=utmToLatLng(q[0],q[1],z); if(llpt) pts.push(llpt);});});
+  if(!pts.length){ alert('ابتدا محدوده (پلیگون) را بارگذاری کنید.'); return; }
+  let la=0,ln=0; pts.forEach(p=>{la+=p[0];ln+=p[1]}); la/=pts.length; ln/=pts.length;
+  const dest=[la,ln];
+  if(!(typeof cur!=='undefined' && cur && cur.lat)){
+    alert('موقعیت فعلی در دسترس نیست. مختصات/GPS را روشن کنید.');
+    try{ if(typeof startGPS==='function') startGPS(); }catch(e){}
+    return;
+  }
+  const origin=[cur.lat, cur.lng];
+  (async()=>{
+    try{
+      if(!satOn){ satOn=true; await ensureSatMap(); }
+      else { await ensureSatMap(); }
+      // حذف مسیر قبلی
+      if(window._satRouteLine){ try{satMap.removeLayer(window._satRouteLine)}catch(e){} window._satRouteLine=null; }
+      if(window._satRouteEnd){ try{satMap.removeLayer(window._satRouteEnd)}catch(e){} window._satRouteEnd=null; }
+      let linePts=[origin, dest];
+      let distInfo='';
+      // تلاش برای مسیر جاده‌ای با OSRM
+      try{
+        const url='https://router.project-osrm.org/route/v1/driving/'+origin[1]+','+origin[0]+';'+dest[1]+','+dest[0]+'?overview=full&geometries=geojson';
+        const r=await fetch(url);
+        if(r.ok){
+          const j=await r.json();
+          if(j.routes && j.routes[0] && j.routes[0].geometry){
+            linePts=j.routes[0].geometry.coordinates.map(c=>[c[1],c[0]]);
+            const km=(j.routes[0].distance||0)/1000;
+            const min=(j.routes[0].duration||0)/60;
+            distInfo='حدود '+toFa(Math.round(km*10)/10)+' کیلومتر، '+toFa(Math.round(min))+' دقیقه';
+          }
+        }
+      }catch(e){}
+      window._satRouteLine=L.polyline(linePts,{color:'#ff9800',weight:4,opacity:0.95}).addTo(satMap);
+      window._satRouteEnd=L.circleMarker(dest,{radius:8,color:'#fff',weight:2,fillColor:'#e53935',fillOpacity:1})
+        .bindPopup('مرکز محدوده'+(distInfo?('<br>'+distInfo):'')).addTo(satMap);
+      try{ satMap.fitBounds(L.latLngBounds(linePts),{padding:[40,40]}); }catch(e){}
+      refreshSatOverlays();
+      // مسیر را دوباره بالای overlays بکش
+      if(window._satRouteLine) window._satRouteLine.bringToFront();
+      const st=$('#satCacheStatus');
+      if(st) st.textContent=distInfo?('مسیر تا محدوده: '+distInfo):'مسیر مستقیم تا مرکز محدوده ترسیم شد';
+    }catch(e){
+      alert(e.message||'خطا در مسیریابی');
+    }
+  })();
+}
+
+
+document.addEventListener('DOMContentLoaded', bindSatUi);
+setTimeout(bindSatUi, 0);
+setTimeout(bindSatUi, 500);
+setTimeout(bindSatUi, 1500);
+
+function setMap(p,z,nm,save){
+  MAPP=p;MAPZ=z;MAPNM=nm;updateMapInfo();if(save)store();mapCheck();
+  try{
+    if(MAPP && MAPP.length){
+      (async()=>{
+        try{
+          const det=document.getElementById('mapDetails');
+          if(det && !det.open) det.open=true;
+          satOn=true;
+          await ensureSatMap();
+          refreshSatOverlays();
+          fitSatView(false);
+          // ذخیره خودکار آفلاین محدوده
+          setTimeout(()=>{ try{ cacheSatArea(true); }catch(e){} }, 600);
+        }catch(e){ console.warn(e); }
+      })();
+    } else if(satOn){
+      refreshSatOverlays();
+    }
+  }catch(e){}
+}
 function updateMapInfo(){if(MAPP.length){$('#mi').textContent='نقشه: '+MAPNM+' — '+toFa(MAPP.length)+' پلیگون';}else{$('#mi').textContent='نقشه‌ای بارگذاری نشده است.';}}
 let appendMap=false;
 $('#mb').onclick=()=>{appendMap=false;aud();$('#mf').click()};
