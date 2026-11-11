@@ -5012,15 +5012,18 @@ async function playBlob(blob){
 /*AUDIO-END*/
 
 /* ── تنظیمات صدا (ذخیره در حافظهٔ دستگاه) ── */
-const OFF_VOICES={'browser':'مرورگر (رایگان)','google':'گوگل'};
+/* مدل‌های Piper فارسی — روی دستگاه اجرا می‌شوند؛ اولین بار ~۶۰MB دانلود */
+const OFF_VOICES={
+  'fa_IR-gyro-medium':'ژیرو',
+  'fa_IR-amir-medium':'امیر'
+};
 const VC=(()=>{let c={};try{c=JSON.parse(localStorage.getItem('hkVoiceCfg')||'{}')||{}}catch(e){}
   if(!['auto','app','ai'].includes(c.mode))c.mode='app';
-  if(!OFF_VOICES[c.voice])c.voice='browser';
+  if(!OFF_VOICES[c.voice])c.voice='fa_IR-gyro-medium';
   return c})();
 const saveVC=()=>{try{localStorage.setItem('hkVoiceCfg',JSON.stringify(VC))}catch(e){}};
 
-
-/* ── لایه سرور: با مهلت زمانی؛ اگر دیر رسید، فوراً صدای برنامه ── */
+/* ── لایه سرور ── */
 async function speakServer(parts,sp,deadline){
   const get=p=>ttsBlob(p).then(b=>({b}),e=>({e}));
   let next=get(parts[0]);const ends=[];
@@ -5041,30 +5044,29 @@ async function speakServer(parts,sp,deadline){
   return{rest:[]};
 }
 
-/* ── لایه مرورگر ── */
+/* ── لایه مرورگر (اگر گوشی فارسی داشته باشد) ── */
 async function persianVoice(){
   const sy=window.speechSynthesis; if(!sy) return null;
   let v=sy.getVoices();
   if(!v.length){
     await new Promise(r=>{
       let done=false; const fin=()=>{if(done)return;done=true;r()};
-      const t=setTimeout(fin,1200);
+      const t=setTimeout(fin,800);
       sy.onvoiceschanged=()=>{clearTimeout(t);fin()};
     });
     v=sy.getVoices();
   }
   const fa=v.filter(x=>/^fa/i.test(x.lang||'')||/persian|farsi|فارسی|iran/i.test(x.name||''));
-  // ترجیح: صدای محلی اندروید/کروم
-  return fa.find(x=>/google|samsung|iranian|persian/i.test(x.name||''))||fa[0]||null;
+  return fa.find(x=>/google|samsung|persian/i.test(x.name||''))||fa[0]||null;
 }
 async function speakBrowser(parts,sp){
   const sy=window.speechSynthesis;
   if(!sy||sp!==V.sp) return parts;
-  try{sy.cancel()}catch(e){}
   const voice=await persianVoice();
+  if(!voice) return parts; // گوشی فارسی ندارد — رد شو
+  try{sy.cancel()}catch(e){}
   const pieces=[];
   parts.forEach(p=>splitSmart(String(p||''),160).forEach(x=>{if(x.trim())pieces.push(x.trim())}));
-  if(!pieces.length) return [];
   for(let i=0;i<pieces.length;i++){
     if(sp!==V.sp){try{sy.cancel()}catch(e){} return [];}
     const x=pieces[i];
@@ -5072,110 +5074,129 @@ async function speakBrowser(parts,sp){
       let fin=false;
       const done=v=>{if(fin)return;fin=true;clearTimeout(t);res(v)};
       const u=new SpeechSynthesisUtterance(x);
-      u.lang='fa-IR';
-      u.rate=1; u.pitch=1; u.volume=1;
-      if(voice) try{u.voice=voice}catch(e){}
+      u.lang=voice.lang||'fa-IR'; u.voice=voice; u.rate=1;
       const t=setTimeout(()=>done(false), Math.max(9000, x.length*220));
-      u.onend=()=>done(true);
-      u.onerror=()=>done(false);
+      u.onend=()=>done(true); u.onerror=()=>done(false);
       try{sy.speak(u)}catch(e){done(false)}
     });
-    if(sp!==V.sp){try{sy.cancel()}catch(e){} return [];}
-    if(!ok){
-      // اگر با voice خاص شکست، بدون voice یک‌بار دیگر
-      if(voice){
-        const ok2=await new Promise(res=>{
-          let fin=false;
-          const done=v=>{if(fin)return;fin=true;clearTimeout(t);res(v)};
-          const u=new SpeechSynthesisUtterance(x);
-          u.lang='fa-IR';
-          const t=setTimeout(()=>done(false), Math.max(9000, x.length*220));
-          u.onend=()=>done(true);
-          u.onerror=()=>done(false);
-          try{sy.speak(u)}catch(e){done(false)}
-        });
-        if(ok2) continue;
-      }
-      return pieces.slice(i);
-    }
-  }
-  return [];
-}
-
-
-/* ── لایه «صدای برنامه»: TTS رایگان گوگل (بدون کلید، کیفیت قابل قبول فارسی) ── */
-const OFF={have:{google:true}, loading:{}, failed:{}, warm:{}, errs:0};
-
-function gTTSUrls(t){
-  const q = encodeURIComponent(String(t).slice(0, 160));
-  // چند endpoint رایگان؛ بعضی روی موبایل ایران با VPN بهتر جواب می‌دهند
-  return [
-    'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=fa&q='+q,
-    'https://translate.googleapis.com/translate_tts?ie=UTF-8&client=gtx&tl=fa&q='+q,
-    'https://translate.google.com/translate_tts?ie=UTF-8&client=gtx&tl=fa&q='+q
-  ];
-}
-
-async function playGoogleUrl(url, sp){
-  return new Promise(res=>{
-    try{
-      unlockAudio();
-      const a = new Audio();
-      let fin=false;
-      const done = ok => { if(fin)return; fin=true; try{a.onended=a.onerror=null;a.src='';}catch(e){} res(ok); };
-      a.onended = ()=>done(true);
-      a.onerror = ()=>done(false);
-      a.preload = 'auto';
-      a.src = url;
-      const p = a.play();
-      if(p && p.catch) p.catch(()=>done(false));
-      setTimeout(()=>{ if(!fin) done(!a.paused && a.currentTime>0); }, 10000);
-    }catch(e){ res(false); }
-  });
-}
-
-async function speakGoogle(parts, sp){
-  const pieces=[];
-  parts.forEach(p => {
-    const s = String(p||'').trim();
-    if(!s) return;
-    if(s.length <= 150){ pieces.push(s); return; }
-    let buf='';
-    s.split(/(\s+)/).forEach(w=>{
-      if((buf+w).length > 150){ if(buf.trim()) pieces.push(buf.trim()); buf=w; }
-      else buf+=w;
-    });
-    if(buf.trim()) pieces.push(buf.trim());
-  });
-  for(let i=0;i<pieces.length;i++){
-    if(sp!==V.sp) return [];
-    const urls = gTTSUrls(pieces[i]);
-    let ok=false;
-    for(const url of urls){
-      if(sp!==V.sp) return [];
-      ok = await playGoogleUrl(url, sp);
-      if(ok) break;
-    }
     if(!ok) return pieces.slice(i);
   }
   return [];
 }
 
-async function offlineWarm(){ /* no-op: گوگل نیاز به دانلود مدل ندارد */ }
-async function speakOffline(parts, sp){
-  // گوگل translate_tts دیگر از مرورگرهای متفرقه معمولاً کار نمی‌کند → اول مرورگر
-  if(VC.voice==='google'){
-    const left = await speakGoogle(parts, sp);
-    if(!left.length) return [];
-    return speakBrowser(left, sp);
-  }
-  return speakBrowser(parts, sp);
+/* ── لایه Piper آفلاین (صدای واقعی برنامه) ──
+   کتابخانه مسیر غلط دارد؛ به rhasspy/piper-voices (دارای CORS) بازنویسی می‌شود.
+   بعد از اولین دانلود، مدل در Origin Private File System گوشی می‌ماند. */
+const OFF={tts:null,have:{},loading:{},failed:{},warm:{},errs:0};
+const OFF_LIB='https://cdn.jsdelivr.net/npm/@diffusionstudio/vits-web@1.0.3/+esm';
+
+(function(){
+  if(window.__hkFetchPatched)return;
+  window.__hkFetchPatched=true;
+  const of=window.fetch.bind(window);
+  window.fetch=function(u,o){
+    try{
+      let url=typeof u==='string'?u:(u&&u.url)||'';
+      // مسیر کتابخانه: .../piper-voices/resolve/main/fa_IR/gyro/medium/fa_IR-gyro-medium.onnx
+      // مسیر واقعی:   .../rhasspy/piper-voices/resolve/main/fa/fa_IR/gyro/medium/fa_IR-gyro-medium.onnx
+      if(/huggingface\.co\/[^/"']*piper-voices/.test(url) && /\/fa_IR\//.test(url)){
+        url=url
+          .replace(/huggingface\.co\/[^/]+\/piper-voices/,'huggingface.co/rhasspy/piper-voices')
+          .replace('/resolve/main/fa_IR/','/resolve/main/fa/fa_IR/');
+        return of(url, o && typeof u==='string' ? o : undefined);
+      }
+    }catch(e){}
+    return of(u,o);
+  };
+})();
+
+function offNote(t){
+  V.note=t||'';
+  try{
+    if(V.on && bar && !bar.classList.contains('hid')){
+      const s=bar.dataset.s||'';
+      if(s==='listen'||s==='speak'||s==='think'||s==='warn')
+        vTxt.textContent=(s==='listen'?'🎙️ گوش می‌دهم':s==='speak'?'🔊 در حال پاسخ':s==='think'?'⏳ فکر می‌کنم':'')+(t?' · '+t:'');
+    }
+  }catch(e){}
 }
 
-/* ── زنجیرهٔ کامل ──
-   خودکار: سرور ← گوگل رایگان ← مرورگر
-   صدای برنامه: گوگل/مرورگر ← سرور
-   صدای هوشمند: سرور ← مرورگر ← گوگل */
+async function offLib(){
+  if(OFF.tts)return OFF.tts;
+  const m=await import(OFF_LIB);
+  OFF.tts=(m.predict?m:m.default)||m;
+  return OFF.tts;
+}
+
+function offlineInit(id){
+  id=id||VC.voice;
+  if(OFF.have[id])return Promise.resolve(true);
+  if(OFF.failed[id] && Date.now()-OFF.failed[id]<45000)return Promise.resolve(false);
+  if(OFF.loading[id])return OFF.loading[id];
+  OFF.loading[id]=(async()=>{
+    try{
+      const tts=await offLib();
+      let st=[]; try{st=(await tts.stored())||[]}catch(e){}
+      if(!st.includes(id)){
+        offNote('⬇️ دانلود صدای '+ (OFF_VOICES[id]||'') +'…');
+        await tts.download(id, p=>{
+          if(p && p.total)
+            offNote('⬇️ دانلود صدای برنامه '+Math.round(p.loaded*100/p.total).toLocaleString('fa-IR')+'٪');
+        });
+      }
+      OFF.have[id]=true; offNote(''); return true;
+    }catch(e){
+      console.warn('piper init failed', id, e);
+      OFF.failed[id]=Date.now(); offNote(''); return false;
+    }finally{ delete OFF.loading[id]; }
+  })();
+  return OFF.loading[id];
+}
+
+async function offlineWarm(){
+  const id=VC.voice;
+  if(OFF.warm[id]||OFF.failed[id])return;
+  if(await offlineInit(id)){
+    OFF.warm[id]=1;
+    try{ await OFF.tts.predict({text:'سلام', voiceId:id}); }catch(e){}
+  }
+}
+
+async function speakOffline(parts,sp){
+  const id=VC.voice;
+  // شروع دانلود/بارگذاری موازی؛ حداکثر ۱٫۵s صبر برای آماده شدن
+  const p=offlineInit(id);
+  if(!OFF.have[id]) await Promise.race([p, sleep(2000)]);
+  if(!OFF.have[id]){
+    // هنوز در حال دانلود — یک‌بار بیشتر صبر کن اگر واقعاً loading است
+    if(OFF.loading[id]) await Promise.race([OFF.loading[id], sleep(8000)]);
+  }
+  if(!OFF.have[id]) return parts;
+
+  const pieces=[];
+  parts.forEach((q,qi)=>splitSmart(q, qi===0?80:180).forEach(x=>{if(x.trim())pieces.push(x.trim())}));
+  if(!pieces.length) return [];
+
+  const synth=x=>OFF.tts.predict({text:x, voiceId:id}).then(b=>({b}),e=>({e}));
+  let next=synth(pieces[0]); const ends=[];
+  for(let i=0;i<pieces.length;i++){
+    const r=await next; next=null;
+    if(sp!==V.sp){ await Promise.all(ends); return []; }
+    if(r.e){
+      if(++OFF.errs>=3) OFF.failed[id]=Date.now();
+      await Promise.all(ends);
+      return pieces.slice(i);
+    }
+    if(i+1<pieces.length) next=synth(pieces[i+1]);
+    let h;
+    try{ h=await playBlob(r.b); }
+    catch(e){ await Promise.all(ends); return pieces.slice(i); }
+    ends.push(h.ended); OFF.errs=0;
+  }
+  await Promise.all(ends);
+  return [];
+}
+
 async function speak(text,sp0,force){
   const sp=sp0||++V.sp,clean=speechClean(text);
   if(!clean)return true;
@@ -5185,8 +5206,8 @@ async function speak(text,sp0,force){
   // اولویت: اگر سرور TTS سهمیه تمام کرده، مستقیم برو مرورگر
   // app = مرورگر اول | auto/ai = سرور بعد مرورگر
   const order = (V.ttsOff && Date.now()-V.ttsOffAt < 300000)
-    ? ['br','off']
-    : (mode==='app' ? ['br','off','srv'] : ['srv','br','off']);
+    ? ['off','br']
+    : (mode==='app' ? ['off','srv','br'] : mode==='ai' ? ['srv','off','br'] : ['off','srv','br']);
   let parts=ttsChunks(clean),why='';
   const srvFail=e=>{
     V.ttsFail++;
@@ -5229,7 +5250,7 @@ function renderPop(){
   vPop.innerHTML='<b>منبع صدا</b><div class="row">'+chip('mode','auto','خودکار')+chip('mode','app','صدای برنامه')+chip('mode','ai','صدای هوشمند')+'</div>'
    +'<b>نوع صدای برنامه</b><div class="row">'+Object.keys(OFF_VOICES).map(id=>chip('voice',id,OFF_VOICES[id])).join('')+'</div>'
    +(V.on?'':'<div class="row" style="margin-top:10px"><button type="button" class="vc" data-test="1">🔊 تست صدا</button></div>')
-   +'<small>خودکار: اول سرور؛ اگر قطع شد → صدای خود گوشی (رایگان).<br>پیشنهاد: منبع را روی «صدای برنامه» و نوع را «مرورگر» بگذارید.</small>';
+   +'<small>صدای برنامه = مدل Piper روی خود گوشی (ژیرو/امیر). اولین بار حدود ۶۰ مگابایت با اینترنت/VPN دانلود می‌شود و بعد آفلاین است.</small>';
 }
 function togglePop(show){
   if(show===undefined)show=vPop.classList.contains('hid');
@@ -5242,7 +5263,7 @@ vPop.addEventListener('click',e=>{
     unlockAudio();stopSpeak();
     const sp=++V.sp;
     (async()=>{
-      const ok = await speak('سلام، من دستیار شما هستم. صدای من این‌طوری است.', sp, 'app');
+      const ok = await speak('سلام، من دستیار شما هستم. صدای برنامه این‌طور است.', sp, 'app');
       if(!ok) alert('پخش صدا ممکن نشد.\nVPN را روشن نگه دارید و حجم اینترنت را چک کنید.\nاگر باز هم نشد، نوع صدا را روی «مرورگر» بگذارید.');
     })();
     return;
@@ -5777,7 +5798,6 @@ box.onclick=async e=>{
   if(V.speaking){stopSpeak();t.textContent='🔊 خواندن';return}
   unlockAudio();t.textContent='⏹ توقف';
   try{
-    // دکمه خواندن: مستقیم صدای مرورگر (رایگان، بدون سهمیه سرور)
     await speak(hist[i].content, null, 'app');
   }finally{t.textContent='🔊 خواندن'}
 };

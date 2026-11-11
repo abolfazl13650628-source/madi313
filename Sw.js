@@ -1,5 +1,5 @@
-/* Service Worker — hirkani-v6: HTML همیشه از شبکه، بقیه کش */
-const V = 'hirkani-v6';
+/* Service Worker — hirkani-v7: HTML همیشه از شبکه، بقیه کش */
+const V = 'hirkani-v7';
 const SHELL = ['./', './index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'forest.jpg'];
 const PRE = [
   'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
