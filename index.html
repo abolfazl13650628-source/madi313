@@ -5039,8 +5039,11 @@ async function playBlob(blob){
 /* مدل‌های Piper فارسی — روی دستگاه اجرا می‌شوند؛ اولین بار ~۶۰MB دانلود */
 const OFF_VOICES={
   'fa_IR-gyro-medium':'ژیرو',
-  'fa_IR-amir-medium':'امیر'
+  'fa_IR-amir-medium':'مانا (جدید)'   // این شناسه در کتابخانه ثابت است؛ فایل‌ها به مدل Mana هدایت می‌شوند
 };
+const MANA_ALIAS='fa_IR-amir-medium';
+/* برای میزبانی خودتان (مثلاً GitHub Pages) فقط این آدرس را عوض کنید؛ فایل‌ها: fa_IR-mana-medium.onnx و .onnx.json */
+const MANA_BASE='https://huggingface.co/MahtaFetrat/Mana-Persian-Piper/resolve/main';
 const VC=(()=>{let c={};try{c=JSON.parse(localStorage.getItem('hkVoiceCfg')||'{}')||{}}catch(e){}
   if(!['auto','app','ai'].includes(c.mode))c.mode='app';
   if(!OFF_VOICES[c.voice])c.voice='fa_IR-gyro-medium';
@@ -5123,6 +5126,10 @@ const OFF_LIB='https://cdn.jsdelivr.net/npm/@diffusionstudio/vits-web@1.0.3/+esm
       let url=typeof u==='string'?u:(u&&u.url)||'';
       // مسیر کتابخانه: .../piper-voices/resolve/main/fa_IR/gyro/medium/fa_IR-gyro-medium.onnx
       // مسیر واقعی:   .../rhasspy/piper-voices/resolve/main/fa/fa_IR/gyro/medium/fa_IR-gyro-medium.onnx
+      if(/piper-voices\/resolve\/main\/fa_IR\/amir\/medium\/fa_IR-amir-medium\.onnx/.test(url)){
+        const ext=/\.onnx\.json/.test(url)?'.onnx.json':'.onnx';
+        return of(MANA_BASE+'/fa_IR-mana-medium'+ext, o && typeof u==='string' ? o : undefined);
+      }
       if(/huggingface\.co\/[^/"']*piper-voices/.test(url) && /\/fa_IR\//.test(url)){
         url=url
           .replace(/huggingface\.co\/[^/]+\/piper-voices/,'huggingface.co/rhasspy/piper-voices')
@@ -5161,6 +5168,10 @@ function offlineInit(id){
     try{
       const tts=await offLib();
       let st=[]; try{st=(await tts.stored())||[]}catch(e){}
+      if(id===MANA_ALIAS){
+        let fl=null; try{fl=localStorage.getItem('hkManaV1')}catch(e){}
+        if(fl!=='1' && st.includes(id)){ try{ if(tts.remove) await tts.remove(id); }catch(e){} st=st.filter(x=>x!==id); }
+      }
       if(!st.includes(id)){
         offNote('⬇️ دانلود صدای '+ (OFF_VOICES[id]||'') +'…');
         await tts.download(id, p=>{
@@ -5168,6 +5179,7 @@ function offlineInit(id){
             offNote('⬇️ دانلود صدای برنامه '+Math.round(p.loaded*100/p.total).toLocaleString('fa-IR')+'٪');
         });
       }
+      if(id===MANA_ALIAS){ try{localStorage.setItem('hkManaV1','1')}catch(e){} }
       OFF.have[id]=true; offNote(''); return true;
     }catch(e){
       console.warn('piper init failed', id, e);
