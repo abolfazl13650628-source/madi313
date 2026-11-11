@@ -4998,7 +4998,7 @@ async function playBlob(blob){
 /*AUDIO-END*/
 
 /* ── تنظیمات صدا (ذخیره در حافظهٔ دستگاه) ── */
-const OFF_VOICES={'fa_IR-gyro-medium':'ژیرو','fa_IR-amir-medium':'امیر'};   // مدل‌های موجود در Releases (v1.0) — mana در کتابخانه vits-web ثبت نیست
+const OFF_VOICES={'fa_IR-gyro-medium':'ژیرو','fa_IR-amir-medium':'امیر'};   // از Hugging Face رسمی (rhasspy)
 const VC=(()=>{let c={};try{c=JSON.parse(localStorage.getItem('hkVoiceCfg')||'{}')||{}}catch(e){}
   if(!['auto','app','ai'].includes(c.mode))c.mode='auto';
   if(!OFF_VOICES[c.voice])c.voice=Object.keys(OFF_VOICES)[0];
@@ -5057,20 +5057,27 @@ async function speakBrowser(parts,sp){
   return[];
 }
 
-/* ── لایه «صدای برنامه»: Piper آفلاین، مدل از گیت‌هاب خودتان ── */
+/* ── لایه «صدای برنامه»: Piper آفلاین ──
+   کتابخانهٔ vits-web مسیر قدیمی برای مدل‌های فارسی دارد
+   (diffusionstudio + بدون پیشوند fa/). اینجا به مسیر رسمی rhasspy
+   که CORS دارد بازنویسی می‌شود. بعد از اولین دانلود، مدل روی دستگاه می‌ماند. */
 const OFF={tts:null,have:{},loading:{},failed:{},warm:{},errs:0};
 const OFF_LIB='https://cdn.jsdelivr.net/npm/@diffusionstudio/vits-web@1.0.3/+esm';
-/* آدرس دانلود مدل‌های صوتی از Releases (تگ v1.0) — فایل‌ها به صورت تخت در همین مسیر هستند */
-const OFF_BASE='https://github.com/abolfazl13650628-source/madi313/releases/download/v1.0';
 (function(){
-  if(window.__hkFetchPatched||/YOUR-USERNAME/.test(OFF_BASE))return;
+  if(window.__hkFetchPatched)return;
   window.__hkFetchPatched=true;
   const of=window.fetch.bind(window);
   window.fetch=function(u,o){
     try{
-      const url=typeof u==='string'?u:(u&&u.url)||'';
-      const m=/huggingface\.co\/.*?(fa_IR-[\w-]+\.onnx(?:\.json)?)(?:\?.*)?$/.exec(url);
-      if(m)return of(OFF_BASE+'/'+m[1],o&&typeof u==='string'?o:undefined);
+      let url=typeof u==='string'?u:(u&&u.url)||'';
+      // مسیر کتابخانه: .../piper-voices/resolve/main/fa_IR/gyro/...
+      // مسیر واقعی:   .../rhasspy/piper-voices/resolve/main/fa/fa_IR/gyro/...
+      if(/huggingface\.co\/[^/]*piper-voices.*\/fa_IR\//.test(url)){
+        url=url
+          .replace(/huggingface\.co\/[^/]+\/piper-voices/,'huggingface.co/rhasspy/piper-voices')
+          .replace('/resolve/main/fa_IR/','/resolve/main/fa/fa_IR/');
+        return of(url, o && typeof u==='string' ? o : undefined);
+      }
     }catch(e){}
     return of(u,o);
   };
