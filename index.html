@@ -4998,12 +4998,13 @@ async function playBlob(blob){
 /*AUDIO-END*/
 
 /* ── تنظیمات صدا (ذخیره در حافظهٔ دستگاه) ── */
-const OFF_VOICES={'fa_IR-gyro-medium':'ژیرو','fa_IR-amir-medium':'امیر'};   // از Hugging Face رسمی (rhasspy)
+const OFF_VOICES={'google':'گوگل (رایگان)','browser':'مرورگر'};
 const VC=(()=>{let c={};try{c=JSON.parse(localStorage.getItem('hkVoiceCfg')||'{}')||{}}catch(e){}
   if(!['auto','app','ai'].includes(c.mode))c.mode='auto';
-  if(!OFF_VOICES[c.voice])c.voice=Object.keys(OFF_VOICES)[0];
+  if(!OFF_VOICES[c.voice])c.voice='google';
   return c})();
 const saveVC=()=>{try{localStorage.setItem('hkVoiceCfg',JSON.stringify(VC))}catch(e){}};
+
 
 /* ── لایه سرور: با مهلت زمانی؛ اگر دیر رسید، فوراً صدای برنامه ── */
 async function speakServer(parts,sp,deadline){
@@ -5057,96 +5058,82 @@ async function speakBrowser(parts,sp){
   return[];
 }
 
-/* ── لایه «صدای برنامه»: Piper آفلاین ──
-   کتابخانهٔ vits-web مسیر قدیمی برای مدل‌های فارسی دارد
-   (diffusionstudio + بدون پیشوند fa/). اینجا به مسیر رسمی rhasspy
-   که CORS دارد بازنویسی می‌شود. بعد از اولین دانلود، مدل روی دستگاه می‌ماند. */
-const OFF={tts:null,have:{},loading:{},failed:{},warm:{},errs:0};
-const OFF_LIB='https://cdn.jsdelivr.net/npm/@diffusionstudio/vits-web@1.0.3/+esm';
-(function(){
-  if(window.__hkFetchPatched)return;
-  window.__hkFetchPatched=true;
-  const of=window.fetch.bind(window);
-  window.fetch=function(u,o){
+/* ── لایه «صدای برنامه»: TTS رایگان گوگل (بدون کلید، کیفیت قابل قبول فارسی) ── */
+const OFF={have:{google:true}, loading:{}, failed:{}, warm:{}, errs:0};
+
+function gTTSUrl(t, slow){
+  // client=tw-ob معمولاً روی موبایل بهتر جواب می‌دهد؛ تکه باید کوتاه باشد
+  const q = encodeURIComponent(String(t).slice(0, 180));
+  const sp = slow ? '0.24' : '1';
+  return 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=fa&ttsspeed='+sp+'&q='+q;
+}
+
+async function playGoogleUrl(url, sp){
+  return new Promise(res=>{
     try{
-      let url=typeof u==='string'?u:(u&&u.url)||'';
-      // مسیر کتابخانه: .../piper-voices/resolve/main/fa_IR/gyro/...
-      // مسیر واقعی:   .../rhasspy/piper-voices/resolve/main/fa/fa_IR/gyro/...
-      if(/huggingface\.co\/[^/]*piper-voices.*\/fa_IR\//.test(url)){
-        url=url
-          .replace(/huggingface\.co\/[^/]+\/piper-voices/,'huggingface.co/rhasspy/piper-voices')
-          .replace('/resolve/main/fa_IR/','/resolve/main/fa/fa_IR/');
-        return of(url, o && typeof u==='string' ? o : undefined);
-      }
-    }catch(e){}
-    return of(u,o);
-  };
-})();
-function offNote(t){
-  V.note=t;
-  try{if(V.on&&bar.dataset.s==='listen')vTxt.textContent='🎙️ گوش می‌دهم'+(t?' · '+t:'')}catch(e){}
+      const a = V.player || (V.player = new Audio());
+      let fin=false;
+      const done = ok => { if(fin)return; fin=true; a.onended=a.onerror=null; V.playRes=null; res(ok); };
+      V.playRes = done;
+      a.onended = ()=>done(true);
+      a.onerror = ()=>done(false);
+      a.src = url;
+      const p = a.play();
+      if(p && p.catch) p.catch(()=>done(false));
+      // اگر خیلی طول کشید و چیزی پخش نشد
+      setTimeout(()=>{ if(!fin && a.paused) done(false); }, 12000);
+    }catch(e){ res(false); }
+  });
 }
-async function offLib(){
-  if(OFF.tts)return OFF.tts;
-  const m=await import(OFF_LIB);OFF.tts=(m.predict?m:m.default)||m;return OFF.tts;
-}
-function offlineInit(id){
-  id=id||VC.voice;
-  if(OFF.have[id])return Promise.resolve(true);
-  if(OFF.failed[id]&&Date.now()-OFF.failed[id]<60000)return Promise.resolve(false);
-  if(OFF.loading[id])return OFF.loading[id];
-  OFF.loading[id]=(async()=>{
-    try{
-      const tts=await offLib();
-      let st=[];try{st=(await tts.stored())||[]}catch(e){}
-      if(!st.includes(id)){
-        offNote('⬇️ دانلود صدای برنامه…');
-        await tts.download(id,p=>{
-          if(p&&p.total)offNote('⬇️ دانلود صدای برنامه '+Math.round(p.loaded*100/p.total).toLocaleString('fa-IR')+'٪');
-        });
-      }
-      OFF.have[id]=true;offNote('');return true;
-    }catch(e){OFF.failed[id]=Date.now();offNote('');return false}
-    finally{delete OFF.loading[id]}
-  })();
-  return OFF.loading[id];
-}
-/* آماده‌سازی از قبل: دانلود + ساخت نشست مدل، تا اولین جواب بدون تأخیر خوانده شود */
-async function offlineWarm(){
-  const id=VC.voice;
-  if(OFF.warm[id])return;
-  if(await offlineInit(id)){OFF.warm[id]=1;try{await OFF.tts.predict({text:'سلام',voiceId:id})}catch(e){}}
-}
-async function speakOffline(parts,sp){
-  const id=VC.voice,p=offlineInit(id);
-  if(!OFF.have[id])await Promise.race([p,sleep(1500)]);
-  if(!OFF.have[id])return parts;
-  const pieces=[];parts.forEach((q,qi)=>splitSmart(q,qi===0?70:200).forEach(x=>pieces.push(x)));  // تکهٔ اول کوتاه = شروع سریع‌تر
-  const synth=x=>OFF.tts.predict({text:x,voiceId:id}).then(b=>({b}),e=>({e}));
-  let next=synth(pieces[0]);const ends=[];
+
+async function speakGoogle(parts, sp){
+  const pieces=[];
+  parts.forEach(p => {
+    // تکه‌های کوتاه برای محدودیت طول گوگل
+    const s = String(p||'').trim();
+    if(!s) return;
+    if(s.length <= 160){ pieces.push(s); return; }
+    // شکستن روی فاصله/نقطه
+    let buf='';
+    s.split(/(\s+)/).forEach(w=>{
+      if((buf+w).length > 160){ if(buf.trim()) pieces.push(buf.trim()); buf=w; }
+      else buf+=w;
+    });
+    if(buf.trim()) pieces.push(buf.trim());
+  });
   for(let i=0;i<pieces.length;i++){
-    const r=await next;next=null;
-    if(sp!==V.sp){await Promise.all(ends);return[]}
-    if(r.e){if(++OFF.errs>=3)OFF.failed[id]=Date.now();await Promise.all(ends);return pieces.slice(i)}
-    if(i+1<pieces.length)next=synth(pieces[i+1]);
-    let h;try{h=await playBlob(r.b)}catch(e){await Promise.all(ends);return pieces.slice(i)}
-    ends.push(h.ended);OFF.errs=0;
+    if(sp!==V.sp) return [];
+    const url = gTTSUrl(pieces[i], false);
+    const ok = await playGoogleUrl(url, sp);
+    if(sp!==V.sp) return [];
+    if(!ok){
+      // یک‌بار با host جایگزین امتحان کن
+      const alt = url.replace('translate.google.com','translate.googleapis.com');
+      const ok2 = await playGoogleUrl(alt, sp);
+      if(!ok2) return pieces.slice(i);
+    }
   }
-  await Promise.all(ends);
-  return[];
+  return [];
+}
+
+async function offlineWarm(){ /* no-op: گوگل نیاز به دانلود مدل ندارد */ }
+async function speakOffline(parts, sp){
+  // «صدای برنامه» = گوگل رایگان
+  if(VC.voice==='browser') return speakBrowser(parts, sp);
+  return speakGoogle(parts, sp);
 }
 
 /* ── زنجیرهٔ کامل ──
-   خودکار: سرور (مهلت ۲٫۵ ثانیه) ← مرورگر ← برنامه
-   صدای برنامه: برنامه ← سرور ← مرورگر
-   صدای هوشمند: سرور ← مرورگر ← برنامه */
+   خودکار: سرور ← گوگل رایگان ← مرورگر
+   صدای برنامه: گوگل/مرورگر ← سرور
+   صدای هوشمند: سرور ← مرورگر ← گوگل */
 async function speak(text,sp0,force){
   const sp=sp0||++V.sp,clean=speechClean(text);
   if(!clean)return true;
   V.speaking=true;
   if(!Object.keys(OFF.loading).length)V.note='';
   const mode=force||VC.mode;
-  const order=mode==='app'?['off','srv','br']:['srv','br','off'];
+  const order=mode==='app'?['off','srv','br']:mode==='ai'?['srv','br','off']:['srv','off','br'];
   let parts=ttsChunks(clean),why='';
   const srvFail=e=>{
     V.ttsFail++;
@@ -5180,9 +5167,9 @@ const vPop=document.createElement('div');vPop.id='aiVoicePop';vPop.className='hi
 function renderPop(){
   const chip=(k,v,l)=>'<button type="button" class="vc'+(VC[k]===v?' on':'')+'" data-k="'+k+'" data-v="'+v+'">'+l+'</button>';
   vPop.innerHTML='<b>منبع صدا</b><div class="row">'+chip('mode','auto','خودکار')+chip('mode','app','صدای برنامه')+chip('mode','ai','صدای هوشمند')+'</div>'
-   +'<b>گوینده (صدای برنامه)</b><div class="row">'+Object.keys(OFF_VOICES).map(id=>chip('voice',id,OFF_VOICES[id])).join('')+'</div>'
+   +'<b>نوع صدای برنامه</b><div class="row">'+Object.keys(OFF_VOICES).map(id=>chip('voice',id,OFF_VOICES[id])).join('')+'</div>'
    +(V.on?'':'<div class="row" style="margin-top:10px"><button type="button" class="vc" data-test="1">🔊 تست صدا</button></div>')
-   +'<small>خودکار: صدای هوشمند؛ اگر دیر رسید بلافاصله صدای برنامه.<br>صدای برنامه: همیشه روی خود دستگاه، بدون محدودیت و سریع.</small>';
+   +'<small>خودکار: اول صدای هوشمند سرور؛ اگر قطع شد → گوگل رایگان → مرورگر.<br>صدای برنامه: گوگل (رایگان، نیاز به اینترنت) یا صدای خود مرورگر.</small>';
 }
 function togglePop(show){
   if(show===undefined)show=vPop.classList.contains('hid');
