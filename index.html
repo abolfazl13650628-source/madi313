@@ -5000,7 +5000,7 @@ async function playBlob(blob){
 /* ── تنظیمات صدا (ذخیره در حافظهٔ دستگاه) ── */
 const OFF_VOICES={'google':'گوگل (رایگان)','browser':'مرورگر'};
 const VC=(()=>{let c={};try{c=JSON.parse(localStorage.getItem('hkVoiceCfg')||'{}')||{}}catch(e){}
-  if(!['auto','app','ai'].includes(c.mode))c.mode='auto';
+  if(!['auto','app','ai'].includes(c.mode))c.mode='app';
   if(!OFF_VOICES[c.voice])c.voice='google';
   return c})();
 const saveVC=()=>{try{localStorage.setItem('hkVoiceCfg',JSON.stringify(VC))}catch(e){}};
@@ -5061,27 +5061,30 @@ async function speakBrowser(parts,sp){
 /* ── لایه «صدای برنامه»: TTS رایگان گوگل (بدون کلید، کیفیت قابل قبول فارسی) ── */
 const OFF={have:{google:true}, loading:{}, failed:{}, warm:{}, errs:0};
 
-function gTTSUrl(t, slow){
-  // client=tw-ob معمولاً روی موبایل بهتر جواب می‌دهد؛ تکه باید کوتاه باشد
-  const q = encodeURIComponent(String(t).slice(0, 180));
-  const sp = slow ? '0.24' : '1';
-  return 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=fa&ttsspeed='+sp+'&q='+q;
+function gTTSUrls(t){
+  const q = encodeURIComponent(String(t).slice(0, 160));
+  // چند endpoint رایگان؛ بعضی روی موبایل ایران با VPN بهتر جواب می‌دهند
+  return [
+    'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=fa&q='+q,
+    'https://translate.googleapis.com/translate_tts?ie=UTF-8&client=gtx&tl=fa&q='+q,
+    'https://translate.google.com/translate_tts?ie=UTF-8&client=gtx&tl=fa&q='+q
+  ];
 }
 
 async function playGoogleUrl(url, sp){
   return new Promise(res=>{
     try{
-      const a = V.player || (V.player = new Audio());
+      unlockAudio();
+      const a = new Audio();
       let fin=false;
-      const done = ok => { if(fin)return; fin=true; a.onended=a.onerror=null; V.playRes=null; res(ok); };
-      V.playRes = done;
+      const done = ok => { if(fin)return; fin=true; try{a.onended=a.onerror=null;a.src='';}catch(e){} res(ok); };
       a.onended = ()=>done(true);
       a.onerror = ()=>done(false);
+      a.preload = 'auto';
       a.src = url;
       const p = a.play();
       if(p && p.catch) p.catch(()=>done(false));
-      // اگر خیلی طول کشید و چیزی پخش نشد
-      setTimeout(()=>{ if(!fin && a.paused) done(false); }, 12000);
+      setTimeout(()=>{ if(!fin) done(!a.paused && a.currentTime>0); }, 10000);
     }catch(e){ res(false); }
   });
 }
@@ -5089,29 +5092,26 @@ async function playGoogleUrl(url, sp){
 async function speakGoogle(parts, sp){
   const pieces=[];
   parts.forEach(p => {
-    // تکه‌های کوتاه برای محدودیت طول گوگل
     const s = String(p||'').trim();
     if(!s) return;
-    if(s.length <= 160){ pieces.push(s); return; }
-    // شکستن روی فاصله/نقطه
+    if(s.length <= 150){ pieces.push(s); return; }
     let buf='';
     s.split(/(\s+)/).forEach(w=>{
-      if((buf+w).length > 160){ if(buf.trim()) pieces.push(buf.trim()); buf=w; }
+      if((buf+w).length > 150){ if(buf.trim()) pieces.push(buf.trim()); buf=w; }
       else buf+=w;
     });
     if(buf.trim()) pieces.push(buf.trim());
   });
   for(let i=0;i<pieces.length;i++){
     if(sp!==V.sp) return [];
-    const url = gTTSUrl(pieces[i], false);
-    const ok = await playGoogleUrl(url, sp);
-    if(sp!==V.sp) return [];
-    if(!ok){
-      // یک‌بار با host جایگزین امتحان کن
-      const alt = url.replace('translate.google.com','translate.googleapis.com');
-      const ok2 = await playGoogleUrl(alt, sp);
-      if(!ok2) return pieces.slice(i);
+    const urls = gTTSUrls(pieces[i]);
+    let ok=false;
+    for(const url of urls){
+      if(sp!==V.sp) return [];
+      ok = await playGoogleUrl(url, sp);
+      if(ok) break;
     }
+    if(!ok) return pieces.slice(i);
   }
   return [];
 }
@@ -5180,7 +5180,12 @@ vPop.addEventListener('click',e=>{
   const b=e.target.closest('.vc');if(!b)return;
   if(b.dataset.test){
     unlockAudio();stopSpeak();
-    const sp=++V.sp;speak('سلام، من دستیار شما هستم. صدای من این‌طوری است.',sp,VC.mode==='auto'?'app':VC.mode);return;
+    const sp=++V.sp;
+    (async()=>{
+      const ok = await speak('سلام، من دستیار شما هستم. صدای من این‌طوری است.', sp, 'app');
+      if(!ok) alert('پخش صدا ممکن نشد.\nVPN را روشن نگه دارید و حجم اینترنت را چک کنید.\nاگر باز هم نشد، نوع صدا را روی «مرورگر» بگذارید.');
+    })();
+    return;
   }
   VC[b.dataset.k]=b.dataset.v;saveVC();renderPop();
   if(VC.mode!=='ai')offlineWarm();
@@ -5191,14 +5196,26 @@ document.addEventListener('click',e=>{
   vPop.classList.add('hid');
 },true);
 (function(){
-  const cfg=Q('#aiVoiceCfg');if(cfg)cfg.onclick=()=>togglePop();
-  const vm=Q('#aiVoiceMode');if(!vm)return;
-  let tm=null,lp=false;
-  const st=()=>{lp=false;tm=setTimeout(()=>{lp=true;togglePop(true)},550)},en=()=>{clearTimeout(tm)};
-  vm.addEventListener('touchstart',st,{passive:true});vm.addEventListener('touchend',en);vm.addEventListener('touchmove',en);vm.addEventListener('touchcancel',en);
-  vm.addEventListener('mousedown',st);vm.addEventListener('mouseup',en);vm.addEventListener('mouseleave',en);
-  vm.addEventListener('contextmenu',e=>e.preventDefault());
-  vm.addEventListener('click',e=>{if(lp){e.stopImmediatePropagation();e.preventDefault();lp=false}},true);
+  // delegation: حتی اگر نوار صدا بعداً ساخته/عوض شود، ⚙️ کار می‌کند
+  document.addEventListener('click', e=>{
+    const cfg = e.target.closest('#aiVoiceCfg');
+    if(cfg){ e.preventDefault(); e.stopPropagation(); togglePop(); }
+  }, true);
+  const bindVm = ()=>{
+    const vm=Q('#aiVoiceMode'); if(!vm || vm.dataset.lpBound) return;
+    vm.dataset.lpBound='1';
+    let tm=null,lp=false;
+    const st=()=>{lp=false;tm=setTimeout(()=>{lp=true;togglePop(true)},550)};
+    const en=()=>{clearTimeout(tm)};
+    vm.addEventListener('touchstart',st,{passive:true});
+    vm.addEventListener('touchend',en);vm.addEventListener('touchmove',en);vm.addEventListener('touchcancel',en);
+    vm.addEventListener('mousedown',st);vm.addEventListener('mouseup',en);vm.addEventListener('mouseleave',en);
+    vm.addEventListener('contextmenu',e=>e.preventDefault());
+    vm.addEventListener('click',e=>{if(lp){e.stopImmediatePropagation();e.preventDefault();lp=false}},true);
+  };
+  bindVm();
+  setTimeout(bindVm, 800);
+  setTimeout(bindVm, 2500);
 })();
 function stopSpeak(){
   V.sp++;V.speaking=false;
