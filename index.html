@@ -4209,7 +4209,7 @@ document.querySelectorAll('nav button').forEach(b=>{
             }
         });
         
-        document.body.dataset.tab=b; try{updateHarvestGate()}catch(e){} 
+        document.body.dataset.tab=b.dataset.t||''; try{updateHarvestGate()}catch(e){} try{if(typeof renderTabs==='function')renderTabs()}catch(e){} 
         document.dispatchEvent(new Event('hktab'));
         // با ورود به تب AI تاریخچه را از حافظه تازه کن
         if(b.dataset.t==='a'){
