@@ -4998,7 +4998,7 @@ async function playBlob(blob){
 /*AUDIO-END*/
 
 /* ── تنظیمات صدا (ذخیره در حافظهٔ دستگاه) ── */
-const OFF_VOICES={'fa_IR-amir-medium':'امیر','fa_IR-gyro-medium':'ژیرو'};   // فقط صداهایی که فایلشان را در گیت‌هاب گذاشته‌اید
+const OFF_VOICES={'fa_IR-gyro-medium':'ژیرو','fa_IR-amir-medium':'امیر'};   // مدل‌های موجود در Releases (v1.0) — mana در کتابخانه vits-web ثبت نیست
 const VC=(()=>{let c={};try{c=JSON.parse(localStorage.getItem('hkVoiceCfg')||'{}')||{}}catch(e){}
   if(!['auto','app','ai'].includes(c.mode))c.mode='auto';
   if(!OFF_VOICES[c.voice])c.voice=Object.keys(OFF_VOICES)[0];
@@ -5060,8 +5060,8 @@ async function speakBrowser(parts,sp){
 /* ── لایه «صدای برنامه»: Piper آفلاین، مدل از گیت‌هاب خودتان ── */
 const OFF={tts:null,have:{},loading:{},failed:{},warm:{},errs:0};
 const OFF_LIB='https://cdn.jsdelivr.net/npm/@diffusionstudio/vits-web@1.0.3/+esm';
-/* آدرس GitHub Pages خودتان (بدون اسلش آخر)؛ فایل‌های fa_IR-*.onnx و fa_IR-*.onnx.json داخل آن */
-const OFF_BASE='https://YOUR-USERNAME.github.io/YOUR-REPO/voices';
+/* آدرس دانلود مدل‌های صوتی از Releases (تگ v1.0) — فایل‌ها به صورت تخت در همین مسیر هستند */
+const OFF_BASE='https://github.com/abolfazl13650628-source/madi313/releases/download/v1.0';
 (function(){
   if(window.__hkFetchPatched||/YOUR-USERNAME/.test(OFF_BASE))return;
   window.__hkFetchPatched=true;
