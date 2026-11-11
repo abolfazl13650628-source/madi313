@@ -378,7 +378,7 @@ body[data-tab="a"] #sec-a:not(.hid){
 .aiIn.has #aiSend{display:flex}
 .aiIn.has #aiVoiceMode{display:none}
 #aiVoiceCfg{position:relative;width:40px;height:40px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--tx);border:1px solid var(--bd);font-size:17px}
-#aiVoicePop{position:fixed;left:12px;right:12px;bottom:84px;z-index:60;background:var(--sf);color:var(--tx);border:1px solid var(--bd);border-radius:18px;padding:12px 14px;box-shadow:0 6px 28px rgba(0,0,0,.22);font-size:13px;max-width:420px;margin:0 auto}
+#aiVoicePop{position:fixed;left:12px;right:12px;bottom:96px;z-index:2147483000;background:var(--sf);color:var(--tx);border:1px solid var(--bd);border-radius:18px;padding:12px 14px;box-shadow:0 6px 28px rgba(0,0,0,.22);font-size:13px;max-width:420px;margin:0 auto}
 #aiVoicePop.hid{display:none}
 #aiVoicePop b{display:block;margin:10px 0 6px;font-size:12px;color:var(--mu)}
 #aiVoicePop b:first-child{margin-top:0}
@@ -4873,7 +4873,7 @@ const sosBusy=()=>{try{return !!localStorage.getItem('sosActive')}catch(e){retur
 async function getMic(){
   if(V.stream&&V.stream.active&&V.an)return V.stream;
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw Object.assign(new Error('no-mediadevices'),{name:'NotSupportedError'});
-  V.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+  V.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:{ideal:1}}});
   const AC=window.AudioContext||window.webkitAudioContext;
   V.ac=new AC();try{await V.ac.resume()}catch(e){}
   const src=V.ac.createMediaStreamSource(V.stream);V.an=V.ac.createAnalyser();V.an.fftSize=1024;src.connect(V.an);
@@ -4906,7 +4906,7 @@ function recordUtterance(o){
       if(o.onLevel)o.onLevel(rms);
       if(now<500){calib.push(rms);return}
       if(floor===null)floor=calib.reduce((a,b)=>a+b,0)/Math.max(1,calib.length);
-      const thr=Math.max(0.03,floor*3),talking=speechAt>=0;
+      const thr=Math.max(0.016,floor*2.5),talking=speechAt>=0;
       if(rms>(talking?thr*0.6:thr)){hf++;lastVoice=now;if(!talking&&hf>=2)speechAt=Math.max(0,now-450)}else hf=0;
       if(speechAt>=0&&now-lastVoice>o.silenceMs)finish('silence');
       else if(speechAt<0&&now>o.noSpeechMs)finish('nospeech');
@@ -4921,6 +4921,8 @@ async function blobToWav(blob,fromMs){
   if(n<1600)throw new Error('too-short');
   const pcm=new Int16Array(n);
   for(let i=0;i<n;i++){const a=start+i*ratio,i0=Math.floor(a),i1=Math.min(ch.length,Math.max(i0+1,Math.floor(a+ratio)));let s=0;for(let j=i0;j<i1;j++)s+=ch[j];const x=Math.max(-1,Math.min(1,s/(i1-i0)));pcm[i]=x<0?x*32768:x*32767}
+  {let pk=0;for(let i=0;i<pcm.length;i++){const a=pcm[i]<0?-pcm[i]:pcm[i];if(a>pk)pk=a}
+   if(pk>200&&pk<20000){const g=Math.min(8,26000/pk);for(let i=0;i<pcm.length;i++){const v=Math.round(pcm[i]*g);pcm[i]=v>32767?32767:v<-32768?-32768:v}}}
   const h=new DataView(new ArrayBuffer(44)),w=(o,s)=>{for(let i=0;i<s.length;i++)h.setUint8(o+i,s.charCodeAt(i))};
   w(0,'RIFF');h.setUint32(4,36+pcm.length*2,true);w(8,'WAVE');w(12,'fmt ');h.setUint32(16,16,true);h.setUint16(20,1,true);h.setUint16(22,1,true);h.setUint32(24,16000,true);h.setUint32(28,32000,true);h.setUint16(32,2,true);h.setUint16(34,16,true);w(36,'data');h.setUint32(40,pcm.length*2,true);
   return new Blob([h.buffer,pcm.buffer],{type:'audio/wav'});
@@ -5260,7 +5262,7 @@ async function speak(text,sp0,force){
     try{
       if(t==='srv'){
         if(V.ttsOff&&Date.now()-V.ttsOffAt<=300000)continue;
-        const r=await speakServer(parts,sp, mode!=='ai' ? 2000 : 0);
+        const r=await speakServer(parts,sp, mode!=='ai' ? 1300 : 0);
         parts=r.rest;
         if(r.err)srvFail(r.err);else{V.ttsFail=0;V.ttsOff=false}
       }else if(t==='br'){
@@ -5290,7 +5292,10 @@ function renderPop(){
 }
 function togglePop(show){
   if(show===undefined)show=vPop.classList.contains('hid');
-  if(show)renderPop();
+  if(show){
+    renderPop();
+    try{const r=bar.getBoundingClientRect();vPop.style.bottom=(r&&r.height>0?Math.round(window.innerHeight-r.top+10):96)+'px'}catch(e){}
+  }
   vPop.classList.toggle('hid',!show);
 }
 vPop.addEventListener('click',e=>{
@@ -5314,10 +5319,16 @@ document.addEventListener('click',e=>{
 },true);
 (function(){
   // delegation: حتی اگر نوار صدا بعداً ساخته/عوض شود، ⚙️ کار می‌کند
-  document.addEventListener('click', e=>{
-    const cfg = e.target.closest('#aiVoiceCfg');
-    if(cfg){ e.preventDefault(); e.stopPropagation(); togglePop(); }
-  }, true);
+  let lastTog=0;
+  const tapCfg=e=>{
+    const cfg=e.target&&e.target.closest&&e.target.closest('#aiVoiceCfg');
+    if(!cfg)return;
+    e.preventDefault();e.stopPropagation();
+    const n=Date.now();if(n-lastTog<450)return;lastTog=n;
+    try{togglePop()}catch(err){alert('خطا در باز کردن تنظیم صدا: '+(err&&err.message||err))}
+  };
+  document.addEventListener('click',tapCfg,true);
+  document.addEventListener('touchend',tapCfg,true);
   const bindVm = ()=>{
     const vm=Q('#aiVoiceMode'); if(!vm || vm.dataset.lpBound) return;
     vm.dataset.lpBound='1';
@@ -5369,7 +5380,7 @@ async function turn(tok){
   try{
     if(!V.useSR){
       setBar('listen','🎙️ گوش می‌دهم'+(V.note?' · '+V.note:''));
-      const rec=await IO.record({silenceMs:V.once?3000:2800,noSpeechMs:12000,maxMs:60000,onLevel:l=>{vLvl.style.width=Math.min(100,Math.round(l*900))+'%'}});
+      const rec=await IO.record({silenceMs:V.once?2000:1500,noSpeechMs:12000,maxMs:60000,onLevel:l=>{vLvl.style.width=Math.min(100,Math.round(l*900))+'%'}});
       if(!alive(tok))return;
       if(rec.reason==='cancel'||rec.reason==='error'&&!rec.blob)return;
       if(rec.text!==undefined)text=cleanStt(rec.text);
