@@ -69,6 +69,17 @@ body.home-mode #acct button { border-color: rgba(255,255,255,0.6); color: #fff; 
 body.home-mode .sbtn { border-color: rgba(255,255,255,0.6); color: #fff; background: rgba(0,0,0,0.4); }
 body.home-mode #gpsStripTxt span { color: #fff !important; }
 
+/* Dark + home-mode: دکمه‌ها و نوارها با تم تیره هماهنگ */
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) body.home-mode nav button { background: rgba(24,37,28,0.75); color: #e8f0e9; border: 1px solid rgba(255,255,255,0.12); }
+  :root:not([data-theme="light"]) body.home-mode nav button.on { background: var(--ac); color: #fff; }
+  :root:not([data-theme="light"]) body.home-mode .sbtn { background: rgba(24,37,28,0.7); color: #e8f0e9; border-color: rgba(255,255,255,0.2); }
+}
+:root[data-theme="dark"] body.home-mode nav button { background: rgba(24,37,28,0.75); color: #e8f0e9; border: 1px solid rgba(255,255,255,0.12); }
+:root[data-theme="dark"] body.home-mode nav button.on { background: var(--ac); color: #fff; }
+:root[data-theme="dark"] body.home-mode .sbtn { background: rgba(24,37,28,0.7); color: #e8f0e9; border-color: rgba(255,255,255,0.2); }
+
+
 /* Hide GPS and Sensors in AI Tab */
 body[data-tab="a"] #gpsStrip,
 body[data-tab="a"] #sensors {
@@ -244,6 +255,13 @@ body.home-mode #sosCard{background:transparent;}
 #walkBox b{font-size:16px!important}
 #walkBox small{font-size:10px!important}
 
+#routeChoiceModal{position:fixed;inset:0;z-index:1001;background:#0009;display:flex;align-items:center;justify-content:center;padding:16px}
+#routeChoiceModal .bx{background:var(--sf);color:var(--tx);border-radius:16px;padding:20px;width:100%;max-width:340px;text-align:center;box-shadow:var(--sh2)}
+#routeChoiceModal .bx h3{margin:0 0 8px;color:var(--ac);font-size:17px}
+#routeChoiceModal .bx .sub{font-size:12px;color:var(--mu);margin-bottom:14px}
+#routeChoiceModal .mbtn{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+#routeChoiceModal .mbtn button{padding:16px;font-size:15px;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:4px}
+#routeChoiceModal .mbtn button small{font-size:11px;opacity:.85;font-weight:400}
 #saveTypeModal{position:fixed;inset:0;z-index:1001;background:#0009;display:flex;align-items:center;justify-content:center;padding:16px}
 #saveTypeModal .bx{background:var(--sf);color:var(--tx);border-radius:16px;padding:20px;width:100%;max-width:340px;text-align:center;box-shadow:var(--sh2)}
 #saveTypeModal .bx h3{margin:0 0 8px;color:var(--ac);font-size:17px}
@@ -703,15 +721,13 @@ window.needOcr=async()=>{if(typeof Tesseract==='undefined')await loadLib('https:
         <input type="file" id="mf" accept=".kmz,.kml,.dxf,.dwg" class="hid">
         <div id="manualCoordArea" class="hid">
           <div id="manualCoordList"></div>
-          <div class="r">
-            <button id="addManualRow" class="o" style="flex:1">+ افزودن نقطه</button>
-            <button id="applyManualCoord" style="flex:1">رسم روی نقشه</button>
-          </div>
+          <div class="m" style="margin-top:4px;font-size:11px">با ورود حداقل ۳ نقطه، محدوده خودکار رسم می‌شود. نقطهٔ بعدی: دکمهٔ + کنار هر ردیف.</div>
         </div>
         <div class="m" id="mi" style="margin-top:6px">نقشه‌ای بارگذاری نشده است.</div>
         <div class="m" style="margin-top:4px;font-size:10px">نکته: DXF باید مختصات واقعی UTM یا طول/عرض جغرافیایی داشته باشد.</div>
         <div class="sat-ctl">
           <button type="button" id="btnSatLayers" class="o">🛰️ نقشه ماهواره‌ای ▾</button>
+          <button type="button" id="btnSatShowMap" class="o">🗺️ نمایش نقشه محدوده</button>
           <button type="button" id="btnSatRoute" class="o">🧭 مسیریابی تا محدوده</button>
         </div>
         <div id="satLayerDrawer" class="sat-drawer hid">
@@ -910,13 +926,18 @@ window.needOcr=async()=>{if(typeof Tesseract==='undefined')await loadLib('https:
   <!-- Tab Content: Tajdid -->
   <section id="sec-h" class="hid">
     <div class="sheetbar"></div>
-    <div class="c">
+    <div id="harvestGate" class="c" style="border-color:#c62828;background:rgba(198,40,40,.06)">
+      <b>🔒 تجدید حجم فقط برای پروژهٔ ذخیره‌شده</b>
+      <div class="m" style="margin-top:6px">ابتدا در تب «سیاهه» با دکمهٔ <b>ذخیرهٔ سربرگ فعلی با نام</b> این پروژه را ذخیره کنید. پس از ذخیره، فرم تجدید برای <b>همین سربرگ</b> فعال می‌شود و پروژه در فهرست زیر هم دیده می‌شود.</div>
+      <div id="harvestSavedList" style="margin-top:8px"></div>
+    </div>
+    <div id="harvestWork" class="c">
       <label>درخت</label><select id="hs2"></select>
       <div class="r"><div><label>قطر جدید (cm)</label><input id="d2" type="text" inputmode="decimal"></div><div><label>ارتفاع جدید (m)</label><input id="h2" type="text" inputmode="decimal"></div></div>
       <div class="r"><div><label>حجم استحصال‌شده (m³)</label><input id="hv" type="text" inputmode="decimal"></div><div><label>تاریخ استحصال</label><input id="hd" type="date"></div></div>
-      <label>یادداشت</label><input id="hn"><br><button id="sh" style="width:100%">ذخیره</button>
+      <label>یادداشت</label><input id="hn"><br><button id="sh" style="width:100%">ذخیره تجدید / استحصال</button>
     </div>
-    <div class="c">
+    <div class="c" id="harvestTableCard">
       <div class="tw"><table id="tb2"></table></div><br>
       <div class="r"><button id="e2">خروجی اکسل</button><button id="e2s" class="o">📤 اشتراک‌گذاری</button></div>
       <div class="m xs"></div>
@@ -1075,6 +1096,25 @@ window.needOcr=async()=>{if(typeof Tesseract==='undefined')await loadLib('https:
     <button class="o cancel" id="saveTypeCancel">انصراف</button>
   </div>
 </div>
+
+<div id="routeChoiceModal" class="hid">
+  <div class="bx">
+    <h3>مسیریابی تا محدوده</h3>
+    <div class="sub">چطور می‌خواهید به محدوده برسید؟</div>
+    <div class="mbtn">
+      <button type="button" data-route="app" style="background:#2f6b3c;color:#fff;border:0">
+        🗺️ رسم روی نقشهٔ برنامه
+        <small>مسیر روی نقشه ماهواره‌ای همین برنامه نمایش داده می‌شود</small>
+      </button>
+      <button type="button" data-route="phone" style="background:#3a7bd5;color:#fff;border:0">
+        🧭 برنامهٔ مسیریابی گوشی
+        <small>گوگل‌مپ، نشان یا هر برنامهٔ نقشهٔ نصب‌شده روی گوشی</small>
+      </button>
+    </div>
+    <button type="button" class="o cancel" id="routeChoiceCancel">انصراف</button>
+  </div>
+</div>
+
 
 <!-- New sheet modal -->
 <div id="newSheetModal" class="hid">
@@ -1353,7 +1393,56 @@ function ensureSheetUids(){
     if(!s.ua) s.ua = Date.now();
   });
 }
-function deepClone(x){try{return JSON.parse(JSON.stringify(x))}catch(e){return x}}
+
+function isProjectSaved(sh){
+  sh = sh || getActiveSheet();
+  if(!sh) return false;
+  if(sh.projectSaved) return true;
+  if(sh.uid && typeof SNAPS!=='undefined' && SNAPS.some(s => s.sheetUid === sh.uid)) return true;
+  return false;
+}
+function markProjectSaved(sh, snapMeta){
+  sh = sh || getActiveSheet();
+  if(!sh) return;
+  sh.projectSaved = true;
+  sh.savedAt = Date.now();
+  if(snapMeta && snapMeta.name) sh.snapName = snapMeta.name;
+  try{ saveActive(); }catch(e){}
+}
+function updateHarvestGate(){
+  const gate = document.getElementById('harvestGate');
+  const work = document.getElementById('harvestWork');
+  const table = document.getElementById('harvestTableCard');
+  const list = document.getElementById('harvestSavedList');
+  const saved = isProjectSaved();
+  if(gate) gate.classList.toggle('hid', !!saved);
+  if(work){
+    work.classList.toggle('hid', !saved);
+    work.querySelectorAll('input,select,button').forEach(el=>{ el.disabled = !saved; });
+  }
+  if(table) table.classList.toggle('hid', !saved);
+  if(list){
+    if(!SNAPS.length){
+      list.innerHTML = '<div class="m">هنوز پروژه‌ای ذخیره نشده است.</div>';
+    } else {
+      list.innerHTML = '<div class="m" style="margin-bottom:4px">پروژه‌های ذخیره‌شده — برای تجدید باز کنید:</div>' +
+        SNAPS.slice().reverse().map(s=>
+          '<button type="button" class="o" style="width:100%;margin:3px 0;text-align:right;padding:8px 10px" data-snap="'+s.id+'">'
+          +'<b>'+esc(s.name)+'</b> <small style="color:var(--mu)"> — '+toFa((s.trees||[]).length)+' درخت</small></button>'
+        ).join('');
+      list.querySelectorAll('[data-snap]').forEach(b=>{
+        b.onclick = ()=> loadSnap(+b.dataset.snap);
+      });
+    }
+  }
+  try{
+    if(!saved && $('#tb2')){
+      $('#tb2').innerHTML = '<tr><td class="m">پس از ذخیرهٔ پروژه، درختان همین سربرگ اینجا می‌آیند.</td></tr>';
+    }
+  }catch(e){}
+}
+
+function deepClone(x){try{if(typeof structuredClone==='function')return structuredClone(x);return JSON.parse(JSON.stringify(x))}catch(e){try{return JSON.parse(JSON.stringify(x))}catch(e2){return x}}}
 function getActiveSheet(){
   ensureSheetUids();
   let sh=SHEETS.find(s=>s.id===activeId);
@@ -1629,27 +1718,67 @@ $('#btnManualCoord').onclick = () => {
   area.classList.toggle('hid');
   if(!area.classList.contains('hid') && !$('#manualCoordList').children.length) addManualCoordRow();
 };
+function collectManualPts(){
+  const pts = [];
+  document.querySelectorAll('.mc-row').forEach(r => {
+    const xEl=r.querySelector('.mc-x'), yEl=r.querySelector('.mc-y'), zEl=r.querySelector('.mc-z');
+    if(!xEl||!yEl||!zEl) return;
+    const x = parseFloat(toEn(xEl.value)), y = parseFloat(toEn(yEl.value)), z = parseInt(toEn(zEl.value), 10);
+    if(isFinite(x) && isFinite(y) && z >= 1 && z <= 60) pts.push([x, y, z]);
+  });
+  return pts;
+}
+let _manualDrawT = null;
+function applyManualCoordsAuto(){
+  const pts = collectManualPts();
+  if(pts.length < 3) return false;
+  const z0 = pts[0][2];
+  const poly = pts.map(([x, y, z]) => {
+    if(z === z0) return [x, y];
+    const g = ll(x, y, z), u = utm(g[0], g[1], z0);
+    return [u.E, u.N];
+  });
+  const others = (MAPP||[]).filter(p => p && p.n !== 'ورود دستی');
+  const next = others.concat([{n:'ورود دستی', o:poly, i:[]}]);
+  setMap(next, z0, others.length ? ((MAPNM||'محدوده')+' + ورود دستی') : 'ورود دستی', true);
+  try{
+    if(typeof satOn !== 'undefined' && satOn){
+      if(typeof refreshSatOverlays==='function') refreshSatOverlays();
+      if(typeof fitSatView==='function') fitSatView(false);
+    }
+  }catch(e){}
+  return true;
+}
+function scheduleManualDraw(){
+  clearTimeout(_manualDrawT);
+  _manualDrawT = setTimeout(()=>{ try{ applyManualCoordsAuto(); }catch(e){} }, 450);
+}
 function addManualCoordRow() {
   const list = $('#manualCoordList');
+  if(!list) return;
   const zs = list.querySelectorAll('.mc-z');
   const z = zs.length ? zs[zs.length-1].value : (cur ? cur.u.z : (MAPZ || 39));
   const div = document.createElement('div');
   div.className = 'mc-row';
-  div.innerHTML = `<input type="text" inputmode="decimal" placeholder="X" class="mc-x" style="flex:1.3"><input type="text" inputmode="decimal" placeholder="Y" class="mc-y" style="flex:1.3"><input type="text" inputmode="numeric" placeholder="Z زون" class="mc-z" value="${z}" style="flex:.8"><button class="x" onclick="this.parentElement.remove()">×</button>`;
+  div.innerHTML = '<input type="text" inputmode="decimal" placeholder="X" class="mc-x" style="flex:1.3">'
+    +'<input type="text" inputmode="decimal" placeholder="Y" class="mc-y" style="flex:1.3">'
+    +'<input type="text" inputmode="numeric" placeholder="Z زون" class="mc-z" value="'+z+'" style="flex:.8">'
+    +'<button type="button" class="o mc-add" title="افزودن نقطه" style="padding:4px 10px;min-width:36px">+</button>'
+    +'<button type="button" class="x mc-del" title="حذف">×</button>';
   list.appendChild(div);
-}
-$('#addManualRow').onclick = addManualCoordRow;
-$('#applyManualCoord').onclick = () => {
-  const pts = [];
-  document.querySelectorAll('.mc-row').forEach(r => {
-    const x = parseFloat(toEn(r.querySelector('.mc-x').value)), y = parseFloat(toEn(r.querySelector('.mc-y').value)), z = parseInt(toEn(r.querySelector('.mc-z').value));
-    if(isFinite(x) && isFinite(y) && z >= 1 && z <= 60) pts.push([x, y, z]);
+  const onEdit = () => scheduleManualDraw();
+  div.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', onEdit);
+    inp.addEventListener('change', onEdit);
   });
-  if(pts.length < 3){ alert('حداقل ۳ نقطه با X و Y و زون معتبر لازم است.'); return; }
-  const keep = MAPP.length > 0, z0 = keep ? MAPZ : pts[0][2];
-  const poly = pts.map(([x, y, z]) => { if(z === z0) return [x, y]; const g = ll(x, y, z), u = utm(g[0], g[1], z0); return [u.E, u.N]; });
-  setMap(keep ? MAPP.concat([{n:'ورود دستی', o:poly, i:[]}]) : [{n:'ورود دستی', o:poly, i:[]}], z0, keep ? (MAPNM+' + ورود دستی') : 'ورود دستی', true);
-};
+  div.querySelector('.mc-add').onclick = () => { addManualCoordRow(); };
+  div.querySelector('.mc-del').onclick = () => {
+    div.remove();
+    scheduleManualDraw();
+    if(!list.querySelector('.mc-row')) addManualCoordRow();
+  };
+}
+
 
 function treeZone(){return MAPP.length?MAPZ:((T.find(t=>t.uz)||{}).uz||MAPZ||39)}
 function treePts(){const Z=treeZone();return T.filter(t=>t.lat&&t.lng).map(t=>{const u=utm(t.lat,t.lng,Z);return{E:u.E,N:u.N,t}})}
@@ -1704,7 +1833,7 @@ function mapCheck(quiet){
   if(box) box.classList.remove('hid'); if(leg)leg.classList.toggle('hid',!pts.length&&!TRACK.length);
   if(!MAPP.length){
     const u=cur?utm(cur.lat,cur.lng,treeZone()):null;if(u)u.in=true;
-    mdraw([],u,pts);box.className='gbox';
+    /* mdraw skipped: #mc2 hidden */;box.className='gbox';
     $('#mst').textContent='نقشهٔ محدوده بارگذاری نشده';
     const parts=[];
     if(pts.length)parts.push(toFa(pts.length)+' درخت');
@@ -1712,8 +1841,8 @@ function mapCheck(quiet){
     $('#msd').textContent=parts.join(' • ')||'برای نمایش، مختصات را روشن کنید';
     return;
   }
-  if(!cur){mdraw(MAPP,null,pts);box.className='gbox';$('#mst').textContent='نقشه بارگذاری شد';$('#msd').textContent=(pts.length?toFa(pts.length)+' درخت روی نقشه — ':'')+(TRACK.length?'مسیر '+toFa(TRACK.length)+' نقطه — ':'')+'برای موقعیت، «مختصات» را بزنید.';return}
-  const u=utm(cur.lat,cur.lng,MAPZ),r=mtest(MAPP,u.E,u.N);u.in=r.in;mdraw(MAPP,u,pts);
+  if(!cur){/* mdraw skipped: #mc2 hidden */;box.className='gbox';$('#mst').textContent='نقشه بارگذاری شد';$('#msd').textContent=(pts.length?toFa(pts.length)+' درخت روی نقشه — ':'')+(TRACK.length?'مسیر '+toFa(TRACK.length)+' نقطه — ':'')+'برای موقعیت، «مختصات» را بزنید.';return}
+  const u=utm(cur.lat,cur.lng,MAPZ),r=mtest(MAPP,u.E,u.N);u.in=r.in;/* mdraw skipped: #mc2 hidden */;
   box.className='gbox '+(r.in?'g1':'g3 al');
   $('#mst').textContent=r.in?'✅ داخل محدوده':'⛔ خارج از محدوده';
   $('#msd').textContent=(r.in?'فاصله تا مرز: ':'فاصله: ')+toFa(Math.round(r.d))+' متر';
@@ -1721,24 +1850,36 @@ function mapCheck(quiet){
 }
 
 function renderTabs(){
-  const bar=document.querySelector('.sheetbar');if(!bar)return;
-  const html = SHEETS.map(s=>{
+  const isHarvest = (document.body.dataset.tab==='h') || !!(document.getElementById('sec-h') && !document.getElementById('sec-h').classList.contains('hid'));
+  const makeHtml = (forHarvest) => SHEETS.map(s=>{
     const on=s.id===activeId;
     let badge='';
     if(on){
       if(s.mode==='garden')badge=' 🌳';
       else if(s.mode==='forest')badge=' 🌲';
     }
-    return `<button class="tab ${on?'on':''}" data-id="${s.id}" data-act="switch"><span class="tname">${esc(s.name)}${badge}</span>${on?`<i class="del" data-act="rename" title="تغییر نام">✏️</i>${SHEETS.length>1?`<i class="del" data-act="delete" title="حذف">×</i>`:''}`:''}</button>`;
-  }).join('')+`<button class="add" data-act="add" title="سربرگ جدید">+</button>`;
-  
+    // در تب تجدید حجم: فقط انتخاب سربرگ — بدون تغییر نام و حذف
+    const actions = (!forHarvest && on)
+      ? (`<i class="del" data-act="rename" title="تغییر نام">✏️</i>` + (SHEETS.length>1?`<i class="del" data-act="delete" title="حذف">×</i>`:''))
+      : '';
+    return `<button class="tab ${on?'on':''}" data-id="${s.id}" data-act="switch"><span class="tname">${esc(s.name)}${badge}</span>${actions}</button>`;
+  }).join('') + (forHarvest ? '' : `<button class="add" data-act="add" title="سربرگ جدید">+</button>`);
+
   document.querySelectorAll('.sheetbar').forEach(b=>{
-    b.innerHTML = html;
-    b.querySelectorAll('button').forEach(btn=>{
+    const forHarvest = !!(b.closest && b.closest('#sec-h'));
+    b.innerHTML = makeHtml(forHarvest);
+    b.querySelectorAll('button, i[data-act]').forEach(btn=>{
       btn.onclick=e=>{
         e.stopPropagation();
-        const t=e.target,act=t.dataset.act||btn.dataset.act,id=+(btn.dataset.id||0);
-        if(act==='add')addSheet(); else if(act==='rename')renameSheet(id); else if(act==='delete')deleteSheet(id); else if(act==='switch'&&id!==activeId)switchSheet(id);
+        const t=e.target.closest('[data-act]')||e.target;
+        const act=t.dataset.act||btn.dataset.act;
+        const id=+(btn.dataset.id||t.dataset.id||btn.closest('[data-id]')?.dataset?.id||0);
+        // امنیت: در تجدید حجم rename/delete/add اجرا نشود
+        if(forHarvest && (act==='rename'||act==='delete'||act==='add')) return;
+        if(act==='add')addSheet();
+        else if(act==='rename')renameSheet(id);
+        else if(act==='delete')deleteSheet(id);
+        else if(act==='switch'&&id!==activeId)switchSheet(id);
       };
     });
   });
@@ -1763,7 +1904,7 @@ function addSheet(){
         return;
       }
       const id = SHEETS.reduce((a, s) => Math.max(a, s.id), 0) + 1;
-      SHEETS.push({ id, name: nm, mode, trees: [], map: null, track: [], uid: (typeof rid==='function'?rid():Math.random().toString(36).slice(2)+Date.now().toString(36)), ua: Date.now() });
+      SHEETS.push({ id, name: nm, mode, trees: [], map: null, track: [], projectSaved:false, uid: (typeof rid==='function'?rid():Math.random().toString(36).slice(2)+Date.now().toString(36)), ua: Date.now() });
       switchSheet(id);
       store();
     };
@@ -1799,8 +1940,15 @@ function switchSheet(id,skipSave){
   const oldSIM=SIM;SIM=false;clr();SIM=oldSIM;updSimBtn();
   cur=null;
   updateWalkUI();
-  renderTabs();updateMapInfo();draw();mapCheck();updateGpsUI();
+  renderTabs();updateMapInfo();draw();
+  // نقشه ماهواره‌ای را حتماً با دادهٔ همین سربرگ تازه کن
+  try{
+    if(typeof satOverlays!=='undefined' && satOverlays && satMap){ try{satMap.removeLayer(satOverlays)}catch(e){} satOverlays=null; }
+    if(typeof refreshSatOverlays==='function') refreshSatOverlays();
+  }catch(e){}
+  mapCheck();updateGpsUI();
   updateModeLock();
+  try{updateHarvestGate()}catch(e){}
 }
 
 let BK={n:0,dt:''};try{BK=JSON.parse(localStorage.getItem('bk')||'{"n":0,"dt":""}')}catch(e){}
@@ -2143,7 +2291,12 @@ async function cacheSatArea(silent){
   for(let i=0;i<jobs.length;i++){
     const {z,x,y}=jobs[i];
     const key=satLayerKey+':'+z+'/'+y+'/'+x;
-    const url=conf.url.replace('{z}',z).replace('{y}',y).replace('{x}',x);
+    let url=conf.url.replace('{z}',z).replace('{y}',y).replace('{x}',x);
+    if(conf.mapir){
+      const mk=getMapirKey();
+      if(!mk){ fail++; continue; }
+      url = url + (url.indexOf('?')>=0?'&':'?') + 'x-api-key=' + encodeURIComponent(mk);
+    }
     try{
       if(await satGetTile(key)){ ok++; }
       else{
@@ -2198,6 +2351,23 @@ function bindSatUi(){
   });
   if(bFab && !bFab.dataset.sat){ bFab.dataset.sat='1'; bFab.onclick=()=>goToMyLocation(); }
   if(bRoute && !bRoute.dataset.sat){ bRoute.dataset.sat='1'; bRoute.onclick=()=>routeToBoundary(); }
+  const bShow=document.getElementById('btnSatShowMap');
+  if(bShow && !bShow.dataset.sat){
+    bShow.dataset.sat='1';
+    bShow.onclick=async()=>{
+      try{
+        // روشن کردن نقشه ماهواره‌ای در صورت نیاز
+        if(typeof satOn!=='undefined' && !satOn){ await toggleSatMap(true); }
+        else { await ensureSatMap(); refreshSatOverlays(); }
+        // برگشت به محدودهٔ ورودی (فایل یا دستی)
+        if(typeof fitSatView==='function') fitSatView(false);
+        else if(satMap && typeof collectMapBoundsLatLng==='function'){
+          const pts=collectMapBoundsLatLng();
+          if(pts.length>=2) satMap.fitBounds(pts,{padding:[30,30],maxZoom:17});
+        }
+      }catch(e){ alert('نمایش محدوده ممکن نشد.'); }
+    };
+  }
   if(bKey && !bKey.dataset.sat){
     bKey.dataset.sat='1';
     bKey.onclick=()=>{
@@ -2233,49 +2403,83 @@ function routeToBoundary(){
   const z=MAPZ||39;
   let pts=[];
   (MAPP||[]).forEach(p=>{(p.o||[]).forEach(q=>{const llpt=utmToLatLng(q[0],q[1],z); if(llpt) pts.push(llpt);});});
-  if(!pts.length){ alert('ابتدا محدوده (پلیگون) را بارگذاری کنید.'); return; }
+  if(!pts.length){ alert('ابتدا محدوده (پلیگون) را بارگذاری یا به‌صورت دستی وارد کنید.'); return; }
   let la=0,ln=0; pts.forEach(p=>{la+=p[0];ln+=p[1]}); la/=pts.length; ln/=pts.length;
-  const dest=[la,ln];
+  const destLat=la, destLng=ln;
+
+  const m=document.getElementById('routeChoiceModal');
+  if(!m){
+    // fallback
+    openPhoneMaps(destLat, destLng);
+    return;
+  }
+  m.classList.remove('hid');
+  const close=()=>m.classList.add('hid');
+  const cancel=document.getElementById('routeChoiceCancel');
+  if(cancel) cancel.onclick=close;
+  m.querySelectorAll('[data-route]').forEach(b=>{
+    b.onclick=()=>{
+      close();
+      const k=b.dataset.route;
+      if(k==='phone') openPhoneMaps(destLat, destLng);
+      else drawRouteOnApp(destLat, destLng);
+    };
+  });
+  // کلیک روی پس‌زمینه = انصراف
+  m.onclick=e=>{ if(e.target===m) close(); };
+}
+
+function openPhoneMaps(destLat, destLng){
+  // geo: باعث می‌شود گوشی فهرست برنامه‌های نقشه/مسیریابی نصب‌شده را نشان دهد
+  const q = destLat.toFixed(6)+','+destLng.toFixed(6);
+  const geo = 'geo:'+q+'?q='+encodeURIComponent(q);
+  try{
+    const a=document.createElement('a');
+    a.href=geo;
+    a.style.display='none';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }catch(e){
+    // وب‌پشتیبان عمومی
+    try{ window.open('https://maps.google.com/maps?daddr='+q, '_blank'); }
+    catch(x){ location.href='https://maps.google.com/maps?daddr='+q; }
+  }
+}
+
+function drawRouteOnApp(destLat, destLng){
   if(!(typeof cur!=='undefined' && cur && cur.lat)){
-    alert('موقعیت فعلی در دسترس نیست. مختصات/GPS را روشن کنید.');
+    alert('برای رسم مسیر داخل برنامه، موقعیت فعلی (GPS) لازم است.\nمختصات را روشن کنید یا از «برنامهٔ مسیریابی گوشی» استفاده کنید.');
     try{ if(typeof startGPS==='function') startGPS(); }catch(e){}
     return;
   }
   const origin=[cur.lat, cur.lng];
+  const dest=[destLat, destLng];
   (async()=>{
     try{
-      if(!satOn){ satOn=true; await ensureSatMap(); }
+      if(typeof satOn!=='undefined' && !satOn){ satOn=true; await ensureSatMap(); }
       else { await ensureSatMap(); }
-      // حذف مسیر قبلی
       if(window._satRouteLine){ try{satMap.removeLayer(window._satRouteLine)}catch(e){} window._satRouteLine=null; }
       if(window._satRouteEnd){ try{satMap.removeLayer(window._satRouteEnd)}catch(e){} window._satRouteEnd=null; }
       let linePts=[origin, dest];
       let distInfo='';
-      // تلاش برای مسیر جاده‌ای با OSRM
       try{
         const url='https://router.project-osrm.org/route/v1/driving/'+origin[1]+','+origin[0]+';'+dest[1]+','+dest[0]+'?overview=full&geometries=geojson';
-        const r=await fetch(url);
-        if(r.ok){
-          const j=await r.json();
-          if(j.routes && j.routes[0] && j.routes[0].geometry){
-            linePts=j.routes[0].geometry.coordinates.map(c=>[c[1],c[0]]);
-            const km=(j.routes[0].distance||0)/1000;
-            const min=(j.routes[0].duration||0)/60;
-            distInfo='حدود '+toFa(Math.round(km*10)/10)+' کیلومتر، '+toFa(Math.round(min))+' دقیقه';
-          }
+        const r=await fetch(url,{signal:AbortSignal.timeout?AbortSignal.timeout(8000):undefined});
+        const j=await r.json();
+        if(j&&j.routes&&j.routes[0]&&j.routes[0].geometry&&j.routes[0].geometry.coordinates){
+          linePts=j.routes[0].geometry.coordinates.map(c=>[c[1],c[0]]);
+          const km=(j.routes[0].distance||0)/1000;
+          const min=Math.round((j.routes[0].duration||0)/60);
+          distInfo=' حدود '+km.toFixed(1)+' کیلومتر، '+min+' دقیقه';
         }
       }catch(e){}
-      window._satRouteLine=L.polyline(linePts,{color:'#ff9800',weight:4,opacity:0.95}).addTo(satMap);
-      window._satRouteEnd=L.circleMarker(dest,{radius:8,color:'#fff',weight:2,fillColor:'#e53935',fillOpacity:1})
-        .bindPopup('مرکز محدوده'+(distInfo?('<br>'+distInfo):'')).addTo(satMap);
+      window._satRouteLine=L.polyline(linePts,{color:'#1565c0',weight:5,opacity:0.9}).addTo(satMap);
+      window._satRouteEnd=L.circleMarker(dest,{radius:8,color:'#fff',weight:2,fillColor:'#c62828',fillOpacity:1})
+        .bindPopup('مرکز محدوده'+distInfo).addTo(satMap);
       try{ satMap.fitBounds(L.latLngBounds(linePts),{padding:[40,40]}); }catch(e){}
-      refreshSatOverlays();
-      // مسیر را دوباره بالای overlays بکش
-      if(window._satRouteLine) window._satRouteLine.bringToFront();
-      const st=$('#satCacheStatus');
-      if(st) st.textContent=distInfo?('مسیر تا محدوده: '+distInfo):'مسیر مستقیم تا مرکز محدوده ترسیم شد';
     }catch(e){
-      alert(e.message||'خطا در مسیریابی');
+      alert('رسم مسیر روی نقشه ممکن نشد. از «برنامهٔ مسیریابی گوشی» استفاده کنید.');
     }
   })();
 }
@@ -2538,6 +2742,7 @@ window.undoLast=()=>{
   lastSavedId = null;
   clearTimeout(saveTimer);
   store(); draw(); updateModeLock();
+  try{updateHarvestGate()}catch(e){}
 };
 
 let pendingSave=null;
@@ -2973,9 +3178,11 @@ function draw(){
   
   updateModeLock();
   try{mapCheck(true)}catch(e){}
+  try{updateHarvestGate()}catch(e){}
 }
 window.del=id=>{if(!confirm('این درخت حذف شود؟'))return;T=T.filter(t=>t.id!==id);store();draw();updateModeLock();};
 $('#sh').onclick=()=>{
+  if(!isProjectSaved()){ alert('ابتدا سربرگ فعلی را از تب سیاهه ذخیره کنید.'); updateHarvestGate(); return; }
   const t=T.find(x=>x.id==$('#hs2').value);if(!t)return;
   const d2=N('#d2'),h2=N('#h2');
   if(d2>0&&h2>0){t.d2=d2;t.h2=h2;t.v2=volSp(t.sp,d2,h2)}
@@ -3669,18 +3876,80 @@ function quickRowHtml(r) { r = r || {};
 
 document.getElementById('btnQuickEntry').onclick = () => openQuickEntry();
 function saveSnaps(){try{localStorage.setItem('snaps',JSON.stringify(SNAPS));stWarn(false)}catch(e){stWarn(true)}}
-function renderSnaps(){const el=$('#savedList');if(!el)return;if(!SNAPS.length){el.innerHTML='<div class="m">هنوز موردی ذخیره نشده است.</div>';return}el.innerHTML=SNAPS.slice().reverse().map(s=>`<div class="sitem"><div class="sinfo"><b>${esc(s.name)}</b><small>${toFa((s.trees||[]).length)} درخت</small></div><button class="o" style="padding:4px 10px;font-size:12px" data-load="${s.id}">باز کردن</button><button class="x" data-del="${s.id}">×</button></div>`).join('');el.querySelectorAll('[data-load]').forEach(b=>b.onclick=()=>loadSnap(+b.dataset.load));el.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{const id=+b.dataset.del;if(!confirm('حذف شود؟'))return;SNAPS=SNAPS.filter(s=>s.id!==id);saveSnaps();renderSnaps()});}
+function renderSnaps(){ try{updateHarvestGate()}catch(e){} const el=$('#savedList');if(!el)return;if(!SNAPS.length){el.innerHTML='<div class="m">هنوز موردی ذخیره نشده است.</div>';return}el.innerHTML=SNAPS.slice().reverse().map(s=>`<div class="sitem"><div class="sinfo"><b>${esc(s.name)}</b><small>${toFa((s.trees||[]).length)} درخت</small></div><button class="o" style="padding:4px 10px;font-size:12px" data-load="${s.id}">باز کردن</button><button class="x" data-del="${s.id}">×</button></div>`).join('');el.querySelectorAll('[data-load]').forEach(b=>b.onclick=()=>loadSnap(+b.dataset.load));el.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{const id=+b.dataset.del;if(!confirm('حذف شود؟'))return;SNAPS=SNAPS.filter(s=>s.id!==id);saveSnaps();renderSnaps()});}
 $('#saveSnap').onclick=()=>{
+  saveActive();
   if(!T.length&&!MAPP.length){alert('سربرگ خالی است.');return}
   const sh=getActiveSheet(),currentName=sh.name;
-  const name=prompt('نام ذخیره:',currentName); if(name===null)return;
+  const name=prompt('نام ذخیرهٔ پروژه:',currentName); if(name===null)return;
   const nm=name.trim()||currentName;
-  const existing=SNAPS.find(s=>s.name===nm);
-  if(existing){ if(!confirm('جایگزین شود؟'))return; existing.date=new Date().toLocaleDateString('fa-IR'); existing.trees=JSON.parse(JSON.stringify(T)); existing.map=MAPP.length?JSON.parse(JSON.stringify({p:MAPP,z:MAPZ,nm:MAPNM})):null; saveSnaps(); renderSnaps(); }
-  else{ const id=SNAPS.reduce((a,s)=>Math.max(a,s.id),0)+1; SNAPS.push({id,name:nm,date:new Date().toLocaleDateString('fa-IR'),trees:JSON.parse(JSON.stringify(T)),map:MAPP.length?JSON.parse(JSON.stringify({p:MAPP,z:MAPZ,nm:MAPNM})):null}); saveSnaps(); renderSnaps(); }
-  if(nm!==currentName){if(SHEETS.some(x=>x!==sh&&x.name===nm)){alert('سربرگ دیگری با این نام وجود دارد؛ نام سربرگ تغییر نکرد.')}else{sh.name=nm;saveActive();renderTabs()}}
+  const payload={
+    name:nm,
+    date:new Date().toLocaleDateString('fa-IR'),
+    sheetUid:sh.uid||null,
+    mode:sh.mode||'garden',
+    volClass:sh.volClass||'general',
+    trees:deepClone(T),
+    map:MAPP.length?deepClone({p:MAPP,z:MAPZ,nm:MAPNM}):null,
+    track:TRACK.length?deepClone(TRACK):[]
+  };
+  const existing=SNAPS.find(s=>s.name===nm || (sh.uid && s.sheetUid===sh.uid));
+  if(existing){
+    if(!confirm('این نام قبلاً ذخیره شده. جایگزین شود؟'))return;
+    Object.assign(existing, payload);
+  } else {
+    const id=SNAPS.reduce((a,s)=>Math.max(a,s.id||0),0)+1;
+    SNAPS.push(Object.assign({id}, payload));
+  }
+  saveSnaps(); renderSnaps();
+  markProjectSaved(sh, {name:nm});
+  if(nm!==currentName){
+    if(SHEETS.some(x=>x!==sh&&x.name===nm)){alert('سربرگ دیگری با این نام هست؛ نام سربرگ عوض نشد.');}
+    else { sh.name=nm; renderTabs(); }
+  }
+  const msg=$('#snapMsg'); if(msg){ msg.textContent='✓ پروژه «'+nm+'» ذخیره شد — تجدید حجم فعال است.'; setTimeout(()=>{try{if(msg.textContent.indexOf('ذخیره')>=0)msg.textContent=''}catch(e){}},4000); }
+  store();
+  updateHarvestGate();
 };
-function loadSnap(id){const s=SNAPS.find(x=>x.id===id);if(!s)return;const existingSheet=SHEETS.find(sh=>sh.name===s.name);if(existingSheet){if(!confirm('جایگزین شود؟'))return;saveActive();existingSheet.trees=JSON.parse(JSON.stringify(s.trees||[]));existingSheet.map=s.map?JSON.parse(JSON.stringify(s.map)):null;switchSheet(existingSheet.id,true);return;}if(!confirm('سربرگ جدید باز شود؟'))return;const nid=SHEETS.reduce((a,x)=>Math.max(a,x.id),0)+1;SHEETS.push({id:nid,name:s.name,trees:JSON.parse(JSON.stringify(s.trees||[])),map:s.map?JSON.parse(JSON.stringify(s.map)):null});switchSheet(nid);}
+function loadSnap(id){
+  const s=SNAPS.find(x=>x.id===id); if(!s)return;
+  saveActive();
+  // ترجیح: همان سربرگ با uid مشترک
+  let sh = s.sheetUid ? SHEETS.find(x=>x.uid===s.sheetUid) : null;
+  if(!sh) sh = SHEETS.find(x=>x.name===s.name);
+  if(sh){
+    if(!confirm('دادهٔ ذخیره‌شده روی سربرگ «'+sh.name+'» بارگذاری شود؟'))return;
+    sh.trees = deepClone(s.trees||[]);
+    sh.map = s.map ? deepClone(s.map) : null;
+    sh.track = s.track ? deepClone(s.track) : [];
+    if(s.mode) sh.mode = s.mode;
+    if(s.volClass) sh.volClass = s.volClass;
+    sh.projectSaved = true;
+    sh.snapName = s.name;
+    switchSheet(sh.id, true);
+    store();
+    updateHarvestGate();
+    return;
+  }
+  if(!confirm('سربرگ جدید از روی ذخیره باز شود؟'))return;
+  const nid = SHEETS.reduce((a,x)=>Math.max(a,x.id),0)+1;
+  SHEETS.push({
+    id:nid,
+    name:s.name,
+    mode:s.mode||'garden',
+    volClass:s.volClass||'general',
+    trees:deepClone(s.trees||[]),
+    map:s.map?deepClone(s.map):null,
+    track:s.track?deepClone(s.track):[],
+    uid:s.sheetUid||(typeof rid==='function'?rid():Math.random().toString(36).slice(2)+Date.now().toString(36)),
+    projectSaved:true,
+    snapName:s.name,
+    ua:Date.now()
+  });
+  switchSheet(nid, true);
+  store();
+  updateHarvestGate();
+}
 
 renderTabs();updateMapInfo();renderSnaps();updSimBtn();renderRecent();
 $('#refType').value=refType;
@@ -3917,7 +4186,7 @@ document.querySelectorAll('nav button').forEach(b=>{
   b.onclick=()=>{
     if (b.classList.contains('on')) {
         document.body.classList.add('home-mode');
-        document.body.dataset.tab = 'home';
+        document.body.dataset.tab = 'home'; try{updateHarvestGate()}catch(e){};
         document.dispatchEvent(new Event('hktab'));
         document.querySelectorAll('nav button').forEach(x=>x.classList.remove('on'));
         ['m','l','h','a'].forEach(k=>{const s=document.getElementById('sec-'+k);if(s)s.classList.add('hid')});
@@ -3940,7 +4209,7 @@ document.querySelectorAll('nav button').forEach(b=>{
             }
         });
         
-        document.body.dataset.tab=b.dataset.t;
+        document.body.dataset.tab=b; try{updateHarvestGate()}catch(e){} 
         document.dispatchEvent(new Event('hktab'));
         // با ورود به تب AI تاریخچه را از حافظه تازه کن
         if(b.dataset.t==='a'){
@@ -3956,7 +4225,7 @@ document.querySelectorAll('nav button').forEach(b=>{
   };
 });
 
-document.getElementById('app-header').onclick=()=>{document.body.classList.add('home-mode');document.body.dataset.tab='home';document.dispatchEvent(new Event('hktab'));document.querySelectorAll('nav button').forEach(x=>x.classList.remove('on'));['m','l','h','a'].forEach(k=>{const e=document.getElementById('sec-'+k);if(e)e.classList.add('hid')});scrollTo(0,0)};
+document.getElementById('app-header').onclick=()=>{document.body.classList.add('home-mode');document.body.dataset.tab='home'; try{updateHarvestGate()}catch(e){};document.dispatchEvent(new Event('hktab'));document.querySelectorAll('nav button').forEach(x=>x.classList.remove('on'));['m','l','h','a'].forEach(k=>{const e=document.getElementById('sec-'+k);if(e)e.classList.add('hid')});scrollTo(0,0)};
 document.addEventListener('visibilitychange',()=>{if(document.hidden){try{saveActive()}catch(e){}}});
 window.addEventListener('beforeunload',()=>{try{saveActive()}catch(e){}});
 
@@ -4329,6 +4598,21 @@ const btn=(id,t,css)=>'<button id="'+id+'" type="button" style="flex:1;'+(css||'
 const idb=()=>new Promise((res,rej)=>{const r=indexedDB.open('sosbox',1);r.onupgradeneeded=()=>r.result.createObjectStore('c',{keyPath:'k'});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
 const idbPut=async v=>{const d=await idb();return new Promise((res,rej)=>{const t=d.transaction('c','readwrite');t.objectStore('c').put(v);t.oncomplete=res;t.onerror=()=>rej(t.error)})};
 const idbAll=async()=>{const d=await idb();return new Promise((res,rej)=>{const r=d.transaction('c').objectStore('c').getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})};
+const idbDel=async k=>{const d=await idb();return new Promise((res,rej)=>{const t=d.transaction('c','readwrite');t.objectStore('c').delete(k);t.oncomplete=res;t.onerror=()=>rej(t.error)})};
+async function purgeOldSOS(keepSid){
+  try{
+    const all=await idbAll();
+    const now=Date.now();
+    for(const c of all){
+      // آپلودشده‌ها یا قدیمی‌تر از ۳ روز یا متعلق به نشست‌های دیگر
+      const old = c.t && (now-c.t>3*24*3600e3);
+      const done = c.up;
+      const other = keepSid && c.sid && c.sid!==keepSid && done;
+      if(done || old || other){ try{ await idbDel(c.k) }catch(e){} }
+    }
+  }catch(e){}
+}
+
 
 function renderCard(){
   if(!card)return;
@@ -4371,7 +4655,7 @@ if(card)card.onclick=e=>{
   if(a==='ask')openConfirm();
   else if(a==='cfg')openCfg();
   else if(a==='save')saveRec(b.dataset.sid);
-  else if(a==='call'){c.nums[0]?location.href='tel:'+c.nums[0]:openCfg()}
+  else if(a==='call'){if(!c.nums[0])openCfg();else{try{const a2=document.createElement('a');a2.href='tel:'+c.nums[0];a2.click()}catch(e){location.href='tel:'+c.nums[0]}}}
   else if(a==='sms'){c.nums.length?location.href=smsLink():openCfg()}
   else if(a==='end')openEnd();
 };
@@ -4435,9 +4719,22 @@ function startSOS(){
   if(cur)st.last=[+cur.lat.toFixed(6),+cur.lng.toFixed(6),Date.now()];
   seq=0;fl={rec:null,net:null,err:'',sms:c.nums.length?null:'شماره‌ای تعریف نشده'};
   jset('sosActive',st);localStorage.setItem('sosLast',st.id);
-  closeDlg();renderCard();tick();tickT=setInterval(tick,5000);record();lock();
+  closeDlg();renderCard();tick();tickT=setInterval(tick,5000);
+  // اول ضبط را قطعی شروع کن، بعد تماس — تا tel: ضبط را نکشد
+  Promise.resolve(record()).then(()=>lock()).catch(()=>lock());
   if(c.nums.length)smsAuto(smsText()).then(r=>{fl.sms=r.ok?true:r.err;stat()});
-  if(c.nums[0])location.href='tel:'+c.nums[0];
+  if(c.nums[0]){
+    const num=c.nums[0];
+    setTimeout(()=>{
+      try{
+        const a=document.createElement('a');
+        a.href='tel:'+num; a.style.display='none';
+        document.body.appendChild(a); a.click(); a.remove();
+      }catch(e){
+        try{ location.href='tel:'+num }catch(x){}
+      }
+    }, 700);
+  }
 }
 async function lock(){try{wl=await navigator.wakeLock.request('screen')}catch(e){}}
 
@@ -4448,7 +4745,7 @@ async function record(){
     const mimes=v?['video/webm;codecs=vp8,opus','video/webm','video/mp4']:['audio/webm;codecs=opus','audio/webm','audio/mp4'];
     const mime=mimes.find(m=>window.MediaRecorder&&MediaRecorder.isTypeSupported(m))||'';
     rec=new MediaRecorder(stream,Object.assign(mime?{mimeType:mime}:{},v?{videoBitsPerSecond:400000}:{audioBitsPerSecond:32000}));
-    rec.ondataavailable=e=>{if(e.data&&e.data.size){const i=seq++;idbPut({k:sid+':'+pad(i),sid,i,blob:e.data,mime:rec.mimeType||mime,up:0}).catch(()=>{})}};
+    rec.ondataavailable=e=>{if(e.data&&e.data.size){const i=seq++;idbPut({k:sid+':'+pad(i),sid,i,blob:e.data,mime:rec.mimeType||mime,up:0,t:Date.now()}).catch(()=>{})}};
     rec.onstop=()=>{fl.rec=false};
     rec.start(5000);fl.rec=true;fl.err='';
   }catch(e){fl.rec=false;fl.err=e.name==='NotAllowedError'?'مجوز میکروفن داده نشده':(e.name||'خطا')}
@@ -4462,7 +4759,7 @@ async function uploadChunks(){
     for(const c of list){
       const ext=(c.mime||'').includes('mp4')?'mp4':'webm';
       const r=await fetch(SB.url+'/storage/v1/object/sos/'+st.uid+'/'+st.id+'/'+pad(c.i)+'.'+ext,{method:'POST',headers:{apikey:SB.key,Authorization:'Bearer '+SB.token(),'Content-Type':c.blob.type||'application/octet-stream','x-upsert':'true'},body:c.blob});
-      if(r.ok){c.up=1;await idbPut(c)}else break;
+      if(r.ok){ try{await idbDel(c.k)}catch(e){ c.up=1; try{await idbPut(c)}catch(x){} } }else break;
     }
   }catch(e){}
   upBusy=false;
@@ -4512,7 +4809,9 @@ async function endSOS(){
   try{await SB.api('/rest/v1/sos_alerts?id=eq.'+id,'PATCH',{active:false,safe_at:iso,updated_at:iso},{Prefer:'return=minimal'})}
   catch(e){try{await SB.api('/rest/v1/sos_alerts?id=eq.'+id,'PATCH',{active:false,updated_at:iso},{Prefer:'return=minimal'})}catch(x){}}
   await new Promise(r=>setTimeout(r,900));await uploadChunks();
+  const doneId=id;
   st=null;rec=null;stream=null;localStorage.removeItem('sosActive');renderCard();
+  try{ await purgeOldSOS(doneId); }catch(e){}
 }
 async function resume(){
   const a=jget('sosActive',null),u=user();
@@ -4955,7 +5254,7 @@ function listenSR(){
   });
 }
 
-const speechClean=t=>String(t||'').replace(/https?:\/\/\S+/g,' ').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu,'').replace(/[*#_`>~|]/g,' ').replace(/[….]{2,}/g,'، ').replace(/\s*\n+\s*/g,'. ').replace(/\s{2,}/g,' ').trim();
+const speechClean=t=>String(t||'').replace(/https?:\/\/\S+/g,' ').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu,'').replace(/[*#_`>~|]/g,' ').replace(/[…]{2,}/g,'، ').replace(/\.{3,}/g,'، ').replace(/\s*\n+\s*/g,' ').replace(/\s{2,}/g,' ').trim();
 const TTS_MAX=1500;
 function splitSmart(t,max){
   const out=[];let cur='';
@@ -4974,11 +5273,18 @@ function splitSmart(t,max){
 }
 function ttsChunks(t){
   t=t.slice(0,TTS_MAX);
-  const s=t.match(/[^.!؟?؛]+[.!؟?؛]*/g)||[t];let first='';
-  while(s.length&&first.length<40)first+=(first?' ':'')+s.shift().trim();
-  const out=[];if(first)out.push(...splitSmart(first,600));
-  const rest=s.join(' ').trim();if(rest)out.push(...splitSmart(rest,600));
-  return out;
+  // تکهٔ اول کوتاه → صدای سرور زودتر شروع می‌شود؛ بقیهٔ متن تکه‌های بزرگ‌تر و پیوسته
+  const out=[];
+  if(t.length<=120){ out.push(t); return out; }
+  // ترجیح: بعد از ویرگول/فاصله نزدیک ۱۲۰ کاراکتر
+  let cut=120;
+  const win=t.slice(80,140);
+  let k=Math.max(win.lastIndexOf('،'), win.lastIndexOf(','), win.lastIndexOf(' '));
+  if(k>0) cut=80+k; else cut=Math.min(120,t.length);
+  out.push(t.slice(0,cut).trim());
+  const rest=t.slice(cut).trim();
+  if(rest) out.push(...splitSmart(rest, 450));
+  return out.filter(Boolean);
 }
 
 /*AUDIO-START*/
@@ -4988,19 +5294,31 @@ function pctx(){
   if(!V.pc||V.pc.state==='closed'){V.pc=new AC();V.pEnd=0;V.pSrc=new Set()}
   return V.pc;
 }
+function releaseAudioCtx(){
+  try{
+    if(V.pSrc){V.pSrc.forEach(x=>{try{x.stop()}catch(e){}});V.pSrc=new Set()}
+    V.pEnd=0;
+    if(V.pc && V.pc.state!=='closed'){
+      const c=V.pc; V.pc=null;
+      try{c.close()}catch(e){}
+    }
+  }catch(e){}
+}
 function unlockAudio(){
   try{if(!V.player)V.player=new Audio();V.player.src=SILENT;const p=V.player.play();if(p&&p.catch)p.catch(()=>{})}catch(e){}
   try{const c=pctx();if(c.state==='suspended')c.resume();const b=c.createBuffer(1,1,22050),x=c.createBufferSource();x.buffer=b;x.connect(c.destination);x.start(0)}catch(e){}
 }
 async function ttsBlob(text){
-  // مستقیم به edge function تا کد 429 را درست بگیریم
   if(!window.SB||!SB.token||!SB.token()) throw new Error('login');
-  await SB.fresh();
+  // فقط اگر توکن نزدیک انقضا است تازه کن — در غیر این صورت تأخیر اضافه نکن
+  try{
+    if(typeof S!=='undefined' && S && S.exp && Date.now()>S.exp-60000) await SB.fresh();
+  }catch(e){ try{await SB.fresh()}catch(e2){} }
   const r = await fetch(SB.url+'/functions/v1/read-table',{
     method:'POST',
     headers:{'Content-Type':'application/json',apikey:SB.key,Authorization:'Bearer '+SB.token()},
     body:JSON.stringify({tts:{text}}),
-    signal: AbortSignal.timeout ? AbortSignal.timeout(25000) : undefined
+    signal: AbortSignal.timeout ? AbortSignal.timeout(18000) : undefined
   });
   const j = await r.json().catch(()=>({}));
   if(r.status===429){
@@ -5027,7 +5345,7 @@ async function playBlob(blob){
     const ab=await blob.arrayBuffer();
     const buf=await new Promise((res,rej)=>{const p=c.decodeAudioData(ab,res,rej);if(p&&p.catch)p.catch(rej)});
     const x=c.createBufferSource();x.buffer=buf;x.connect(c.destination);
-    const t=Math.max(c.currentTime+0.03,V.pEnd||0);x.start(t);V.pEnd=t+buf.duration;V.pSrc.add(x);
+    const t=Math.max(c.currentTime+0.01,V.pEnd||0);x.start(t);V.pEnd=t+buf.duration;V.pSrc.add(x);
     return{ended:new Promise(r=>{x.onended=()=>{V.pSrc.delete(x);r(true)}})};
   }catch(e){
     const u=URL.createObjectURL(blob),ok=await playUrl(u);URL.revokeObjectURL(u);   // راه‌حل جایگزین: المنت audio
@@ -5092,20 +5410,36 @@ async function speakBrowser(parts,sp){
   const sy=window.speechSynthesis;
   if(!sy||sp!==V.sp) return parts;
   const voice=await persianVoice();
-  if(!voice) return parts; // گوشی فارسی ندارد — رد شو
+  if(!voice) return parts;
   try{sy.cancel()}catch(e){}
+  // یک متن پیوسته؛ فقط اگر خیلی بلند بود روی فاصله بشکن — نه روی هر نقطه (جلوگیری از مکث مصنوعی)
+  const full=parts.map(p=>String(p||'').trim()).filter(Boolean).join(' ');
   const pieces=[];
-  parts.forEach(p=>splitSmart(String(p||''),160).forEach(x=>{if(x.trim())pieces.push(x.trim())}));
+  if(full.length<=500) pieces.push(full);
+  else {
+    let s=full;
+    while(s.length>500){
+      let k=Math.max(s.lastIndexOf('،',500), s.lastIndexOf(',',500), s.lastIndexOf(' ',500));
+      if(k<200) k=500;
+      pieces.push(s.slice(0,k).trim());
+      s=s.slice(k).trim();
+    }
+    if(s) pieces.push(s);
+  }
   for(let i=0;i<pieces.length;i++){
     if(sp!==V.sp){try{sy.cancel()}catch(e){} return [];}
     const x=pieces[i];
     const ok=await new Promise(res=>{
       let fin=false;
-      const done=v=>{if(fin)return;fin=true;clearTimeout(t);res(v)};
+      const done=v=>{if(fin)return;fin=true;clearTimeout(tm);res(v)};
       const u=new SpeechSynthesisUtterance(x);
-      u.lang=voice.lang||'fa-IR'; u.voice=voice; u.rate=1;
-      const t=setTimeout(()=>done(false), Math.max(9000, x.length*220));
-      u.onend=()=>done(true); u.onerror=()=>done(false);
+      u.lang=voice.lang||'fa-IR';
+      try{u.voice=voice}catch(e){}
+      u.rate=1.05; // کمی سریع‌تر = طبیعی‌تر و کمتر حس مکث
+      u.pitch=1;
+      const tm=setTimeout(()=>done(false), Math.max(12000, x.length*180));
+      u.onend=()=>done(true);
+      u.onerror=()=>done(false);
       try{sy.speak(u)}catch(e){done(false)}
     });
     if(!ok) return pieces.slice(i);
@@ -5351,6 +5685,8 @@ function stopSpeak(){
   try{V.player&&V.player.pause()}catch(e){}
   if(V.playRes)V.playRes(false);
   try{window.speechSynthesis&&window.speechSynthesis.cancel()}catch(e){}
+  // بعد از توقف، AudioContext را آزاد کن تا سقف مرورگر پر نشود
+  try{ if(typeof releaseAudioCtx==='function') setTimeout(releaseAudioCtx, 800); }catch(e){}
 }
 
 function endVoice(msg){
@@ -5899,7 +6235,7 @@ Q('#aiBack').onclick=()=>{
   const prev = document.querySelector('nav button[data-t="m"]') || document.querySelector('nav button:not([data-t="a"])');
   if(prev) prev.click();
   else {
-    document.body.dataset.tab='m';
+    document.body.dataset.tab='m'; try{updateHarvestGate()}catch(e){};
     document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on', x.dataset.t==='m'));
     ['m','l','h','a'].forEach(k=>{const e=document.getElementById('sec-'+k); if(e) e.classList.toggle('hid', k!=='m');});
     document.dispatchEvent(new Event('hktab'));
