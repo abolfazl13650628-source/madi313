@@ -391,10 +391,11 @@ body[data-tab="a"] #sec-a:not(.hid){
 #aiVoiceMode{background:var(--ac);color:var(--ac2)}
 #aiVoiceMode.active{background:#c62828;color:#fff;animation:aiPulse 1.5s infinite}
 #aiVoiceMode.listening{background:#2e9d4f;color:#fff}
-#aiSend{display:none;background:var(--ac);color:var(--ac2)}
+#aiSend{display:flex;background:var(--ac);color:var(--ac2);opacity:0;pointer-events:none;visibility:hidden}
 #aiSend:disabled{opacity:.45}
-.aiIn.has #aiSend{display:flex}
-.aiIn.has #aiVoiceMode{display:none}
+.aiIn.has #aiSend{opacity:1;pointer-events:auto;visibility:visible}
+.aiIn.has #aiVoiceMode{opacity:0;pointer-events:none;visibility:hidden}
+/* هر دو دکمه همیشه جای خود را نگه می‌دارند تا نوار نپرد */
 #aiVoiceCfg{position:relative;width:40px;height:40px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--tx);border:1px solid var(--bd);font-size:17px}
 #aiVoicePop{position:fixed;left:12px;right:12px;bottom:96px;z-index:2147483000;background:var(--sf);color:var(--tx);border:1px solid var(--bd);border-radius:18px;padding:12px 14px;box-shadow:0 6px 28px rgba(0,0,0,.22);font-size:13px;max-width:420px;margin:0 auto}
 #aiVoicePop.hid{display:none}
@@ -5227,7 +5228,7 @@ async function blobToWav(blob,fromMs){
   return new Blob([h.buffer,pcm.buffer],{type:'audio/wav'});
 }
 const blobB64=blob=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]||'');r.onerror=rej;r.readAsDataURL(blob)});
-const cleanStt=t=>{t=String(t||'').replace(/\s+/g,' ').trim();return t.length<2||/^[.…،\s]+$/.test(t)?'':t};
+const cleanStt=t=>{t=String(t||'').replace(/\s+/g,' ').replace(/(.)\1{3,}/g,'$1$1').trim();return t.length<2||/^[.…،\s]+$/.test(t)?'':t;};
 async function sttServer(rec){
   let blob=rec.blob,mime=(rec.blob.type||'audio/webm').split(';')[0];
   try{blob=await blobToWav(rec.blob,rec.speechAt);mime='audio/wav'}catch(e){}
@@ -5241,16 +5242,48 @@ function listenSR(){
   return new Promise(res=>{
     if(!SR){res({text:'',err:'no-sr'});return}
     let r;try{r=new SR()}catch(e){res({text:'',err:'no-sr'});return}
-    r.lang='fa-IR';r.interimResults=true;r.continuous=false;
-    let fin='',tmp='',err='',done=false;
-    const end=()=>{if(done)return;done=true;V.cancel=null;V.stopRec=null;clearTimeout(wd);res({text:cleanStt(fin||tmp),err})};
-    r.onresult=e=>{fin='';tmp='';for(let i=0;i<e.results.length;i++){const x=e.results[i];if(x.isFinal)fin+=x[0].transcript;else tmp+=x[0].transcript}inp.value=(fin+' '+tmp).trim()};
-    r.onerror=e=>{err=e.error||'error'};
+    try{r.lang='fa-IR'}catch(e){}
+    try{r.interimResults=true}catch(e){}
+    try{r.continuous=true}catch(e){try{r.continuous=false}catch(x){}}
+    try{r.maxAlternatives=3}catch(e){}
+    let fin='',tmp='',err='',done=false,silenceT=null;
+    const pickAlt=x=>{
+      let best=x[0],bc=(x[0]&&typeof x[0].confidence==='number')?x[0].confidence:0;
+      for(let a=1;a<x.length;a++){
+        const c=x[a].confidence;
+        if(typeof c==='number' && c>bc){best=x[a];bc=c}
+      }
+      return (best&&best.transcript)||'';
+    };
+    const bumpSilence=()=>{
+      clearTimeout(silenceT);
+      silenceT=setTimeout(()=>{try{r.stop()}catch(e){end()}},1800);
+    };
+    const end=()=>{if(done)return;done=true;clearTimeout(silenceT);clearTimeout(wd);V.cancel=null;V.stopRec=null;res({text:cleanStt(fin||tmp),err})};
+    r.onresult=e=>{
+      let f='',im='';
+      for(let i=0;i<e.results.length;i++){
+        const x=e.results[i];
+        const tr=pickAlt(x);
+        if(x.isFinal) f+=tr+' ';
+        else im+=tr+' ';
+      }
+      if(f.trim()) fin=(fin+' '+f).replace(/\s+/g,' ').trim();
+      tmp=im.trim();
+      const show=(fin+(tmp?(' '+tmp):'')).trim();
+      try{inp.value=show; if(typeof grow==='function')grow()}catch(e){}
+      bumpSilence();
+    };
+    r.onerror=e=>{
+      const er=e.error||'error';
+      if(er==='no-speech'||er==='aborted') return;
+      err=er;
+    };
     r.onend=end;
-    const wd=setTimeout(()=>{try{r.abort()}catch(e){}end()},60000);
+    const wd=setTimeout(()=>{try{r.stop()}catch(e){}end()},45000);
     V.cancel=()=>{try{r.abort()}catch(e){}end()};
     V.stopRec=()=>{try{r.stop()}catch(e){end()}};
-    try{r.start()}catch(e){err='start';end()}
+    try{r.start(); bumpSilence()}catch(e){err='start';end()}
   });
 }
 
@@ -5412,15 +5445,20 @@ async function speakBrowser(parts,sp){
   const voice=await persianVoice();
   if(!voice) return parts;
   try{sy.cancel()}catch(e){}
-  // یک متن پیوسته؛ فقط اگر خیلی بلند بود روی فاصله بشکن — نه روی هر نقطه (جلوگیری از مکث مصنوعی)
+  // شروع با تأخیر کوتاه ۱ثانیه (پایدارتر روی موبایل)
+  await sleep(1000);
+  if(sp!==V.sp) return [];
+  // متن پیوسته؛ حداقل حدود ۵۰۰ کاراکتر در هر تکه — بدون مکث روی هر نقطه
   const full=parts.map(p=>String(p||'').trim()).filter(Boolean).join(' ');
   const pieces=[];
-  if(full.length<=500) pieces.push(full);
+  const MIN=500;
+  if(full.length<=MIN) pieces.push(full);
   else {
     let s=full;
-    while(s.length>500){
-      let k=Math.max(s.lastIndexOf('،',500), s.lastIndexOf(',',500), s.lastIndexOf(' ',500));
-      if(k<200) k=500;
+    while(s.length>MIN){
+      // ترجیح شکست روی فاصله/ویرگول نزدیک MIN، نه نقطهٔ جمله
+      let k=Math.max(s.lastIndexOf('،',MIN+80), s.lastIndexOf(',',MIN+80), s.lastIndexOf(' ',MIN+80));
+      if(k<MIN*0.5) k=MIN;
       pieces.push(s.slice(0,k).trim());
       s=s.slice(k).trim();
     }
@@ -5435,14 +5473,16 @@ async function speakBrowser(parts,sp){
       const u=new SpeechSynthesisUtterance(x);
       u.lang=voice.lang||'fa-IR';
       try{u.voice=voice}catch(e){}
-      u.rate=1.05; // کمی سریع‌تر = طبیعی‌تر و کمتر حس مکث
+      u.rate=1.05;
       u.pitch=1;
-      const tm=setTimeout(()=>done(false), Math.max(12000, x.length*180));
+      const tm=setTimeout(()=>done(false), Math.max(15000, x.length*160));
       u.onend=()=>done(true);
       u.onerror=()=>done(false);
       try{sy.speak(u)}catch(e){done(false)}
     });
-    if(!ok) return pieces.slice(i);
+    if(!ok) return parts;
+    // فقط بین تکه‌های بلند ~۱ثانیه فاصله (نه بعد از هر نقطه)
+    if(i<pieces.length-1 && sp===V.sp) await sleep(1000);
   }
   return [];
 }
@@ -5596,7 +5636,7 @@ async function speak(text,sp0,force){
     try{
       if(t==='srv'){
         if(V.ttsOff&&Date.now()-V.ttsOffAt<=300000)continue;
-        const r=await speakServer(parts,sp, mode!=='ai' ? 1300 : 0);
+        const r=await speakServer(parts,sp, mode==='ai' ? 4000 : 1500);
         parts=r.rest;
         if(r.err)srvFail(r.err);else{V.ttsFail=0;V.ttsOff=false}
       }else if(t==='br'){
@@ -6244,8 +6284,12 @@ Q('#aiBack').onclick=()=>{
 };
 
 function grow(){
-  inp.style.height='auto';inp.style.height=Math.min(inp.scrollHeight,128)+'px';
-  aiIn.classList.toggle('has',!!inp.value.trim());
+  // ارتفاع را بدون ریست ناگهانی تنظیم کن تا نوار پایین نپرد
+  const next=Math.min(Math.max(inp.scrollHeight,40),128);
+  const curH=parseInt(inp.style.height,10)||40;
+  if(Math.abs(curH-next)>1) inp.style.height=next+'px';
+  const has=!!inp.value.trim();
+  if(aiIn.classList.contains('has')!==has) aiIn.classList.toggle('has',has);
 }
 let lastV='';setInterval(()=>{if(inp.value!==lastV){lastV=inp.value;grow()}},200);
 inp.addEventListener('input',()=>{lastV=inp.value;grow()});
