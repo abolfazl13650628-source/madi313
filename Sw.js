@@ -1,6 +1,6 @@
-/* Service Worker — کش برنامه و کتابخانه‌ها برای کار آفلاین */
-const V = 'hirkani-v3';
-const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'forest.jpg'];
+/* Service Worker — hirkani-v6: HTML همیشه از شبکه، بقیه کش */
+const V = 'hirkani-v6';
+const SHELL = ['./', './index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'forest.jpg'];
 const PRE = [
   'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js',
@@ -32,23 +32,41 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
-  if (url.hostname.endsWith('supabase.co')) return;           // داده‌های همگام‌سازی هرگز کش نشود
+  if (url.hostname.endsWith('supabase.co')) return;
   const same = url.origin === location.origin;
   if (!same && !CDN.includes(url.hostname)) return;
 
-  if (same) {                                                  // خود برنامه: اول کش (سریع و آفلاین)، در پس‌زمینه به‌روزرسانی
+  // HTML / navigate: همیشه اول شبکه (تا آپدیت صدا فوری اعمال شود)
+  const isHTML = same && (req.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname.endsWith('/') || url.pathname === '');
+  if (isHTML) {
+    e.respondWith((async () => {
+      try {
+        const r = await fetch(req, { cache: 'no-store' });
+        if (good(r)) {
+          const c = await caches.open(V);
+          c.put(req, r.clone()).catch(() => {});
+          return r;
+        }
+      } catch (_) {}
+      const c = await caches.open(V);
+      return (await c.match(req, { ignoreSearch: true })) || (await c.match('./')) || Response.error();
+    })());
+    return;
+  }
+
+  if (same) {
     e.respondWith((async () => {
       const c = await caches.open(V);
       const hit = await c.match(req, { ignoreSearch: true });
       const net = fetch(req).then(r => { if (good(r)) c.put(req, r.clone()); return r; }).catch(() => null);
       if (hit) { e.waitUntil(net); return hit; }
       const r = await net;
-      if (r) return r;
-      return (req.mode === 'navigate' && (await c.match('./'))) || Response.error();
+      return r || Response.error();
     })());
     return;
   }
-  e.respondWith((async () => {                                 // CDN: اول کش، بعد شبکه (و ذخیره)
+
+  e.respondWith((async () => {
     const c = await caches.open(V);
     const hit = await c.match(req);
     if (hit) return hit;

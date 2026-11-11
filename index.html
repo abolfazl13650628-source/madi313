@@ -4967,8 +4967,22 @@ function unlockAudio(){
   try{const c=pctx();if(c.state==='suspended')c.resume();const b=c.createBuffer(1,1,22050),x=c.createBufferSource();x.buffer=b;x.connect(c.destination);x.start(0)}catch(e){}
 }
 async function ttsBlob(text){
-  const j=await window.hkAiCall({tts:{text}});
-  if(!j||!j.audio)throw new Error('no-audio');
+  // مستقیم به edge function تا کد 429 را درست بگیریم
+  if(!window.SB||!SB.token||!SB.token()) throw new Error('login');
+  await SB.fresh();
+  const r = await fetch(SB.url+'/functions/v1/read-table',{
+    method:'POST',
+    headers:{'Content-Type':'application/json',apikey:SB.key,Authorization:'Bearer '+SB.token()},
+    body:JSON.stringify({tts:{text}}),
+    signal: AbortSignal.timeout ? AbortSignal.timeout(25000) : undefined
+  });
+  const j = await r.json().catch(()=>({}));
+  if(r.status===429){
+    const err = new Error('tts-429'); err.code=429; throw err;
+  }
+  if(!r.ok || !j || !j.audio){
+    const err = new Error((j&&j.error)||('tts-'+r.status)); err.code=r.status; throw err;
+  }
   const bin=atob(j.audio),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
   return new Blob([u],{type:j.mime||'audio/wav'});
 }
@@ -4998,10 +5012,10 @@ async function playBlob(blob){
 /*AUDIO-END*/
 
 /* ── تنظیمات صدا (ذخیره در حافظهٔ دستگاه) ── */
-const OFF_VOICES={'google':'گوگل (رایگان)','browser':'مرورگر'};
+const OFF_VOICES={'browser':'مرورگر (رایگان)','google':'گوگل'};
 const VC=(()=>{let c={};try{c=JSON.parse(localStorage.getItem('hkVoiceCfg')||'{}')||{}}catch(e){}
   if(!['auto','app','ai'].includes(c.mode))c.mode='app';
-  if(!OFF_VOICES[c.voice])c.voice='google';
+  if(!OFF_VOICES[c.voice])c.voice='browser';
   return c})();
 const saveVC=()=>{try{localStorage.setItem('hkVoiceCfg',JSON.stringify(VC))}catch(e){}};
 
@@ -5029,34 +5043,65 @@ async function speakServer(parts,sp,deadline){
 
 /* ── لایه مرورگر ── */
 async function persianVoice(){
-  const sy=window.speechSynthesis;if(!sy)return null;
+  const sy=window.speechSynthesis; if(!sy) return null;
   let v=sy.getVoices();
-  if(!v.length){await new Promise(r=>{const t=setTimeout(r,700);sy.onvoiceschanged=()=>{clearTimeout(t);r()}});v=sy.getVoices()}
-  const fa=v.filter(x=>/^fa/i.test(x.lang||'')||/persian|farsi|فارسی|dilara|farid|dariush/i.test(x.name||''));
-  return fa.find(x=>/natural|online/i.test(x.name||''))||fa.find(x=>!x.localService)||fa[0]||null;
+  if(!v.length){
+    await new Promise(r=>{
+      let done=false; const fin=()=>{if(done)return;done=true;r()};
+      const t=setTimeout(fin,1200);
+      sy.onvoiceschanged=()=>{clearTimeout(t);fin()};
+    });
+    v=sy.getVoices();
+  }
+  const fa=v.filter(x=>/^fa/i.test(x.lang||'')||/persian|farsi|فارسی|iran/i.test(x.name||''));
+  // ترجیح: صدای محلی اندروید/کروم
+  return fa.find(x=>/google|samsung|iranian|persian/i.test(x.name||''))||fa[0]||null;
 }
 async function speakBrowser(parts,sp){
-  const sy=window.speechSynthesis,voice=await persianVoice();
-  if(!sy||!voice||sp!==V.sp)return parts;
-  sy.cancel();
-  const pieces=[];parts.forEach(p=>splitSmart(p,180).forEach(x=>pieces.push(x)));
+  const sy=window.speechSynthesis;
+  if(!sy||sp!==V.sp) return parts;
+  try{sy.cancel()}catch(e){}
+  const voice=await persianVoice();
+  const pieces=[];
+  parts.forEach(p=>splitSmart(String(p||''),160).forEach(x=>{if(x.trim())pieces.push(x.trim())}));
+  if(!pieces.length) return [];
   for(let i=0;i<pieces.length;i++){
-    if(sp!==V.sp)return[];
+    if(sp!==V.sp){try{sy.cancel()}catch(e){} return [];}
     const x=pieces[i];
     const ok=await new Promise(res=>{
-      const u=new SpeechSynthesisUtterance(x),t0=performance.now();let fin=false;
-      u.lang=voice.lang||'fa-IR';u.voice=voice;
+      let fin=false;
       const done=v=>{if(fin)return;fin=true;clearTimeout(t);res(v)};
-      const t=setTimeout(()=>done(false),Math.max(6000,x.length*250));
-      u.onend=()=>done(x.length<8||performance.now()-t0>200);
+      const u=new SpeechSynthesisUtterance(x);
+      u.lang='fa-IR';
+      u.rate=1; u.pitch=1; u.volume=1;
+      if(voice) try{u.voice=voice}catch(e){}
+      const t=setTimeout(()=>done(false), Math.max(9000, x.length*220));
+      u.onend=()=>done(true);
       u.onerror=()=>done(false);
       try{sy.speak(u)}catch(e){done(false)}
     });
-    if(sp!==V.sp)return[];
-    if(!ok){try{sy.cancel()}catch(e){}return pieces.slice(i)}
+    if(sp!==V.sp){try{sy.cancel()}catch(e){} return [];}
+    if(!ok){
+      // اگر با voice خاص شکست، بدون voice یک‌بار دیگر
+      if(voice){
+        const ok2=await new Promise(res=>{
+          let fin=false;
+          const done=v=>{if(fin)return;fin=true;clearTimeout(t);res(v)};
+          const u=new SpeechSynthesisUtterance(x);
+          u.lang='fa-IR';
+          const t=setTimeout(()=>done(false), Math.max(9000, x.length*220));
+          u.onend=()=>done(true);
+          u.onerror=()=>done(false);
+          try{sy.speak(u)}catch(e){done(false)}
+        });
+        if(ok2) continue;
+      }
+      return pieces.slice(i);
+    }
   }
-  return[];
+  return [];
 }
+
 
 /* ── لایه «صدای برنامه»: TTS رایگان گوگل (بدون کلید، کیفیت قابل قبول فارسی) ── */
 const OFF={have:{google:true}, loading:{}, failed:{}, warm:{}, errs:0};
@@ -5118,9 +5163,13 @@ async function speakGoogle(parts, sp){
 
 async function offlineWarm(){ /* no-op: گوگل نیاز به دانلود مدل ندارد */ }
 async function speakOffline(parts, sp){
-  // «صدای برنامه» = گوگل رایگان
-  if(VC.voice==='browser') return speakBrowser(parts, sp);
-  return speakGoogle(parts, sp);
+  // گوگل translate_tts دیگر از مرورگرهای متفرقه معمولاً کار نمی‌کند → اول مرورگر
+  if(VC.voice==='google'){
+    const left = await speakGoogle(parts, sp);
+    if(!left.length) return [];
+    return speakBrowser(left, sp);
+  }
+  return speakBrowser(parts, sp);
 }
 
 /* ── زنجیرهٔ کامل ──
@@ -5131,32 +5180,43 @@ async function speak(text,sp0,force){
   const sp=sp0||++V.sp,clean=speechClean(text);
   if(!clean)return true;
   V.speaking=true;
-  if(!Object.keys(OFF.loading).length)V.note='';
-  const mode=force||VC.mode;
-  const order=mode==='app'?['off','srv','br']:mode==='ai'?['srv','br','off']:['srv','off','br'];
+  V.note='';
+  const mode=force||VC.mode||'app';
+  // اولویت: اگر سرور TTS سهمیه تمام کرده، مستقیم برو مرورگر
+  // app = مرورگر اول | auto/ai = سرور بعد مرورگر
+  const order = (V.ttsOff && Date.now()-V.ttsOffAt < 300000)
+    ? ['br','off']
+    : (mode==='app' ? ['br','off','srv'] : ['srv','br','off']);
   let parts=ttsChunks(clean),why='';
   const srvFail=e=>{
     V.ttsFail++;
-    why=((String(e&&e.message||'').match(/\(([^()]*\d{3}[^()]*)\)\s*$/)||[])[1])||'';
-    if(V.ttsFail>=2){V.ttsOff=true;V.ttsOffAt=Date.now()}
+    const msg=String(e&&e.message||e||'');
+    why = (e&&e.code===429) || /tts-429|429/.test(msg) ? 'سهمیه صدا' : ((msg.match(/\(([^()]*\d{3}[^()]*)\)\s*$/)||[])[1]||msg.slice(0,40));
+    // با اولین 429 سرور را ۵ دقیقه کنار بگذار
+    if((e&&e.code===429) || /tts-429|429/.test(msg) || V.ttsFail>=1){
+      V.ttsOff=true; V.ttsOffAt=Date.now();
+    }
   };
   if(IO.speak){try{if(await IO.speak(clean,sp))parts=[]}catch(e){}}
   for(const t of order){
     if(!parts.length||sp!==V.sp)break;
     try{
       if(t==='srv'){
-        if(V.ttsOff&&Date.now()-V.ttsOffAt<=120000)continue;
-        const r=await speakServer(parts,sp,mode==='auto'&&OFF.have[VC.voice]?2500:0);
+        if(V.ttsOff&&Date.now()-V.ttsOffAt<=300000)continue;
+        const r=await speakServer(parts,sp, mode!=='ai' ? 2000 : 0);
         parts=r.rest;
         if(r.err)srvFail(r.err);else{V.ttsFail=0;V.ttsOff=false}
-      }else if(t==='br')parts=await speakBrowser(parts,sp);
-      else parts=await speakOffline(parts,sp);
+      }else if(t==='br'){
+        parts=await speakBrowser(parts,sp);
+      }else{
+        parts=await speakOffline(parts,sp);
+      }
     }catch(e){if(t==='srv')srvFail(e)}
   }
   if(sp===V.sp)V.speaking=false;
   if(parts.length&&sp===V.sp){
-    V.note='🔇 صدای پاسخ ممکن نشد'+(why?' ('+why+')':'');
-    if(!V.on){setBar('warn',V.note);setTimeout(()=>{if(!V.on)bar.classList.add('hid')},4000)}
+    V.note='🔇 صدای دستگاه در دسترس نیست'+(why?' — '+why:'');
+    if(!V.on){setBar('warn',V.note);setTimeout(()=>{if(!V.on)bar.classList.add('hid')},4500)}
     return false;
   }
   return true;
@@ -5169,7 +5229,7 @@ function renderPop(){
   vPop.innerHTML='<b>منبع صدا</b><div class="row">'+chip('mode','auto','خودکار')+chip('mode','app','صدای برنامه')+chip('mode','ai','صدای هوشمند')+'</div>'
    +'<b>نوع صدای برنامه</b><div class="row">'+Object.keys(OFF_VOICES).map(id=>chip('voice',id,OFF_VOICES[id])).join('')+'</div>'
    +(V.on?'':'<div class="row" style="margin-top:10px"><button type="button" class="vc" data-test="1">🔊 تست صدا</button></div>')
-   +'<small>خودکار: اول صدای هوشمند سرور؛ اگر قطع شد → گوگل رایگان → مرورگر.<br>صدای برنامه: گوگل (رایگان، نیاز به اینترنت) یا صدای خود مرورگر.</small>';
+   +'<small>خودکار: اول سرور؛ اگر قطع شد → صدای خود گوشی (رایگان).<br>پیشنهاد: منبع را روی «صدای برنامه» و نوع را «مرورگر» بگذارید.</small>';
 }
 function togglePop(show){
   if(show===undefined)show=vPop.classList.contains('hid');
@@ -5297,7 +5357,7 @@ async function turn(tok){
   }
   V.errs=0;
   setBar('speak','🔊 در حال پاسخ دادن…');
-  const ok=await speak(reply);
+  const ok=await speak(reply, null, (V.ttsOff?'app':(VC.mode||'app')));
   if(!alive(tok))return;
   if(ok===false){setBar('warn',V.note);await sleep(2800);if(!alive(tok))return}
   setTimeout(()=>turn(tok),350);
@@ -5716,7 +5776,10 @@ box.onclick=async e=>{
   const i=+t.dataset.tts;if(!hist[i])return;
   if(V.speaking){stopSpeak();t.textContent='🔊 خواندن';return}
   unlockAudio();t.textContent='⏹ توقف';
-  try{await speak(hist[i].content)}finally{t.textContent='🔊 خواندن'}
+  try{
+    // دکمه خواندن: مستقیم صدای مرورگر (رایگان، بدون سهمیه سرور)
+    await speak(hist[i].content, null, 'app');
+  }finally{t.textContent='🔊 خواندن'}
 };
 sendB.onclick=()=>send();
 inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&(e.ctrlKey||e.metaKey||!matchMedia('(pointer:coarse)').matches)){e.preventDefault();send()}});
@@ -5791,7 +5854,7 @@ renderModeBar();render();fit();grow();
 <script>
 (function(){
   if('serviceWorker' in navigator){
-    addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').then(r=>{try{r.update()}catch(e){}}).catch(()=>{});});
+    addEventListener('load',()=>{navigator.serviceWorker.register('Sw.js').then(function(reg){try{reg.update()}catch(e){}}).then(r=>{try{r.update()}catch(e){}}).catch(()=>{});});
   }
   let base=null,shown=false;
   function showBar(){
