@@ -255,6 +255,13 @@ body.home-mode #sosCard{background:transparent;}
 #walkBox b{font-size:16px!important}
 #walkBox small{font-size:10px!important}
 
+#corrChoiceModal{position:fixed;inset:0;z-index:1001;background:#0009;display:flex;align-items:center;justify-content:center;padding:16px}
+#corrChoiceModal .bx{background:var(--sf);color:var(--tx);border-radius:16px;padding:20px;width:100%;max-width:360px;text-align:center;box-shadow:var(--sh2)}
+#corrChoiceModal .bx h3{margin:0 0 8px;color:var(--ac);font-size:17px}
+#corrChoiceModal .bx .sub{font-size:12px;color:var(--mu);margin-bottom:14px;line-height:1.6}
+#corrChoiceModal .mbtn{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+#corrChoiceModal .mbtn button{padding:14px;font-size:14px;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:4px;border:0;color:#fff}
+#corrChoiceModal .mbtn button small{font-size:11px;opacity:.9;font-weight:400;line-height:1.45}
 #routeChoiceModal{position:fixed;inset:0;z-index:1001;background:#0009;display:flex;align-items:center;justify-content:center;padding:16px}
 #routeChoiceModal .bx{background:var(--sf);color:var(--tx);border-radius:16px;padding:20px;width:100%;max-width:340px;text-align:center;box-shadow:var(--sh2)}
 #routeChoiceModal .bx h3{margin:0 0 8px;color:var(--ac);font-size:17px}
@@ -388,7 +395,8 @@ body[data-tab="a"] #sec-a:not(.hid){
 .aiB img.aiThumb{display:block;max-width:100%;border-radius:12px;margin-top:8px}
 
 #aiMic.rec{background:#c62828;color:#fff;animation:aiPulse 1s infinite}
-#aiVoiceMode{background:var(--ac);color:var(--ac2)}
+#aiVoiceMode{display:none!important;background:var(--ac);color:var(--ac2)}
+#aiVoiceMode.hid{display:none!important}
 #aiVoiceMode.active{background:#c62828;color:#fff;animation:aiPulse 1.5s infinite}
 #aiVoiceMode.listening{background:#2e9d4f;color:#fff}
 #aiSend{display:flex;background:var(--ac);color:var(--ac2);opacity:0;pointer-events:none;visibility:hidden}
@@ -416,8 +424,10 @@ body[data-tab="a"] #sec-a:not(.hid){
 #aiVoiceBar[data-s=speak] em{background:#1e88e5}
 #aiVoiceBar[data-s=warn] em{background:#e09a00;animation:none}
 #aiVoiceBar span{flex:1;min-width:0}
-#aiVoiceBar i{flex:0 0 44px;height:6px;border-radius:3px;background:var(--bd);overflow:hidden}
-#aiVoiceBar i b{display:block;height:100%;width:0;background:var(--ac);transition:width .08s}
+#aiVoiceBar i.ai-wave{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:3px;height:28px;min-width:72px;background:transparent;overflow:visible;border-radius:0}
+#aiVoiceBar i.ai-wave b{display:block;width:3px;height:6px;border-radius:2px;background:var(--ac);transform-origin:center;transition:height .07s ease}
+#aiVoiceBar[data-s=listen] i.ai-wave b{background:#2e9d4f}
+#aiVoiceBar[data-s=think] i.ai-wave b{background:#78909c}
 #aiVoiceBar button{flex:0 0 auto}
 #aiVoiceSkip{padding:6px 12px;font-size:12px;border-radius:999px;background:var(--bg);color:var(--tx);border:1px solid var(--bd)}
 #aiVoiceEnd{width:40px;height:40px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#c62828;color:#fff}
@@ -891,8 +901,8 @@ window.needOcr=async()=>{if(typeof Tesseract==='undefined')await loadLib('https:
       <div id="plantedBox" class="plantedNote hid"></div>
     </div>
     <div class="c" id="minutesCard">
-      <b>📝 صورتجلسه رسمی جنگل</b>
-      <div class="m" style="font-size:12px;margin:4px 0 8px">بازدید اولیه یا نشانه‌گذاری — خروجی همان‌جا با سیاهه کامل</div>
+      <b>📝 صورتجلسه و نامه اداری</b>
+      <div class="m" style="font-size:12px;margin:4px 0 8px">دادهٔ این بخش برای «دستیار مکاتبات و نامه‌ها» در AI هم استفاده می‌شود — خروجی با سیاهه کامل</div>
       <div class="r">
         <button id="btnMinutesNeshane" style="flex:1;background:#2f6b3c;font-weight:700">نشانه‌گذاری</button>
         <button id="btnMinutesAvali" class="o" style="flex:1">بازدید اولیه</button>
@@ -966,7 +976,7 @@ window.needOcr=async()=>{if(typeof Tesseract==='undefined')await loadLib('https:
         <input type="file" id="aiCamCapture" accept="image/*" capture="environment" class="hid">
         <button id="aiCam" type="button" title="عکس برای تحلیل گونه و آسیب" aria-label="دوربین">📷</button>
         <button id="aiMic" type="button" title="تایپ با صدا" aria-label="میکروفن"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg></button>
-        <button id="aiVoiceMode" type="button" title="گفتگوی صوتی" aria-label="گفتگوی صوتی"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2"/></svg></button>
+        <button id="aiVoiceMode" type="button" class="hid" title="گفتگوی صوتی (غیرفعال)" aria-label="گفتگوی صوتی" aria-hidden="true" tabindex="-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2"/></svg></button>
         <button id="aiSend" type="button" aria-label="ارسال"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
       </div>
     </div>
@@ -1115,6 +1125,29 @@ window.needOcr=async()=>{if(typeof Tesseract==='undefined')await loadLib('https:
     <button type="button" class="o cancel" id="routeChoiceCancel">انصراف</button>
   </div>
 </div>
+
+<div id="corrChoiceModal" class="hid">
+  <div class="bx">
+    <h3>✉️ دستیار مکاتبات و نامه‌ها</h3>
+    <div class="sub">چه کمکی می‌خواهی؟ لازم نیست حتماً از صورتجلسهٔ سربرگ فعلی استفاده شود.</div>
+    <div class="mbtn">
+      <button type="button" data-corr="sheet" style="background:#2f6b3c">
+        📝 صورتجلسه / نامهٔ همین سربرگ
+        <small>بازنویسی یا پیش‌نویس بر اساس دادهٔ فرم و درختان سربرگ فعلی</small>
+      </button>
+      <button type="button" data-corr="otherLetter" style="background:#1565c0">
+        📨 نامهٔ دیگری مد نظر دارم
+        <small>متن یا موضوع نامه‌ای که آمده را می‌گویم تا نظر بدهی یا پاسخ بنویسی</small>
+      </button>
+      <button type="button" data-corr="otherMinutes" style="background:#6a1b9a">
+        📋 صورتجلسهٔ دیگری مد نظر دارم
+        <small>صورتجلسه‌ای غیر از سربرگ فعلی را توضیح می‌دهم یا متنش را می‌گذارم</small>
+      </button>
+    </div>
+    <button type="button" class="o cancel" id="corrChoiceCancel">انصراف</button>
+  </div>
+</div>
+
 
 
 <!-- New sheet modal -->
@@ -4513,59 +4546,119 @@ function tryLoad() {
     .then(r => r.ok ? r.json() : null)
     .then(j => {
       if (j && Array.isArray(j.documents) && j.documents.length) {
-        DOCS = j.documents;
+        DOCS = j.documents; DOCS._idx=null; DOCS._idxVer=0;;
         try { localStorage.setItem('bulletinsCache_v4', JSON.stringify(DOCS)); } catch(e) {}
       }
     })
     .catch(()=>{});
 }
 
+function extractLetterMeta(fullText){
+  const t = String(fullText||'');
+  const no =
+    (t.match(/شماره\s*[:：]?\s*([0-9۰-۹]+(?:\s*[\/\-]\s*[0-9۰-۹]+){1,5})/)||[])[1] ||
+    (t.match(/\b(\d{2,4}\/\d{1,3}\/\d{2,10})\b/)||[])[1] || '';
+  const date =
+    (t.match(/تاریخ\s*[:：]?\s*([0-9۰-۹]{2,4}\s*[\/\-٫\.]\s*[0-9۰-۹]{1,2}\s*[\/\-٫\.]\s*[0-9۰-۹]{2,4})/)||[])[1] ||
+    (t.match(/مورخ\s*([0-9۰-۹]{2,4}\s*[\/\-٫\.]\s*[0-9۰-۹]{1,2}\s*[\/\-٫\.]\s*[0-9۰-۹]{2,4})/)||[])[1] || '';
+  const subject = (t.match(/موضوع\s*[:：]?\s*([^\n]{6,140})/)||[])[1] || '';
+  return {
+    no: String(no||'').replace(/\s+/g,'').trim(),
+    date: String(date||'').replace(/\s+/g,'').trim(),
+    subject: String(subject||'').trim()
+  };
+}
+
 function searchBulletins(query, maxChars) {
-  maxChars = maxChars || 3500;
+  maxChars = maxChars || 5500;
   if (!DOCS || !DOCS.length) return [];
   const q = normFa(query);
   if (!q || q.length < 2) return [];
-  const terms = [...new Set(q.split(' ').filter(t => t.length >= 2))];
+  const terms = [...new Set(q.split(/\s+/).filter(t => t.length >= 2))];
   if (!terms.length) return [];
-  const nums = (q.match(/\d{3,}/g) || []);
+  const nums = (q.match(/[0-9۰-۹]{2,}(?:[\/\-][0-9۰-۹]+)*/g) || []).map(n =>
+    n.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+  );
 
-  if (!DOCS._idx) {
+  if (!DOCS._idx || DOCS._idxVer !== 3) {
     DOCS._idx = [];
+    DOCS._idxVer = 3;
     for (const doc of DOCS) {
       const nd = normFa(doc.name);
+      const allText = (doc.pages||[]).map(p => p.text||'').join('\n');
+      const extracted = extractLetterMeta(allText);
+      const meta = {
+        no: (doc.letterNo || extracted.no || '').trim(),
+        date: (doc.letterDate || extracted.date || '').trim(),
+        subject: (doc.letterSubject || extracted.subject || '').trim()
+      };
+      const metaN = { no: normFa(meta.no), date: normFa(meta.date), subject: normFa(meta.subject) };
+      // کارت خلاصه سند
+      DOCS._idx.push({
+        doc, nd, page: { n: 1 },
+        para: [meta.no && ('شماره نامه: '+meta.no), meta.date && ('تاریخ: '+meta.date), meta.subject && ('موضوع: '+meta.subject), doc.name].filter(Boolean).join(' | '),
+        np: normFa([meta.no, meta.date, meta.subject, doc.name].filter(Boolean).join(' ')),
+        letterNo: meta.no, letterDate: meta.date, letterSubject: meta.subject,
+        nNo: metaN.no, nDate: metaN.date, nSub: metaN.subject, isMeta: true
+      });
       for (const page of (doc.pages || [])) {
-        String(page.text || '').split(/\n+/).map(p => p.trim()).filter(p => p.length > 15).forEach(para => DOCS._idx.push({ doc, nd, page, para, np: normFa(para) }));
+        String(page.text || '').split(/\n+/).map(p => p.trim()).filter(p => p.length > 12).forEach(para => {
+          DOCS._idx.push({
+            doc, nd, page, para, np: normFa(para),
+            letterNo: meta.no, letterDate: meta.date, letterSubject: meta.subject,
+            nNo: metaN.no, nDate: metaN.date, nSub: metaN.subject, isMeta: false
+          });
+        });
       }
     }
   }
+
   const chunks = [];
-  {
-    for (const { doc, nd, page, para, np } of DOCS._idx) {
-      {
-        let score = 0, matched = 0;
-        for (const t of terms) {
-          const c = np.split(t).length - 1;
-          if (c > 0) { score += c * (t.length >= 4 ? 2 : 1); matched++; }
-        }
-        if (!matched) continue;
-        if (np.includes(q)) score += 10;
-        for (const n of nums) if (np.includes(n)) score += 6;
-        if (nd.includes(q)) score += 4;
-        score = score / Math.sqrt(para.length / 80);
-        chunks.push({ docName: doc.name, page: page.n, text: para, score });
-      }
+  for (const row of DOCS._idx) {
+    const { doc, nd, page, para, np, letterNo, letterDate, letterSubject, nNo, nDate, nSub, isMeta } = row;
+    let score = 0, matched = 0;
+    for (const t of terms) {
+      const c = np.split(t).length - 1;
+      if (c > 0) { score += c * (t.length >= 4 ? 2.5 : 1.2); matched++; }
+      if (nd.includes(t)) { score += 2.2; matched++; }
+      if (nNo && nNo.includes(t)) { score += 6; matched++; }
+      if (nSub && nSub.includes(t)) { score += 3; matched++; }
     }
+    for (const n of nums) {
+      if (!n) continue;
+      if ((nNo && (nNo.includes(n) || n.includes(nNo))) || (letterNo && letterNo.includes(n)) || np.includes(n)) score += 14;
+      if (nd.includes(n)) score += 4;
+    }
+    if (!matched && !nums.some(n => n && nNo && (nNo.includes(n) || n.includes(nNo)))) continue;
+    if (np.includes(q)) score += 10;
+    if (nd.includes(q)) score += 5;
+    if (isMeta) score += 2;
+    score = score / Math.sqrt(Math.max(para.length, 40) / 90);
+    chunks.push({ docName: doc.name, page: page.n || 1, text: para, score, letterNo, letterDate, letterSubject });
   }
   chunks.sort((a, b) => b.score - a.score);
   const top = []; let total = 0; const seen = new Set();
   for (const c of chunks) {
-    const k = c.docName + ':' + c.page + ':' + c.text.slice(0, 40);
+    const k = (c.letterNo||'') + ':' + c.docName + ':' + c.page + ':' + c.text.slice(0, 36);
     if (seen.has(k)) continue;
     seen.add(k);
-    if (total + c.text.length > maxChars) break;
-    top.push({ source: c.docName, page: c.page, text: c.text });
-    total += c.text.length;
-    if (top.length >= 5) break;
+    const head = [
+      c.letterNo ? ('شماره نامه: ' + c.letterNo) : '',
+      c.letterDate ? ('تاریخ: ' + c.letterDate) : '',
+      c.letterSubject ? ('موضوع: ' + c.letterSubject) : ''
+    ].filter(Boolean).join(' | ');
+    const body = (head ? head + '\n' : '') + c.text;
+    if (total + body.length > maxChars && top.length) break;
+    top.push({
+      source: c.docName,
+      page: c.page,
+      letterNo: c.letterNo || '',
+      date: c.letterDate || '',
+      subject: c.letterSubject || '',
+      text: body
+    });
+    total += body.length;
+    if (top.length >= 8) break;
   }
   return top;
 }
@@ -4977,15 +5070,32 @@ function openChatList(){
 
 
 const bar=document.createElement('div');bar.id='aiVoiceBar';bar.className='hid';
-bar.innerHTML='<em></em><span id="aiVoiceTxt"></span><i><b id="aiLevel"></b></i><button type="button" id="aiVoiceCfg" aria-label="تنظیم صدا" title="تنظیم صدا">⚙️</button><button type="button" id="aiVoiceMute" aria-label="قطع میکروفن" title="قطع / وصل میکروفن"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg></button><button type="button" id="aiVoiceSkip" class="hid">✔ تمام</button><button type="button" id="aiVoiceEnd" aria-label="پایان"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="3"/></svg></button>';
+bar.innerHTML='<em></em><span id="aiVoiceTxt"></span><i class="ai-wave" id="aiWave" aria-hidden="true"><b></b><b></b><b></b><b></b><b></b><b></b><b></b></i><button type="button" id="aiVoiceCfg" aria-label="تنظیم صدا" title="تنظیم صدا">⚙️</button><button type="button" id="aiVoiceMute" aria-label="قطع میکروفن" title="قطع / وصل میکروفن"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg></button><button type="button" id="aiVoiceSkip" class="hid">✔ تمام</button><button type="button" id="aiVoiceEnd" aria-label="پایان"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="3"/></svg></button>';
 Q('.aiIn').parentNode.insertBefore(bar,Q('.aiIn'));
-const vTxt=Q('#aiVoiceTxt'),vLvl=Q('#aiLevel'),vSkip=Q('#aiVoiceSkip'),vEnd=Q('#aiVoiceEnd'),vMute=Q('#aiVoiceMute');
+const vTxt=Q('#aiVoiceTxt'),vWave=Q('#aiWave'),vSkip=Q('#aiVoiceSkip'),vEnd=Q('#aiVoiceEnd'),vMute=Q('#aiVoiceMute');
+function paintWave(level){
+  if(!vWave) return;
+  const bars=vWave.querySelectorAll('b');
+  if(!bars.length) return;
+  const L=Math.max(0, Math.min(1, +level||0));
+  bars.forEach((b,i)=>{
+    const mid=1-Math.abs(i-(bars.length-1)/2)/((bars.length-1)/2||1);
+    const jitter=0.65+0.35*Math.sin(Date.now()/90+i*1.3);
+    const h=Math.max(4, Math.round((6+L*22*mid)*jitter));
+    b.style.height=h+'px';
+  });
+}
+function resetWave(){
+  if(!vWave) return;
+  vWave.querySelectorAll('b').forEach(b=>{ b.style.height='5px'; });
+}
+
 function setBar(s,txt){
   bar.classList.remove('hid');bar.dataset.s=s;vTxt.textContent=txt;
   try{if(typeof syncAiBgBar==='function')setTimeout(syncAiBgBar,10)}catch(e){}
   vSkip.textContent=s==='speak'?'✋ قطع':'✔ تمام';
   vSkip.classList.toggle('hid',s!=='speak'&&s!=='listen');
-  if(s!=='listen')vLvl.style.width='0';
+  if(s!=='listen')resetWave(); else paintWave(0.15);
 }
 
 const aiTitle=Q('#aiTitle');
@@ -5152,7 +5262,7 @@ async function send(text,o){
     if(mode==='app'){
       const c=o.context||ctx();
       if(!c.knowledge&&window.searchBulletins){
-        const k=window.searchBulletins(text,3500);
+        const k=window.searchBulletins(text,5500);
         if(k.length)c.knowledge=k;
       }
       chat.context=c;
@@ -5259,7 +5369,7 @@ function listenSR(){
       clearTimeout(silenceT);
       silenceT=setTimeout(()=>{try{r.stop()}catch(e){end()}},1800);
     };
-    const end=()=>{if(done)return;done=true;clearTimeout(silenceT);clearTimeout(wd);V.cancel=null;V.stopRec=null;res({text:cleanStt(fin||tmp),err})};
+    const end=()=>{if(done)return;done=true;clearTimeout(silenceT);clearTimeout(wd);if(window._srWaveIv){clearInterval(window._srWaveIv);window._srWaveIv=null}try{resetWave()}catch(e){}V.cancel=null;V.stopRec=null;res({text:cleanStt(fin||tmp),err})};
     r.onresult=e=>{
       let f='',im='';
       for(let i=0;i<e.results.length;i++){
@@ -5283,7 +5393,7 @@ function listenSR(){
     const wd=setTimeout(()=>{try{r.stop()}catch(e){}end()},45000);
     V.cancel=()=>{try{r.abort()}catch(e){}end()};
     V.stopRec=()=>{try{r.stop()}catch(e){end()}};
-    try{r.start(); bumpSilence()}catch(e){err='start';end()}
+    try{r.start(); bumpSilence(); if(window._srWaveIv) clearInterval(window._srWaveIv); window._srWaveIv=setInterval(()=>{try{paintWave(0.25+Math.random()*0.55)}catch(e){}},120);}catch(e){err='start';end()}
   });
 }
 
@@ -5755,8 +5865,8 @@ async function turn(tok){
   let text='';
   try{
     if(!V.useSR){
-      setBar('listen','🎙️ گوش می‌دهم'+(V.note?' · '+V.note:''));
-      const rec=await IO.record({silenceMs:V.once?2000:1500,noSpeechMs:12000,maxMs:60000,onLevel:l=>{vLvl.style.width=Math.min(100,Math.round(l*900))+'%'}});
+      setBar('listen','🎙️ در حال ضبط… صحبت کنید'+(V.note?' · '+V.note:''));
+      const rec=await IO.record({silenceMs:V.once?2800:1500,noSpeechMs:V.once?16000:12000,maxMs:V.once?90000:60000,onLevel:l=>{paintWave(Math.min(1, l*2.2))}});
       if(!alive(tok))return;
       if(rec.reason==='cancel'||rec.reason==='error'&&!rec.blob)return;
       if(rec.text!==undefined)text=cleanStt(rec.text);
@@ -5769,10 +5879,24 @@ async function turn(tok){
         try{text=await IO.stt(rec);V.sttFail=0}
         catch(e){
           if(!alive(tok))return;
-          if(V.once){endVoice('تبدیل گفتار به متن انجام نشد: '+(e&&e.message||'خطا'));return}
-          if(++V.sttFail>=2&&SR){V.useSR=true;setBar('warn','تشخیص گفتار سرور در دسترس نیست؛ از تشخیص مرورگر استفاده می‌شود.')}
-          else if(V.sttFail>=3){endVoice('تبدیل گفتار به متن انجام نشد: '+(e&&e.message||'خطا'));return}
-          await sleep(250);setTimeout(()=>turn(tok),100);return;
+          // دیکته: اگر سرور شکست خورد یک‌بار از تشخیص مرورگر استفاده کن
+          if(V.once && SR){
+            setBar('listen','🎙️ تلاش با تشخیص دستگاه…');
+            try{
+              const r2=await listenSR();
+              if(r2 && r2.text){ text=r2.text; V.sttFail=0; }
+              else { endVoice('تشخیص گفتار ممکن نشد. واضح‌تر صحبت کنید یا تایپ کنید.'); return; }
+            }catch(e2){ endVoice('تشخیص گفتار ممکن نشد. واضح‌تر صحبت کنید یا تایپ کنید.'); return; }
+          } else if(V.once){
+            endVoice('تبدیل گفتار به متن انجام نشد: '+(e&&e.message||'خطا')); return;
+          } else if(++V.sttFail>=2&&SR){
+            V.useSR=true;setBar('warn','تشخیص گفتار سرور در دسترس نیست؛ از تشخیص مرورگر استفاده می‌شود.');
+            await sleep(250);setTimeout(()=>turn(tok),100);return;
+          } else if(V.sttFail>=3){
+            endVoice('تبدیل گفتار به متن انجام نشد: '+(e&&e.message||'خطا'));return;
+          } else {
+            await sleep(250);setTimeout(()=>turn(tok),100);return;
+          }
         }
       }
     }else{
@@ -5790,16 +5914,22 @@ async function turn(tok){
     if(++V.noSpeech>=3){endVoice('چیزی نشنیدم؛ گفتگو پایان یافت. دوباره 🗣️ را بزنید.');return}
     setTimeout(()=>turn(tok),150);return;
   }
-  V.noSpeech=0;inp.value=text;
-  setBar('think','⏳ در حال فکر کردن…');
-  const reply=await send(text,{voice:!V.once});
-  if(!alive(tok))return;
-  if(V.once){endVoice();return}
-  if(!reply){
-    if(++V.errs>=2){endVoice('خطا در دریافت پاسخ؛ گفتگو متوقف شد.');return}
-    setTimeout(()=>turn(tok),700);return;
+  V.noSpeech=0;
+  // دیکته: متن را در کادر بگذار تا کاربر ببیند و در صورت نیاز اصلاح کند
+  try{
+    inp.value = text;
+    if(typeof grow==='function') grow();
+    aiIn.classList.add('has');
+  }catch(e){}
+  if(V.once){
+    setBar('think','⏳ ارسال…');
+    endVoice();
+    try{ await send(text,{voice:false}); }catch(e){}
+    return;
   }
-  V.errs=0;
+  // مسیر زنده حذف شده
+  endVoice();
+  return;
   setBar('speak','🔊 در حال پاسخ دادن…');
   const ok=await speak(reply, null, (V.ttsOff?'app':(VC.mode||'app')));
   if(!alive(tok))return;
@@ -5807,21 +5937,25 @@ async function turn(tok){
   setTimeout(()=>turn(tok),350);
 }
 function startVoice(once){
+  // مکالمهٔ زنده حذف شد — فقط دیکتهٔ یک‌باره (once) مجاز است
+  once = true;
   if(V.on)return;
-  if(!loggedIn()){hist.push({role:'assistant',content:'برای استفاده از صدا ابتدا وارد حساب کاربری شوید.',err:true});render();return}
-  if(sosBusy()){setBar('warn','در حالت اعلام خطر، گفتگوی صوتی غیرفعال است.');return}
+  if(!loggedIn()){hist.push({role:'assistant',content:'برای استفاده از میکروفن ابتدا وارد حساب کاربری شوید.',err:true});render();return}
+  if(sosBusy()){setBar('warn','در حالت اعلام خطر، میکروفن موقتاً غیرفعال است.');return}
   if(busy)return;
-  unlockAudio();try{if(VC.mode!=='ai')offlineWarm()}catch(e){}
-  V.on=true;V.once=!!once;V.muted=false;V.tok++;V.noSpeech=0;V.errs=0;V.sttFail=0;V.ttsFail=0;V.ttsOff=false;V.note='';
-  vMute.classList.remove('off');vMute.classList.toggle('hid',!!once);
+  unlockAudio();
+  V.on=true;V.once=true;V.muted=false;V.tok++;V.noSpeech=0;V.errs=0;V.sttFail=0;V.ttsFail=0;V.ttsOff=false;V.note='';
+  try{vMute.classList.add('hid')}catch(e){}
   const canRec=!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&typeof MediaRecorder!=='undefined');
+  // ترجیح: ضبط + تشخیص سرور (دقیق‌تر برای فارسی)، بعد مرورگر
   V.useSR=!canRec&&!!SR;
   if(!canRec&&!SR){endVoice('این محیط از میکروفن پشتیبانی نمی‌کند.');return}
-  if(once)Q('#aiMic').classList.add('rec');else Q('#aiVoiceMode').className='active';
+  try{Q('#aiMic').classList.add('rec')}catch(e){}
   turn(V.tok);
 }
-Q('#aiVoiceMode').onclick=()=>{if(V.on&&!V.once)endVoice();else if(!V.on)startVoice(false)};
-Q('#aiMic').title='گفتن و ارسال';
+// دکمهٔ گفتگوی زنده غیرفعال
+try{ const _vm=Q('#aiVoiceMode'); if(_vm){ _vm.onclick=null; _vm.classList.add('hid'); } }catch(e){}
+Q('#aiMic').title='تایپ با صدا — صحبت کنید، متن در کادر می‌آید';
 Q('#aiMic').onclick=()=>{
   if(V.on&&V.once){if(bar.dataset.s==='listen'&&V.stopRec)V.stopRec();else endVoice();return}
   if(!V.on)startVoice(true);
@@ -5879,14 +6013,188 @@ document.addEventListener('visibilitychange',()=>{
 document.addEventListener('hktab', ()=> setTimeout(syncAiBgBar, 20));
 
 
-const CHIPS=[['📊 تجزیه و تحلیل','analysis'],['📝 دریافت صورتجلسه','minutes'],['🌲 سؤال تخصصی جنگل و قوانین','specialist'],['💬 چت آزاد و عمومی','general']];
+const CHIPS=[['📊 تجزیه و تحلیل','analysis'],['✉️ دستیار مکاتبات و نامه‌ها','minutes'],['🌲 سؤال تخصصی جنگل و قوانین','specialist'],['💬 چت آزاد و عمومی','general']];
 Q('#aiChips').innerHTML=CHIPS.map(c=>'<button type="button" class="o" data-k="'+c[1]+'">'+c[0]+'</button>').join('');
 Q('#aiChips').onclick=e=>{
   const b=e.target.closest('[data-k]');if(!b)return;const k=b.dataset.k;
-  if(k==='minutes')openMinutesForm();
+  if(k==='minutes')startCorrespondenceAssist();
   else if(k==='analysis')startAnalysis();
   else{setMode(k);inp.focus()}
 };
+function collectCorrespondenceDraft(){
+  const g = id => { const el=Q(id); return el ? String(el.value||'').trim() : ''; };
+  const sheetSel = Q('#mmSheet');
+  let sheetName = '', sheet = null;
+  try{
+    const sid = sheetSel ? +sheetSel.value : activeId;
+    sheet = SHEETS.find(s => s.id === sid) || getActiveSheet();
+    sheetName = (sheet && sheet.name) || '';
+  }catch(e){}
+  const trees = (sheet && sheet.id === activeId) ? (T||[]) : ((sheet && sheet.trees) || []);
+  const ind = trees.filter(t => t.ty !== 'h' && t.k !== 'planted');
+  const fw = trees.filter(t => t.ty === 'h');
+  const sumV = arr => arr.reduce((a,t)=>a+(+t.v||0),0);
+  let mmType = '';
+  try{
+    const on = Q('#mmTypeSeg button.on');
+    mmType = on ? (on.dataset.type === 'avali' ? 'بازدید اولیه' : 'نشانه‌گذاری') : '';
+  }catch(e){}
+  // اعضای هیأت از لیست mmMembers
+  let members = '';
+  try{
+    const box = Q('#mmMembers');
+    if(box){
+      members = [...box.querySelectorAll('input')].map(inp => inp.value.trim()).filter(Boolean).join('، ');
+    }
+  }catch(e){}
+  return {
+    sheetName,
+    letterNo: g('#mmLetterNo') || g('#mmDecreeNo'),
+    letterDate: g('#mmLetterDate') || g('#mmDecreeDate'),
+    reason: g('#mmReason'),
+    coord: g('#mmCoord'),
+    date: g('#mmDate'),
+    place: g('#mmArea'),
+    series: g('#mmSeries'),
+    shahrestan: g('#mmShahrestan'),
+    ost: g('#mmOst'),
+    attendees: members,
+    type: mmType,
+    hammer: g('#mmHammer'),
+    treesTotal: trees.length,
+    industrialCount: ind.length,
+    industrialVol: +sumV(ind).toFixed(3),
+    firewoodCount: fw.length,
+    firewoodVol: +sumV(fw).toFixed(3)
+  };
+}
+
+function startCorrespondenceAssist(preset){
+  if(!loggedIn()){alert('برای دستیار مکاتبات ابتدا وارد حساب کاربری شوید.');return}
+  try{ if(typeof loadMmSettings==='function') loadMmSettings(); }catch(e){}
+  if(mode!=='app') setMode('app');
+
+  // اگر از قبل انتخاب مشخص شده (مثلاً از دکمه اصلاح با AI)
+  if(preset && preset.kind){
+    runCorrespondenceChoice(preset.kind, preset);
+    return;
+  }
+
+  const m = document.getElementById('corrChoiceModal');
+  if(!m){
+    runCorrespondenceChoice('ask');
+    return;
+  }
+  m.classList.remove('hid');
+  const close = () => m.classList.add('hid');
+  const cancel = document.getElementById('corrChoiceCancel');
+  if(cancel) cancel.onclick = close;
+  m.onclick = e => { if(e.target === m) close(); };
+  m.querySelectorAll('[data-corr]').forEach(b => {
+    b.onclick = () => {
+      close();
+      runCorrespondenceChoice(b.dataset.corr);
+    };
+  });
+}
+
+function formatCorrDraftLines(d){
+  const lines = [];
+  if(d.sheetName) lines.push('سربرگ/پروژه: '+d.sheetName);
+  if(d.letterNo) lines.push('شماره دستور/نامه مبنا: '+d.letterNo);
+  if(d.letterDate) lines.push('تاریخ دستور/نامه مبنا: '+d.letterDate);
+  if(d.date) lines.push('تاریخ بازدید/صورتجلسه: '+d.date);
+  if(d.reason) lines.push('موضوع/دلیل: '+d.reason);
+  if(d.coord) lines.push('مختصات: '+d.coord);
+  if(d.place) lines.push('منطقه/محل: '+d.place);
+  if(d.series) lines.push('سری: '+d.series);
+  if(d.shahrestan) lines.push('شهرستان: '+d.shahrestan);
+  if(d.ost) lines.push('استان: '+d.ost);
+  if(d.attendees) lines.push('اعضای هیأت: '+d.attendees);
+  if(d.type) lines.push('نوع: '+d.type);
+  if(d.hammer) lines.push('چکش/علامت: '+d.hammer);
+  lines.push('خلاصه درختان سربرگ: کل '+d.treesTotal+' | صنعتی '+d.industrialCount+' (حجم '+d.industrialVol+' m³) | هیزمی '+d.firewoodCount+' (حجم '+d.firewoodVol+' m³)');
+  return lines;
+}
+
+function runCorrespondenceChoice(kind, preset){
+  preset = preset || {};
+  if(mode!=='app') setMode('app');
+
+  if(kind === 'sheet'){
+    const d = collectCorrespondenceDraft();
+    const lines = formatCorrDraftLines(d);
+    const hasCore = !!(d.letterNo || d.reason || d.treesTotal || d.date);
+    hist.push({
+      role:'assistant',
+      content: hasCore
+        ? ('✉️ مکاتبات بر اساس «همین سربرگ»\n\nداده از فرم صورتجلسه/نامه خوانده شد. می‌توانی بخواهی بازنویسی، خلاصه، یا نامهٔ ارسالی به دستگاه بنویسم.\n\n— داده فعلی —\n'+lines.join('\n'))
+        : ('✉️ مکاتبات بر اساس «همین سربرگ»\n\nفرم صورتجلسه/نامه در تب سیاهه هنوز کامل نیست. یا اینجا موضوع را بنویس، یا اول در تب سیاهه شماره/موضوع/درختان را پر کن.')
+    });
+    render();
+    if(hasCore){
+      const prompt =
+        'با نقش کارشناس مکاتبات اداری منابع طبیعی، بر اساس داده زیر پیش‌نویس نامه یا صورتجلسهٔ رسمی فارسی بنویس. '+
+        'در صورت وجود شماره و تاریخ مبنا را ذکر کن. ساختار اداری داشته باشد. اگر چیزی کم است در پایان بگو.\n\n'+lines.join('\n');
+      send(prompt, {mode:'app', context: ctx()});
+    } else {
+      inp.placeholder = 'موضوع نامه یا صورتجلسهٔ همین سربرگ را بنویسید…';
+      try{inp.focus()}catch(e){}
+    }
+    return;
+  }
+
+  if(kind === 'otherLetter'){
+    hist.push({
+      role:'assistant',
+      content:
+        '✉️ نامهٔ دیگر\n\n'+
+        'متن نامه، شماره و تاریخ (اگر داری) یا موضوع درخواست را اینجا بفرست.\n'+
+        'می‌توانم: خلاصه کنم، ایراد بگیرم، پاسخ اداری بنویسم، یا با بخشنامه‌های موجود در برنامه تطبیق بدهم.\n\n'+
+        'مثال: «این نامه از آب منطقه‌ای آمده…» و بعد متن را بچسبان.'
+    });
+    render();
+    inp.placeholder = 'متن یا موضوع نامهٔ دیگر را بنویسید / بچسبانید…';
+    try{inp.focus()}catch(e){}
+    return;
+  }
+
+  if(kind === 'otherMinutes'){
+    hist.push({
+      role:'assistant',
+      content:
+        '📋 صورتجلسهٔ دیگر\n\n'+
+        'متن صورتجلسه یا شرح بازدید را بفرست تا بازنویسی رسمی، اصلاح نگارشی، یا استخراج سیاهه/اقدامات انجام بدهم.\n'+
+        'اگر مربوط به سربرگ فعلی نیست، همان را بگو تا با درختان سربرگ قاطی نشود.'
+    });
+    render();
+    inp.placeholder = 'متن صورتجلسهٔ دیگر را بنویسید / بچسبانید…';
+    try{inp.focus()}catch(e){}
+    return;
+  }
+
+  if(kind === 'polishLast' && preset.text){
+    hist.push({
+      role:'assistant',
+      content: '✏️ صورتجلسه/نامهٔ تولیدشده از تب سیاهه بارگذاری شد. می‌توانی بخواهی رسمی‌تر شود، کوتاه شود، یا از روی آن نامهٔ جدا برای دستگاه نوشته شود.'
+    });
+    render();
+    const prompt =
+      'این متن صورتجلسه/نامه را بررسی و در صورت نیاز اصلاح کن. لحن رسمی اداری فارسی منابع طبیعی را حفظ کن؛ فقط غلط‌ها، ابهام‌ها و کمبودهای ساختاری را درست کن. اگر مناسب است یک نسخهٔ «نامهٔ ارسالی» جدا هم پیشنهاد بده:\n\n'+
+      String(preset.text).slice(0, 6000);
+    send(prompt, {mode:'app', context: preset.sheet ? ctx(preset.sheet) : ctx()});
+    return;
+  }
+
+  // پیش‌فرض: فقط راهنما
+  hist.push({
+    role:'assistant',
+    content: '✉️ دستیار مکاتبات آماده‌است. بگو نامه است یا صورتجلسه، و متن یا موضوع را بفرست.'
+  });
+  render();
+  try{inp.focus()}catch(e){}
+}
+
 function startAnalysis(){
   if(!loggedIn()){alert('برای تجزیه و تحلیل ابتدا وارد حساب کاربری شوید.');return}
   if(SHEETS.length===1){send('اقدامات صورت‌گرفته در سربرگ «'+SHEETS[0].name+'» را تجزیه و تحلیل کن: نقاط قوت، موارد ناقص و پیشنهادهای عملی.',{mode:'app',context:ctx(SHEETS[0])});return}
@@ -6210,9 +6518,14 @@ if(Q('#mmDlXlsx')) Q('#mmDlXlsx').onclick=async ()=>{
 if(Q('#mmToAi')) Q('#mmToAi').onclick=()=>{
   if(!_mmLast) return;
   Q('#mmResultModal').classList.add('hid');
-  const sh=_mmLast.sheet;
-  const prompt = 'این صورتجلسه را بررسی و در صورت نیاز اصلاح کن. متن رسمی را حفظ کن و فقط غلط‌ها یا کمبودها را درست کن:\n\n'+_mmLast.text;
-  send(prompt, {mode:'app', context:ctx(sh)});
+  // برو به AI و همان متن را برای اصلاح بده — بدون اجبار به سربرگ دیگر
+  try{
+    document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on', x.dataset.t==='a'));
+    ['m','l','h','a'].forEach(k=>{ const s=document.getElementById('sec-'+k); if(s) s.classList.toggle('hid', k!=='a'); });
+    document.body.dataset.tab='a';
+    document.body.classList.remove('home-mode');
+  }catch(e){}
+  startCorrespondenceAssist({ kind:'polishLast', text:_mmLast.text, sheet:_mmLast.sheet });
 };
 
 box.onclick=async e=>{
