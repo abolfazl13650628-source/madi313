@@ -86,6 +86,152 @@ body[data-tab="a"] #sensors {
     display: none !important;
 }
 
+/* Tab h: بدون نوار مختصات/قبله‌نما */
+body[data-tab="h"] #gpsStrip,
+body[data-tab="h"] #sensors{display:none!important}
+.hvSel{display:flex;gap:8px;align-items:center}
+.hvSel input{flex:1;min-height:42px;font-size:15px}
+.hvSel button{padding:8px 14px;font-size:16px;min-height:42px}
+#hvBar{position:relative;z-index:30}
+#hvList{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:40;max-height:min(55vh,300px);overflow-y:auto;border:1px solid var(--bd);border-radius:12px;background:var(--sf);box-shadow:var(--sh2)}
+#hvList .hvIt{display:flex;justify-content:space-between;gap:8px;width:100%;background:none;color:var(--tx);border:0;border-bottom:1px solid var(--bd);border-radius:0;text-align:right;padding:10px 12px;font-size:14px}
+#hvList .hvIt:last-child{border-bottom:0}
+#hvList .hvIt.on{font-weight:700;color:var(--ac)}
+#hvList .hvIt small{color:var(--mu);white-space:nowrap}
+#hvList .hvEmpty{padding:12px;color:var(--mu);font-size:13px;text-align:center}
+.hvBig{display:block;width:100%;margin:12px 0;padding:26px 12px;font-size:19px;font-weight:700;border-radius:18px;box-shadow:0 4px 14px rgba(47,107,60,.3)}
+#hvMsg{border-color:#c62828;background:rgba(198,40,40,.08);color:var(--tx);font-size:13.5px;line-height:1.9}
+#hvOk{min-height:18px;color:var(--ac);font-weight:700;margin-top:6px}
+
+#hvFull{position:fixed;inset:0;z-index:900;background:var(--bg);color:var(--tx);overflow-y:auto;padding-top:env(safe-area-inset-top,0px);padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+#hvFull .aiHead{position:sticky;top:0;z-index:2;background:var(--bg);max-width:640px;margin:auto}
+#hvFullTitle{flex:0 1 auto;min-width:0;padding:9px 16px;border-radius:999px;background:rgba(47,107,60,.12);color:var(--ac);font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hvFullBody{max-width:640px;margin:auto;padding:4px 12px 20px}
+.hvSeg{display:flex;gap:8px}
+.hvSegB{flex:1;background:var(--sf);color:var(--tx);border:1px solid var(--bd);padding:12px 6px;font-size:13.5px;font-weight:700;border-radius:12px;line-height:1.6}
+.hvSegB.on{background:var(--ac);color:var(--ac2);border-color:var(--ac)}
+.hvSpH{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;background:none;color:var(--tx);border:0;padding:6px 2px;font-size:15px;text-align:right}
+.hvSpH.on{color:var(--ac)}.hvSpH small{color:var(--mu);font-weight:400}
+.hvBody{margin-top:8px;border-top:1px solid var(--bd);padding-top:8px}
+.hvRow{display:flex;gap:4px;margin-top:6px;align-items:center}.hvRow input{flex:1;min-width:0;text-align:center;padding:6px 2px;font-size:14px}.hvRow .hvV{background:var(--sf)}
+.hvN{flex:0 0 22px;text-align:center;color:var(--mu);font-size:12px}
+.hvHd span{flex:1;text-align:center;font-size:11px;color:var(--mu)}.hvHd .hvN{flex:0 0 22px}.hvHd .hvX{flex:0 0 30px}
+.hvRow .hvRm{flex:0 0 30px;padding:4px 0}
+
+.hvOk2{color:var(--ac);font-weight:700;margin-top:6px;font-size:13px}
+.hvSavedList{margin-top:12px;display:flex;flex-direction:column;gap:4px}
+.hvSavedItem{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:6px 8px;font-size:12px;
+}
+.hvSavedItem .hvSiMain{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hvSavedItem .hvSiMain b{color:var(--ac)}
+.hvSavedItem .hvSiAct{display:flex;gap:4px;flex-shrink:0}
+.hvSavedItem .hvSiAct button{padding:2px 8px!important;font-size:11px!important;min-height:0;border-radius:6px}
+#harvestTableCard.hvHideCard{display:none!important}
+
+/* ===== ورود دستی تمام‌صفحه ===== */
+/* تیک تأیید تجدید حجم */
+
+.hvPipeWrap{position:relative;margin:12px 0 8px}
+.hvPipe{height:14px;border-radius:999px;background:var(--bd);overflow:hidden;display:flex;direction:ltr}
+.hvPipe .g{background:#2e9d4f;height:100%;transition:width .25s}
+.hvPipe .o{background:#ef6c00;height:100%;transition:width .25s}
+.hvPipeMark{
+  position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--tx);
+  transform:translateX(-50%);z-index:2;border-radius:1px;
+  box-shadow:0 0 0 1px var(--sf);
+}
+.hvPipeMark::after{
+  content:attr(data-lab);
+  position:absolute;top:-15px;left:50%;transform:translateX(-50%);
+  font-size:10px;color:var(--mu);white-space:nowrap;font-weight:700;
+}
+.hvPipeMeta{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--mu);margin-bottom:8px;flex-wrap:wrap}
+.hvPipeMeta b{color:var(--tx)}
+.hvPick{margin:10px 0 8px}
+.hvPick select{width:100%;min-height:48px;font-size:15px;padding:10px 12px}
+.hvFormBox{margin-top:8px}
+
+.hvDoneBadge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#2e9d4f;color:#fff;font-size:13px;font-weight:700;margin-right:6px;flex-shrink:0}
+.hvSpH .hvDoneBadge{margin-left:6px;margin-right:0}
+.hvTrPick{margin:10px 0 8px}
+.hvTrPick select{width:100%;min-height:48px;font-size:15px;padding:10px 12px}
+.hvTrForm{margin-top:8px}
+.hvSpH{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;background:none;color:var(--tx);border:0;padding:6px 2px;font-size:15px;text-align:right}
+#manualOpenBtn{
+  display:block;width:100%;padding:22px 14px;font-size:18px;font-weight:700;
+  border-radius:16px;box-shadow:0 4px 14px rgba(47,107,60,.28);margin:0;
+}
+#manualFull{
+  position:fixed;inset:0;z-index:900;background:var(--bg);color:var(--tx);
+  display:flex;flex-direction:column;overflow:hidden;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+#manualFull .aiHead{
+  flex:0 0 auto;position:relative;z-index:3;background:var(--bg);
+  max-width:640px;width:100%;margin:0 auto;
+}
+#manualFullTitle{
+  flex:0 1 auto;min-width:0;padding:9px 16px;border-radius:999px;
+  background:rgba(47,107,60,.12);color:var(--ac);font-size:14px;font-weight:700;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.manualFullBody{
+  flex:1;min-height:0;max-width:640px;width:100%;margin:0 auto;
+  padding:0 12px 8px;display:flex;flex-direction:column;overflow:hidden;
+}
+/* کل فرم ثبت — ثابت در بالا، بدون محدودیت ارتفاع اجباری */
+#manualFormCard{
+  flex:0 0 auto;
+  margin:4px 0 0;
+  box-shadow:0 4px 14px rgba(0,0,0,.08);
+}
+/* لیست موارد — پایین‌تر و فقط همین قسمت اسکرول */
+#manualRecentCard{
+  flex:1;min-height:100px;margin:10px 0 4px;display:flex;flex-direction:column;
+  overflow:hidden;padding:6px 8px;
+}
+#manualRecentList{
+  flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  display:flex;flex-direction:column;gap:3px;margin:0;padding-bottom:4px;
+}
+#manualFull .tall-input{min-height:54px!important;font-size:18px!important;font-weight:700}
+#manualFull input:not([type=file]),
+#manualFull select{
+  min-height:48px;font-size:16px;padding:10px 12px;
+}
+#manualFull label{font-size:13px;margin-top:10px;font-weight:600}
+#manualFull #saveBar{position:sticky;bottom:auto;margin-top:14px}
+#manualFull #saveBar button{padding:14px 10px;font-size:15px;font-weight:700}
+#manualFull #sps{min-height:48px;font-size:16px}
+#manualFull #sp{min-height:48px;font-size:15px}
+#manualFull #simBtn{min-height:48px;font-size:13px;padding:8px}
+#manualFull .hvTyRow label{font-size:11px;margin-top:4px;font-weight:500;color:var(--mu)}
+#manualFull .hvTyRow select{min-height:34px!important;font-size:13px!important;padding:4px 8px!important}
+.manualItem{
+  background:var(--bg);border:1px solid var(--bd);border-radius:6px;
+  padding:3px 6px;font-size:11.5px;line-height:1.35;
+  display:flex;align-items:center;gap:6px;
+}
+.manualItem .mi-main{
+  flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  color:var(--tx);
+}
+.manualItem .mi-main b{color:var(--ac);font-weight:700}
+.manualItem .mi-actions{display:flex;gap:3px;flex-shrink:0}
+.manualItem .mi-actions button{padding:1px 7px!important;font-size:10.5px!important;min-height:0;border-radius:5px;line-height:1.4}
+#manualErrToast{
+  position:fixed;left:50%;top:45%;transform:translate(-50%,-50%);
+  z-index:1200;max-width:min(90vw,360px);width:auto;
+  background:#b3261e;color:#fff;border-radius:14px;padding:14px 18px;
+  font-size:14.5px;font-weight:700;line-height:1.7;text-align:center;
+  box-shadow:0 12px 40px rgba(0,0,0,.4);pointer-events:none;
+  opacity:0;transition:opacity .2s;
+}
+#manualErrToast.show{opacity:1}
+
 /* Splash (Login) */
 #splash{position:fixed;inset:0;z-index:999;background:linear-gradient(135deg,#1d3b2a,#101a13);display:flex;flex-direction:column;justify-content:center;align-items:center;padding:20px;overflow-y:auto}
 .auth-box{background:var(--sf);width:100%;max-width:360px;border-radius:16px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,.3);text-align:center}
@@ -819,60 +965,9 @@ window.needOcr=async()=>{if(typeof Tesseract==='undefined')await loadLib('https:
       </div>
     </details>
 
-    <div class="c">
-      <div class="m" style="margin:4px 2px 8px">برای ورود دستی، فیلدهای زیر را تکمیل کنید.</div>
-      
-      <div id="volClassRow" class="hid">
-        <label>کلاسه حجم</label>
-        <select id="volClass">
-          <option value="general">حجم عمومی</option>
-          <option value="tala">کلاسه درختان حوزه تالار</option>
-          <option value="karsang" disabled>کلاسه درختان کارسنگ (به‌زودی)</option>
-          <option value="babolak" disabled>کلاسه درختان بابلک (به‌زودی)</option>
-        </select>
-      </div>
-
-      <label>گونه</label>
-      <div id="recentSp"></div>
-      <div class="r" style="align-items:stretch; margin-top:4px;">
-        <input id="sps" placeholder="جستجو..." autocomplete="off" style="flex:1.2">
-        <select id="sp" style="flex:1.5; margin-top:0; padding:4px; min-height:36px; font-size:13px;"></select>
-        <button id="simBtn" class="o" type="button" title="پس از ذخیره، گونه تغییر نکند" style="flex:0.5; padding:0; font-size:11px; white-space:nowrap;">🔁 مشابه</button>
-      </div>
-      <div id="spSug" class="hid"></div>
-
-      <div class="r" style="margin-top:6px;">
-        <div><label>قطر سینه (cm)</label><input id="d" type="text" inputmode="decimal" class="tall-input"></div>
-        <div class="h-wrap">
-          <label>طول / ارتفاع (m)</label>
-          <input id="h" type="text" inputmode="decimal" class="tall-input">
-          <button type="button" id="hKey" class="h-key hid" title="خودکار / دستی">🔒</button>
-        </div>
-        <div><label>دور تنه (cm)</label><input id="gi" type="text" inputmode="decimal" placeholder="اختیاری"></div>
-      </div>
-
-      <div class="r">
-        <div style="flex:0.5"><label>تعداد</label><input id="nn" type="text" inputmode="decimal" value="1"></div>
-        <div style="flex:1"><label>شماره درخت</label><input id="no"></div>
-        <div style="flex:1.5"><label>توضیحات</label><input id="ds" placeholder="مثلاً وضعیت تنه…"></div>
-      </div>
-
-      <div class="r">
-        <div><label>نوع</label><select id="ty"><option value="i">صنعتی</option><option value="h">هیزمی</option></select></div>
-        <div><label>دسته (تشخیص خودکار)</label><select id="gd"><option value="1">دسته اول</option><option value="2">دسته دوم</option><option value="3">دسته سوم</option></select></div>
-      </div>
-
-      <div id="saveBar">
-        <div class="sbIn">
-          <div id="svHint"></div>
-          <div class="m" id="msg"></div>
-          <div class="sbRow">
-            <div id="newSaveBtns" class="r"><button id="sv">📌 ذخیره با مختصات</button><button id="svNo" class="o">بدون مختصات</button></div>
-            <div class="vb">حجم<b id="vBar">—</b></div>
-          </div>
-        </div>
-      </div>
-      <div id="totSummary">—</div>
+        <div class="c" style="padding:10px">
+      <button type="button" id="manualOpenBtn">⌨️ ورود دستی درختان</button>
+      <div class="m" style="margin-top:8px;text-align:center;line-height:1.6">گونه، قطر، ارتفاع و شماره را در صفحهٔ جداگانه با کادرهای بزرگ وارد کنید.</div>
     </div>
 
     <section class="c" id="tools">
@@ -936,23 +1031,25 @@ window.needOcr=async()=>{if(typeof Tesseract==='undefined')await loadLib('https:
 
   <!-- Tab Content: Tajdid -->
   <section id="sec-h" class="hid">
-    <div class="sheetbar"></div>
-    <div id="harvestGate" class="c" style="border-color:#c62828;background:rgba(198,40,40,.06)">
-      <b>🔒 تجدید حجم فقط برای پروژهٔ ذخیره‌شده</b>
-      <div class="m" style="margin-top:6px">ابتدا در تب «سیاهه» با دکمهٔ <b>ذخیرهٔ سربرگ فعلی با نام</b> این پروژه را ذخیره کنید. پس از ذخیره، فرم تجدید برای <b>همین سربرگ</b> فعال می‌شود و پروژه در فهرست زیر هم دیده می‌شود.</div>
-      <div id="harvestSavedList" style="margin-top:8px"></div>
+    <div id="hvBar" class="c">
+      <div class="hvSel">
+        <input id="hvSearch" type="text" placeholder="جستجوی عرصه…" autocomplete="off" aria-label="جستجوی عرصه">
+        <button id="hvArrow" type="button" class="o" aria-label="نمایش همه عرصه‌ها">▾</button>
+      </div>
+      <div id="hvList" class="hid"></div>
     </div>
-    <div id="harvestWork" class="c">
-      <label>درخت</label><select id="hs2"></select>
-      <div class="r"><div><label>قطر جدید (cm)</label><input id="d2" type="text" inputmode="decimal"></div><div><label>ارتفاع جدید (m)</label><input id="h2" type="text" inputmode="decimal"></div></div>
-      <div class="r"><div><label>حجم استحصال‌شده (m³)</label><input id="hv" type="text" inputmode="decimal"></div><div><label>تاریخ استحصال</label><input id="hd" type="date"></div></div>
-      <label>یادداشت</label><input id="hn"><br><button id="sh" style="width:100%">ذخیره تجدید / استحصال</button>
+    <div id="hvMsg" class="c hid"></div>
+
+    <div id="hvHome">
+      <div id="harvestGate" class="c">
+        <b>ℹ️ راهنما</b>
+        <div class="m" style="margin-top:6px">برای تجدید حجم، ابتدا باید عرصه را در تب «📋 دریافت سیاهه» با دکمهٔ <b>ذخیرهٔ سربرگ فعلی با نام</b> ذخیره کنید تا فایل انجام عملیات همان‌جا ساخته شود؛ سپس در این تب عملیات را انجام دهید. استحصال هم فقط پس از ذخیرهٔ «تجدید حجم» یا «تجدید حجم و استحصال همزمان» برای همان عرصه ممکن است.</div>
+      </div>
+      <button type="button" class="hvBig" data-hv="r">📐 تجدید حجم</button>
+      <button type="button" class="hvBig" data-hv="h">🪓 استحصال</button>
+      <button type="button" class="hvBig" data-hv="b">📐🪓 تجدید حجم و استحصال همزمان</button>
     </div>
-    <div class="c" id="harvestTableCard">
-      <div class="tw"><table id="tb2"></table></div><br>
-      <div class="r"><button id="e2">خروجی اکسل</button><button id="e2s" class="o">📤 اشتراک‌گذاری</button></div>
-      <div class="m xs"></div>
-    </div>
+
   </section>
   
   <!-- Tab Content: AI -->
@@ -981,6 +1078,110 @@ window.needOcr=async()=>{if(typeof Tesseract==='undefined')await loadLib('https:
       </div>
     </div>
   </section>
+</div>
+
+<!-- Tajdid full page -->
+<div id="hvFull" class="hid">
+  <div class="aiHead">
+    <button id="hvFullBack" class="aiRound" type="button" aria-label="بازگشت"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+    <div id="hvFullTitle"></div>
+    <span style="width:42px"></span>
+  </div>
+  <div class="hvFullBody">
+    <div class="hvSeg"><button id="hvSubSp" type="button" class="hvSegB"></button><button id="hvSubTr" type="button" class="hvSegB"></button></div>
+    <div id="hvHint" class="m" style="text-align:center;margin-top:16px">یکی از دو روش بالا را انتخاب کنید.</div>
+    <div id="hvSpWrap" class="hid">
+      <div class="c hvPick">
+        <label style="margin-top:0">انتخاب گونه</label>
+        <select id="hvSpSel"><option value="">— گونه را انتخاب کنید —</option></select>
+      </div>
+      <div id="hvSpForm" class="hid"></div>
+      <div id="hvSpSaved" class="hvSavedList"></div>
+    </div>
+    <div id="hvTrWrap" class="hid">
+      <select id="hs2" class="hid"></select>
+      <div class="c hvPick">
+        <label style="margin-top:0">انتخاب درخت</label>
+        <select id="hvTrSel"><option value="">— درخت را انتخاب کنید —</option></select>
+      </div>
+      <div id="hvTrForm" class="hid"></div>
+      <div id="hvTrSaved" class="hvSavedList"></div>
+      <div class="c hvHideCard" id="harvestTableCard" style="margin-top:10px">
+        <div class="tw"><table id="tb2"></table></div><br>
+        <div class="r"><button id="e2">خروجی اکسل</button><button id="e2s" class="o">📤 اشتراک‌گذاری</button></div>
+        <div class="m xs"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Manual entry full page -->
+<div id="manualFull" class="hid">
+  <div class="aiHead">
+    <button id="manualFullBack" class="aiRound" type="button" aria-label="بازگشت"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+    <div id="manualFullTitle">—</div>
+    <span style="width:42px"></span>
+  </div>
+  <div class="manualFullBody">
+    <div class="c" id="manualFormCard">
+      <div id="volClassRow" class="hid">
+        <label>کلاسه حجم</label>
+        <select id="volClass">
+          <option value="general">حجم عمومی</option>
+          <option value="tala">کلاسه درختان حوزه تالار</option>
+          <option value="karsang" disabled>کلاسه درختان کارسنگ (به‌زودی)</option>
+          <option value="babolak" disabled>کلاسه درختان بابلک (به‌زودی)</option>
+        </select>
+      </div>
+
+      <label>گونه</label>
+      <div id="recentSp"></div>
+      <div class="r" style="align-items:stretch; margin-top:4px;">
+        <input id="sps" placeholder="جستجوی گونه..." autocomplete="off" style="flex:1.2">
+        <select id="sp" style="flex:1.5; margin-top:0;"></select>
+        <button id="simBtn" class="o" type="button" title="پس از ذخیره، گونه تغییر نکند" style="flex:0.55; white-space:nowrap;">🔁 مشابه</button>
+      </div>
+      <div id="spSug" class="hid"></div>
+
+      <div class="r" style="margin-top:6px;">
+        <div><label>قطر سینه (cm)</label><input id="d" type="text" inputmode="decimal" class="tall-input"></div>
+        <div class="h-wrap">
+          <label>طول / ارتفاع (m)</label>
+          <input id="h" type="text" inputmode="decimal" class="tall-input">
+          <button type="button" id="hKey" class="h-key hid" title="خودکار / دستی">🔒</button>
+        </div>
+        <div><label>دور تنه (cm)</label><input id="gi" type="text" inputmode="decimal" placeholder="اختیاری"></div>
+      </div>
+
+      <div class="r">
+        <div style="flex:0.55"><label>تعداد</label><input id="nn" type="text" inputmode="decimal" value="1"></div>
+        <div style="flex:1"><label>شماره درخت</label><input id="no" class="tall-input"></div>
+        <div style="flex:1.45"><label>توضیحات</label><input id="ds" placeholder="مثلاً وضعیت تنه…"></div>
+      </div>
+
+      <div class="r hvTyRow">
+        <div><label>نوع</label><select id="ty"><option value="i">صنعتی</option><option value="h">هیزمی</option></select></div>
+        <div><label>دسته (خودکار)</label><select id="gd"><option value="1">دسته اول</option><option value="2">دسته دوم</option><option value="3">دسته سوم</option></select></div>
+      </div>
+
+      <div id="saveBar">
+        <div class="sbIn">
+          <div id="svHint"></div>
+          <div class="m" id="msg"></div>
+          <div class="sbRow">
+            <div id="newSaveBtns" class="r"><button id="sv">📌 ذخیره با مختصات</button><button id="svNo" class="o">بدون مختصات</button></div>
+            <div class="vb">حجم<b id="vBar">—</b></div>
+          </div>
+        </div>
+      </div>
+      <div id="totSummary">—</div>
+    </div>
+
+    <div class="c" id="manualRecentCard">
+      <div id="manualRecentList"></div>
+    </div>
+  </div>
+  <div id="manualErrToast" class="hid" aria-live="assertive"></div>
 </div>
 
 <!-- SOS Button - Circular, static at the bottom -->
@@ -1443,37 +1644,656 @@ function markProjectSaved(sh, snapMeta){
   if(snapMeta && snapMeta.name) sh.snapName = snapMeta.name;
   try{ saveActive(); }catch(e){}
 }
-function updateHarvestGate(){
-  const gate = document.getElementById('harvestGate');
-  const work = document.getElementById('harvestWork');
-  const table = document.getElementById('harvestTableCard');
-  const list = document.getElementById('harvestSavedList');
-  const saved = isProjectSaved();
-  if(gate) gate.classList.toggle('hid', !!saved);
-  if(work){
-    work.classList.toggle('hid', !saved);
-    work.querySelectorAll('input,select,button').forEach(el=>{ el.disabled = !saved; });
-  }
-  if(table) table.classList.toggle('hid', !saved);
-  if(list){
-    if(!SNAPS.length){
-      list.innerHTML = '<div class="m">هنوز پروژه‌ای ذخیره نشده است.</div>';
-    } else {
-      list.innerHTML = '<div class="m" style="margin-bottom:4px">پروژه‌های ذخیره‌شده — برای تجدید باز کنید:</div>' +
-        SNAPS.slice().reverse().map(s=>
-          '<button type="button" class="o" style="width:100%;margin:3px 0;text-align:right;padding:8px 10px" data-snap="'+s.id+'">'
-          +'<b>'+esc(s.name)+'</b> <small style="color:var(--mu)"> — '+toFa((s.trees||[]).length)+' درخت</small></button>'
-        ).join('');
-      list.querySelectorAll('[data-snap]').forEach(b=>{
-        b.onclick = ()=> loadSnap(+b.dataset.snap);
-      });
+window.HV={mode:null,sub:null,sp:null,groups:[],draft:{}};
+
+/* —— دکمه برگشت گوشی / مرورگر = برگشت داخل صفحات —— */
+window.__appBack = {
+  silent: false,
+  pushed: 0,
+  push(){
+    try{
+      history.pushState({appLayer:1, t:Date.now()}, '');
+      this.pushed++;
+    }catch(e){}
+  },
+  backFromUI(){
+    /* بستن با دکمهٔ داخل صفحه: تاریخچه را هم هم‌تراز کن */
+    if(this.pushed>0){
+      this.silent = true;
+      this.pushed--;
+      try{ history.back(); }catch(e){ this.silent=false; }
     }
+  },
+  tryClose(){
+    /* اولویت: مودال‌ها → صفحهٔ دستی → زیر‌صفحهٔ تجدید → صفحهٔ تجدید */
+    const hide = id=>{
+      const el=document.getElementById(id);
+      if(el && !el.classList.contains('hid')){ el.classList.add('hid'); return true; }
+      return false;
+    };
+    if(hide('editModal')) return true;
+    if(hide('saveTypeModal')) return true;
+    if(hide('newSheetModal')) return true;
+    if(hide('corrChoiceModal')) return true;
+    if(hide('routeChoiceModal')) return true;
+    /* لیست عرصه در تجدید حجم */
+    try{
+      const l=document.getElementById('hvList');
+      if(l && !l.classList.contains('hid')){ l.classList.add('hid'); return true; }
+    }catch(e){}
+    /* ورود دستی تمام‌صفحه */
+    try{
+      const mf=document.getElementById('manualFull');
+      if(mf && !mf.classList.contains('hid')){
+        if(typeof closeManualFull==='function') closeManualFull(true);
+        else { mf.classList.add('hid'); document.body.style.overflow=''; }
+        return true;
+      }
+    }catch(e){}
+    /* تجدید حجم تمام‌صفحه */
+    try{
+      const hf=document.getElementById('hvFull');
+      if(hf && !hf.classList.contains('hid')){
+        if(window.HV && HV.sub){
+          if(typeof hvSetSub==='function') hvSetSub(null);
+          return true;
+        }
+        if(typeof hvBack==='function') hvBack(true);
+        else { hf.classList.add('hid'); document.body.style.overflow=''; }
+        return true;
+      }
+    }catch(e){}
+    return false;
   }
+};
+try{
+  if(!history.state || !history.state.appRoot){
+    history.replaceState({appRoot:1}, '');
+  }
+}catch(e){}
+window.addEventListener('popstate', function(ev){
+  if(window.__appBack.silent){
+    window.__appBack.silent = false;
+    return;
+  }
+  if(window.__appBack.pushed>0) window.__appBack.pushed--;
+  const closed = window.__appBack.tryClose();
+  if(!closed){
+    /* چیزی برای بستن نبود — کاربر در ریشه است؛ یک state ریشه بگذار تا خروج ناگهانی کمتر شود */
+    try{ history.replaceState({appRoot:1}, ''); }catch(e){}
+  }
+});
+
+const HV_T={r:'تجدید حجم',h:'استحصال',b:'تجدید حجم و استحصال'};
+const HV_KEYS={r:['r'],h:['h'],b:['r','h']};
+const hvQ=id=>document.getElementById(id);
+function hvNorm(x){return String(x||'').replace(/ي/g,'ی').replace(/ك/g,'ک').replace(/[\u200c\s]/g,'').toLowerCase()}
+function hvHasRev(){
+  const sh=getActiveSheet();
+  return T.some(t=>t.v2>0)||!!(sh&&sh.hvg&&sh.hvg.r&&Object.values(sh.hvg.r).some(a=>a&&a.length));
+}
+function hvReady(mode){
+  const sh=getActiveSheet();
+  if(!sh)return 'ابتدا یک عرصه انتخاب کنید.';
+  if(!isProjectSaved(sh))return '⚠️ این عرصه هنوز در تب «📋 دریافت سیاهه» ذخیره نشده است. ابتدا در آن تب با دکمهٔ «ذخیرهٔ سربرگ فعلی با نام» ذخیره کنید، سپس این عملیات را انجام دهید.';
+  if(mode==='h'&&!hvHasRev())return '⚠️ برای این عرصه هنوز «تجدید حجم» ذخیره نشده است. ابتدا در بخش «تجدید حجم» یا «تجدید حجم و استحصال همزمان» ذخیره کنید، سپس استحصال را انجام دهید.';
+  return '';
+}
+function hvMsg(t){const e=hvQ('hvMsg');if(!e)return;e.textContent=t||'';e.classList.toggle('hid',!t)}
+function hvOpen(mode){
+  const m=hvReady(mode);
+  if(m){hvMsg(m);return}
+  hvMsg('');HV.mode=mode;
+  hvQ('hvFullTitle').textContent=getActiveSheet().name;
+  hvQ('hvSubSp').textContent=HV_T[mode]+(mode==='b'?' همزمان':'')+' گونه‌های مشابه';
+  hvQ('hvSubTr').textContent=HV_T[mode]+(mode==='b'?' همزمان':'')+' درخت به درخت';
+  hvSetSub(null);
+  hvUpdateMethodButtons();
+  const hc=hvQ('harvestTableCard');
+  if(hc){ /* فقط در استحصال خالص جدول اکسل استحصال دیده شود — بدون تاریخ/استحصال در تجدید حجم */
+    if(HV.mode==='h') hc.classList.remove('hvHideCard');
+    else hc.classList.add('hvHideCard');
+  }
+  const f=hvQ('hvFull');f.classList.remove('hid');f.scrollTop=0;
+  document.body.style.overflow='hidden';
+  try{ window.__appBack && window.__appBack.push(); }catch(e){}
+}
+function hvDraftKey(key){ return String(HV.mode||'')+'|'+String(HV.sub||'')+'|'+String(key||''); }
+function hvReadDraftRows(body){
+  if(!body) return [];
+  return [...body.querySelectorAll('.hvRow:not(.hvHd)')].map(r=>{
+    const dRaw=r.querySelector('.hvD').value, hRaw=r.querySelector('.hvH').value, cRaw=r.querySelector('.hvC').value;
+    const d=+toEn(dRaw), h=+toEn(hRaw), n=Math.round(+toEn(cRaw))||1;
+    const v=(d>0&&h>0)?vol(d,h,1)*n:0;
+    return {d:dRaw, h:hRaw, n:cRaw||String(n), v};
+  });
+}
+function hvKeepDraft(body){
+  if(!body||!HV.sp) return;
+  if(!HV.draft) HV.draft={};
+  HV.draft[hvDraftKey(HV.sp)] = hvReadDraftRows(body);
+}
+function hvLoadRows(key){
+  if(!HV.draft) HV.draft={};
+  const dk=hvDraftKey(key);
+  if(HV.draft[dk] && HV.draft[dk].length) return HV.draft[dk];
+  const sh=getActiveSheet(), k0=HV_KEYS[HV.mode]&&HV_KEYS[HV.mode][0];
+  const saved=(sh&&sh.hvg&&k0&&sh.hvg[k0]&&sh.hvg[k0][key])||[];
+  return saved.length?saved:null;
+}
+function hvHasHvgData(which){
+  /* which: 'r' تجدید حجم | 'h' استحصال */
+  const sh=getActiveSheet();
+  if(sh&&sh.hvg&&sh.hvg[which]){
+    if(Object.values(sh.hvg[which]).some(a=>a&&a.length)) return true;
+  }
+  if(which==='r' && typeof T!=='undefined' && T.some(t=>+t.v2>0)) return true;
+  if(which==='h' && typeof T!=='undefined' && T.some(t=>+t.hv>0)) return true;
+  return false;
+}
+function isMarkingLocked(){
+  /* پس از اولین ذخیرهٔ تجدید حجم، نشانه‌گذاری قفل ویرایش/حذف می‌شود */
+  return hvHasHvgData('r');
+}
+function isRenewalEditLocked(){
+  /* پس از اولین ذخیرهٔ استحصال، تجدید حجم قفل ویرایش/حذف می‌شود */
+  return hvHasHvgData('h');
+}
+function hvMethodLocked(){
+  /* قفل روش تجمیعی/درخت‌به‌درخت فقط وقتی دادهٔ ذخیره‌شده باشد؛ با خالی شدن دوباره باز می‌شود */
+  const sh=getActiveSheet();
+  if(!sh||!sh.hvg) return null;
+  const mode=HV.mode;
+  const keys= mode ? (HV_KEYS[mode]||[]) : ['r','h'];
+  let tr=false, sp=false;
+  keys.forEach(x=>{
+    const o=sh.hvg[x]||{};
+    Object.keys(o).forEach(k=>{
+      if(o[k]&&o[k].length){ if(String(k).charAt(0)==='#') tr=true; else sp=true; }
+    });
+  });
+  if(tr) return 'tr';
+  if(sp) return 'sp';
+  return null;
+}
+function hvUpdateMethodButtons(){
+  const lock=hvMethodLocked(); /* null => هر دو باز */
+  const bSp=hvQ('hvSubSp'), bTr=hvQ('hvSubTr');
+  if(!bSp||!bTr) return;
+  const disSp = (lock==='tr');
+  const disTr = (lock==='sp');
+  bSp.disabled = !!disSp;
+  bTr.disabled = !!disTr;
+  bSp.style.opacity = bSp.disabled ? '.45' : '';
+  bTr.style.opacity = bTr.disabled ? '.45' : '';
+  bSp.style.pointerEvents = bSp.disabled ? 'none' : '';
+  bTr.style.pointerEvents = bTr.disabled ? 'none' : '';
+}
+function hvBack(fromPop){
   try{
-    if(!saved && $('#tb2')){
-      $('#tb2').innerHTML = '<tr><td class="m">پس از ذخیرهٔ پروژه، درختان همین سربرگ اینجا می‌آیند.</td></tr>';
-    }
+    const body=document.querySelector('#hvFull [data-hvkey]');
+    if(body) hvKeepDraft(body);
   }catch(e){}
+  const hadSub=!!(window.HV&&HV.sub);
+  HV.mode=null; HV.sub=null; HV.sp=null;
+  hvQ('hvFull').classList.add('hid');
+  document.body.style.overflow='';
+  try{ hvUpdateMethodButtons(); }catch(e){}
+  if(!fromPop){
+    try{
+      if(window.__appBack){
+        if(hadSub) window.__appBack.backFromUI();
+        window.__appBack.backFromUI();
+      }
+    }catch(e){}
+  }
+}
+function hvSetSub(s){
+  const lock=hvMethodLocked();
+  if(s && lock && lock!==s){
+    hvErr(lock==='tr'
+      ? 'برای این عرصه روش «درخت به درخت» قبلاً ذخیره شده است. روش تجمیعی غیرفعال است تا تداخل حجم پیش نیاید.'
+      : 'برای این عرصه روش «گونه‌های مشابه» قبلاً ذخیره شده است. روش درخت‌به‌درخت غیرفعال است تا تداخل حجم پیش نیاید.');
+    return;
+  }
+  /* قبل از تعویض، پیش‌نویس فرم فعلی را نگه دار */
+  try{
+    const body=document.querySelector('#hvFull [data-hvkey]');
+    if(body) hvKeepDraft(body);
+  }catch(e){}
+  HV.sub=s; HV.sp=null;
+  hvQ('hvSubSp').classList.toggle('on',s==='sp');
+  hvQ('hvSubTr').classList.toggle('on',s==='tr');
+  hvQ('hvHint').classList.toggle('hid',!!s);
+  hvQ('hvSpWrap').classList.toggle('hid',s!=='sp');
+  hvQ('hvTrWrap').classList.toggle('hid',s!=='tr');
+  hvUpdateMethodButtons();
+  if(s==='sp') hvRenderSp();
+  if(s==='tr') hvRenderTr();
+  if(s){ try{ window.__appBack && window.__appBack.push(); }catch(e){} }
+}
+function hvGroups(){
+  if(HV.sub==='tr')return T.map(t=>({k:'#'+t.id,label:(t.ty==='h'?'هیزمی':'شماره '+toFa(t.no||t.id))+' — '+(t.sp||''),sub:'قطر '+fa(t.d,0)+' · '+toFa(cnt(t))+' اصله',v:tv(t),list:[t]}));
+  const m=new Map();
+  T.forEach(t=>{const k=t.sp||'نامشخص';if(!m.has(k))m.set(k,{k,label:k,n:0,v:0,list:[]});const g=m.get(k);g.n+=cnt(t);g.v+=tv(t);g.list.push(t)});
+  return [...m.values()].sort((a,b)=>a.k.localeCompare(b.k,'fa')).map(g=>Object.assign(g,{sub:toFa(g.n)+' اصله'}));
+}
+function hvRowH(r,i){
+  const d = (r && r.d!=null && r.d!=='') ? (typeof toFa==='function'?toFa(r.d):r.d) : '';
+  const h = (r && r.h!=null && r.h!=='') ? (typeof toFa==='function'?toFa(r.h):r.h) : '';
+  const nRaw = (r && r.n!=null && r.n!=='') ? r.n : 1;
+  const n = (typeof toFa==='function'?toFa(nRaw):nRaw);
+  const vv = (r && +r.v>0) ? fa(r.v,3) : '';
+  return '<div class="hvRow">'
+    +'<span class="hvN">'+toFa((i||0)+1)+'</span>'
+    +'<input class="hvD" type="text" inputmode="decimal" dir="rtl" lang="fa" placeholder="قطر" value="'+d+'">'
+    +'<input class="hvH" type="text" inputmode="decimal" dir="rtl" lang="fa" placeholder="طول" value="'+h+'">'
+    +'<input class="hvC" type="text" inputmode="numeric" dir="rtl" lang="fa" placeholder="تعداد" value="'+n+'">'
+    +'<input class="hvV" type="text" readonly dir="rtl" lang="fa" placeholder="حجم کل" value="'+vv+'">'
+    +'<button type="button" class="x hvRm" aria-label="حذف">×</button></div>';
+}
+function hvRenum(box){box.querySelectorAll('.hvRow').forEach((r,i)=>{r.querySelector('.hvN').textContent=toFa(i+1)})}
+function hvBaseVol(key){
+  if(!key) return 0;
+  if(String(key).charAt(0)==='#'){
+    const t=T.find(x=>'#'+x.id===key);
+    return t?tv(t):0;
+  }
+  const g=(HV.groups||[]).find(x=>x.k===key);
+  if(g) return g.v||0;
+  return T.filter(t=>(t.sp||'نامشخص')===key).reduce((a,t)=>a+tv(t),0);
+}
+function hvBaseDiam(key){
+  /* بزرگ‌ترین قطر نشانه‌گذاری مرتبط با این کلید */
+  if(!key) return 0;
+  if(String(key).charAt(0)==='#'){
+    const t=T.find(x=>'#'+x.id===key);
+    return t?(+t.d||0):0;
+  }
+  const list=T.filter(t=>(t.sp||'نامشخص')===key);
+  return list.reduce((m,t)=>Math.max(m, +t.d||0), 0);
+}
+function hvSavedVol(key){
+  const sh=getActiveSheet();
+  if(!sh||!sh.hvg||!HV.mode) return 0;
+  const keys=HV_KEYS[HV.mode]||[];
+  let best=0;
+  keys.forEach(x=>{
+    const rows=sh.hvg[x]&&sh.hvg[x][key];
+    if(rows&&rows.length){
+      const s=rows.reduce((a,r)=>a+(+r.v||0),0);
+      if(s>best) best=s;
+    }
+  });
+  return best;
+}
+function hvIsDone(key){
+  const base=hvBaseVol(key);
+  if(!(base>0)) return false;
+  const applied=hvSavedVol(key);
+  if(!(applied>0)) return false;
+  return applied>=base*0.8 && applied<=base*1.2;
+}
+function hvPipeHtml(base, applied){
+  const max=base>0?base*1.2:0;
+  if(!(max>0)){
+    return '<div class="hvPipeMeta"><span>حجم نشانه‌گذاری: —</span></div><div class="hvPipeWrap"><div class="hvPipe"></div></div>';
+  }
+  const a=Math.max(0, +applied||0);
+  const gPct=Math.min(100, (Math.min(a,base)/max)*100);
+  const oPct=Math.min(100-gPct, (Math.max(0, Math.min(a,max)-base)/max)*100);
+  const markPct=(base/max)*100; /* خط مرز نشانه‌گذاری = شروع بازهٔ ۲۰٪ */
+  const pctMark=Math.round((a/base)*100);
+  return '<div class="hvPipeMeta">'
+    +'<span>نشانه‌گذاری: <b>'+fa(base,3)+'</b> m³</span>'
+    +'<span>اعمال‌شده: <b>'+fa(a,3)+'</b> m³ ('+toFa(pctMark)+'٪)</span>'
+    +'<span>سقف +۲۰٪: <b>'+fa(max,3)+'</b> m³</span>'
+    +'</div>'
+    +'<div class="hvPipeWrap" title="خط تیره = حجم نشانه‌گذاری؛ بعد از آن تا +۲۰٪ نارنجی">'
+    +'<div class="hvPipeMark" style="left:'+markPct+'%" data-lab="۱۰۰٪"></div>'
+    +'<div class="hvPipe">'
+    +'<div class="g" style="width:'+gPct+'%"></div>'
+    +'<div class="o" style="width:'+oPct+'%"></div>'
+    +'</div></div>';
+}
+function hvErr(msg){
+  if(typeof showManualError==='function') showManualError(msg);
+  else try{alert(msg)}catch(e){}
+}
+function hvFormHtml(g, rows){
+  const base=g.v||0;
+  const applied=(rows||[]).reduce((a,r)=>a+(r&&r.v?+r.v:0),0);
+  const done=base>0 && applied>=base*0.8 && applied<=base*1.2;
+  const tick=done?'<span class="hvDoneBadge" title="در محدودهٔ مجاز">✓</span> ':'';
+  const tableRows=(g.list||[]).map(t=>'<tr><td>'+(t.ty==='h'?'هیزمی':esc(toFa(t.no||'')))+'</td><td>'+fa(t.d,1)+'</td><td>'+fa(t.h,1)+'</td><td>'+fa(tv(t),3)+'</td></tr>').join('');
+  return '<div class="c hvFormBox" data-hvkey="'+esc(g.k)+'">'
+    +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;font-weight:700;color:var(--ac)">'
+    +tick+esc(g.label)
+    +'</div>'
+    +hvPipeHtml(base, applied)
+    +'<div class="tw"><table><tr><th>شماره</th><th>قطر</th><th>طول</th><th>حجم اولیه</th></tr>'+tableRows+'</table></div>'
+    +'<div class="m" style="margin-top:10px">اندازه‌های جدید — حجم کاتین (استوانه‌ای). حداکثر ۲۰٪ بیش از نشانه‌گذاری:</div>'
+    +'<div class="hvRow hvHd"><span class="hvN">ردیف</span><span>قطر (cm)</span><span>طول (m)</span><span>تعداد</span><span>حجم کل</span><span class="hvX"></span></div>'
+    +'<div class="hvRows">'+(rows&&rows.length?rows:[{}]).map(hvRowH).join('')+'</div>'
+    +'<div class="r" style="margin-top:8px"><button type="button" class="o hvAdd">＋ افزودن</button><button type="button" class="hvSave">💾 ذخیره</button>'
+    +(rows&&rows.length?'<button type="button" class="x hvDelSaved">🗑 حذف ذخیره</button>':'')
+    +'</div>'
+    +'<div class="hvOk2"></div></div>';
+}
+function hvUpdatePipe(box){
+  if(!box) return;
+  const key=box.dataset.hvkey||HV.sp;
+  const base=hvBaseVol(key);
+  const rows=[...box.querySelectorAll('.hvRow:not(.hvHd)')].map(hvRowVal).filter(Boolean);
+  const applied=rows.reduce((a,r)=>a+r.v,0);
+  const meta=box.querySelector('.hvPipeMeta');
+  const wrap=box.querySelector('.hvPipeWrap')||box.querySelector('.hvPipe');
+  if(!wrap) return;
+  const html=hvPipeHtml(base, applied);
+  const tmp=document.createElement('div'); tmp.innerHTML=html;
+  if(meta&&tmp.querySelector('.hvPipeMeta')) meta.replaceWith(tmp.querySelector('.hvPipeMeta'));
+  const nw=tmp.querySelector('.hvPipeWrap');
+  if(nw) wrap.replaceWith(nw);
+  const head=box.querySelector('div[style*="font-weight:700"]');
+  if(head){
+    const done=base>0 && applied>=base*0.8 && applied<=base*1.2;
+    let badge=head.querySelector('.hvDoneBadge');
+    if(done && !badge){
+      head.insertAdjacentHTML('afterbegin', '<span class="hvDoneBadge" title="در محدودهٔ مجاز">✓</span> ');
+    } else if(!done && badge){
+      badge.remove();
+    }
+  }
+}
+function hvRenderSp(){
+  const sel=hvQ('hvSpSel'), form=hvQ('hvSpForm');
+  if(!sel||!form) return;
+  HV.groups=hvGroups();
+  const prev=sel.value;
+  const opts=['<option value="">— گونه را انتخاب کنید —</option>'];
+  HV.groups.forEach(g=>{
+    const done=hvIsDone(g.k);
+    opts.push('<option value="'+esc(g.k)+'"'+(g.k===prev?' selected':'')+'>'+esc(g.label)+' · '+g.sub+' · '+fa(g.v,3)+' m³'+(done?' ✓':'')+'</option>');
+  });
+  sel.innerHTML=opts.join('');
+  if(!sel.value){ form.classList.add('hid'); form.innerHTML=''; HV.sp=null; hvRenderSavedList(); return; }
+  hvShowSpForm(sel.value);
+  hvRenderSavedList();
+}
+function hvShowSpForm(spKey){
+  const form=hvQ('hvSpForm'); if(!form) return;
+  HV.groups=hvGroups();
+  const g=HV.groups.find(x=>x.k===spKey);
+  if(!g){ form.classList.add('hid'); form.innerHTML=''; return; }
+  HV.sp=g.k;
+  const rows=hvLoadRows(g.k);
+  form.classList.remove('hid');
+  form.innerHTML=hvFormHtml(g, rows);
+}
+function hvRenderTr(){
+  const sel=hvQ('hvTrSel'), form=hvQ('hvTrForm');
+  if(!sel||!form) return;
+  const prev=sel.value;
+  const opts=['<option value="">— درخت را انتخاب کنید —</option>'];
+  T.forEach(t=>{
+    const k='#'+t.id;
+    const done=hvIsDone(k);
+    const lab=(t.ty==='h'?'هیزمی':'شماره '+toFa(t.no||t.id))+' — '+(t.sp||'')+' · قطر '+fa(t.d,0)+(done?' ✓':'');
+    opts.push('<option value="'+t.id+'"'+(String(t.id)===String(prev)?' selected':'')+'>'+esc(lab)+'</option>');
+  });
+  sel.innerHTML=opts.join('');
+  if(!sel.value){ form.classList.add('hid'); form.innerHTML=''; HV.sp=null; hvRenderSavedList(); return; }
+  hvShowTrForm(+sel.value);
+  hvRenderSavedList();
+}
+function hvShowTrForm(tid){
+  const form=hvQ('hvTrForm'); if(!form) return;
+  const t=T.find(x=>x.id==tid); if(!t){ form.classList.add('hid'); form.innerHTML=''; return; }
+  const k='#'+t.id;
+  HV.sp=k;
+  const g={k, label:(t.ty==='h'?'هیزمی':'شماره '+toFa(t.no||t.id))+' — '+(t.sp||''), v:tv(t), list:[t]};
+  const rows=hvLoadRows(k);
+  form.classList.remove('hid');
+  form.innerHTML=hvFormHtml(g, rows);
+}
+function hvRowVal(r){
+  const d=+toEn(r.querySelector('.hvD').value),h=+toEn(r.querySelector('.hvH').value),n=Math.round(+toEn(r.querySelector('.hvC').value))||1;
+  return (d>0&&h>0)?{d,h,n,v:vol(d,h,1)*n}:null;
+}
+function hvSaveSp(body){
+  const sh=getActiveSheet(),k=HV.sp,keys=HV_KEYS[HV.mode];
+  if(!k){ hvErr('ابتدا یک مورد را انتخاب کنید.'); return; }
+  const rows=[...body.querySelectorAll('.hvRow:not(.hvHd)')].map(hvRowVal).filter(Boolean);
+  if(!rows.length){
+    const ok2=body.querySelector('.hvOk2');
+    if(ok2) ok2.textContent='ابتدا قطر و طول معتبر وارد کنید.';
+    return;
+  }
+  const baseD=hvBaseDiam(k);
+  if(baseD>0){
+    const maxD=baseD*1.2;
+    const badD=rows.filter(r=>r.d>maxD+1e-9);
+    if(badD.length){
+      hvErr('ثبت نشد — قطر واردشده بیش از ۲۰٪ قطر نشانه‌گذاری است. قطر نشانه‌گذاری: '+fa(baseD,1)+' cm — سقف مجاز: '+fa(maxD,1)+' cm. مقادیر را درست کنید.');
+      return;
+    }
+  }
+  const tot=rows.reduce((a,x)=>a+x.v,0);
+  const base=hvBaseVol(k);
+  if(base>0 && tot>base*1.2+1e-9){
+    hvErr('ثبت نشد — حجم اعمال‌شده ('+fa(tot,3)+' m³) بیش از ۲۰٪ حجم نشانه‌گذاری ('+fa(base,3)+' m³) است. سقف مجاز: '+fa(base*1.2,3)+' m³. مقادیر را درست کنید.');
+    return;
+  }
+  if(base>0 && tot<base*0.8-1e-9){
+    const pct=Math.round((1-tot/base)*100);
+    const ok=confirm('حجم اعمال‌شده ('+fa(tot,3)+' m³) بیش از ۲۰٪ کمتر از حجم نشانه‌گذاری ('+fa(base,3)+' m³) است (حدود '+toFa(pct)+'٪ کاهش).\n\nدر صورت تأیید، ذخیره می‌شود.');
+    if(!ok) return;
+  }
+  if(!sh.hvg)sh.hvg={r:{},h:{}};
+  /* فقط دادهٔ مرتبط با حالت فعلی — بدون تاریخ؛ استحصال فقط در حالت استحصال */
+  const saveKeys = (HV.mode==='h') ? ['h'] : (HV.mode==='b' ? ['r','h'] : ['r']);
+  saveKeys.forEach(x=>{
+    if(!sh.hvg[x])sh.hvg[x]={};
+    sh.hvg[x][k]=rows.map(r=>({d:r.d,h:r.h,n:r.n,v:r.v}));
+  });
+  ['r','h'].forEach(x=>{
+    if(!saveKeys.includes(x) && sh.hvg[x]) delete sh.hvg[x][k];
+  });
+  const tg=String(k).charAt(0)==='#'?T.find(t=>'#'+t.id===k):null;
+  if(tg){
+    if(saveKeys.includes('r')){
+      delete tg.d2; delete tg.h2;
+      tg.v2=tot/cnt(tg); tg.rd=rows[0].d; tg.rh=rows[0].h;
+    }
+    if(HV.mode==='h' || HV.mode==='b'){
+      tg.hv=tot;
+    }
+    delete tg.hd; /* تاریخ ذخیره نشود */
+    if(HV.mode==='r'){
+      delete tg.hv; /* تجدید حجم خالص: بدون استحصال */
+    }
+  }
+  store();
+  if(tg)draw();
+  try{ if(HV.draft) delete HV.draft[hvDraftKey(k)]; }catch(e){}
+  const ok2=body.querySelector('.hvOk2');
+  const done=base>0 && tot>=base*0.8 && tot<=base*1.2;
+  if(ok2) ok2.innerHTML=(done?'<span class="hvDoneBadge">✓</span> ':'')+'ذخیره شد — حجم کل: '+fa(tot,3)+' m³';
+  hvUpdatePipe(body.closest('[data-hvkey]')||body);
+  hvUpdateMethodButtons();
+  if(HV.sub==='sp') hvRenderSp();
+  if(HV.sub==='tr') hvRenderTr();
+  hvRenderSavedList();
+}
+function hvDeleteKey(key){
+  if(!key) return;
+  if(isRenewalEditLocked() && HV.mode!=='h'){
+    hvErr('به‌خاطر وجود دادهٔ استحصال، ویرایش/حذف تجدید حجم قفل است. ابتدا همهٔ موارد استحصال را حذف کنید.');
+    return;
+  }
+  if(!confirm('این مورد ذخیره‌شده حذف شود؟')) return;
+  const sh=getActiveSheet();
+  if(!sh) return;
+  if(!sh.hvg) sh.hvg={r:{},h:{}};
+  ['r','h'].forEach(x=>{ if(sh.hvg[x]) delete sh.hvg[x][key]; });
+  const tg=String(key).charAt(0)==='#'?T.find(t=>'#'+t.id===key):null;
+  if(tg){
+    delete tg.v2; delete tg.rd; delete tg.rh; delete tg.d2; delete tg.h2;
+    if(HV.mode==='h' || HV.mode==='b'){ delete tg.hv; }
+    delete tg.hd;
+  }
+  try{ if(HV.draft) delete HV.draft[hvDraftKey(key)]; }catch(e){}
+  /* اگر دیگر ردیفی در hvg نماند، فیلدهای مشتق را پاک کن تا قفل‌ها باز شوند */
+  const _hasRows=(w)=>!!(sh.hvg&&sh.hvg[w]&&Object.values(sh.hvg[w]).some(a=>a&&a.length));
+  if(!_hasRows('r')){
+    T.forEach(t=>{ delete t.v2; delete t.rd; delete t.rh; delete t.d2; delete t.h2; });
+  }
+  if(!_hasRows('h')){
+    T.forEach(t=>{ delete t.hv; delete t.hd; });
+  }
+  store();
+  if(tg)draw();
+  else try{ draw(); }catch(e){}
+  HV.sp=null;
+  hvUpdateMethodButtons();
+  if(HV.sub==='sp') hvRenderSp();
+  if(HV.sub==='tr') hvRenderTr();
+  hvRenderSavedList();
+  try{ if(typeof renderManualRecentList==='function') renderManualRecentList(); }catch(e){}
+}
+function hvSavedEntries(){
+  const sh=getActiveSheet();
+  if(!sh||!sh.hvg||!HV.mode) return [];
+  const keys = (HV.mode==='h') ? ['h'] : (HV.mode==='b' ? ['r','h'] : ['r']);
+  const map=new Map();
+  keys.forEach(x=>{
+    const o=sh.hvg[x]||{};
+    Object.keys(o).forEach(k=>{
+      if(o[k]&&o[k].length && !map.has(k)){
+        const vol=o[k].reduce((a,r)=>a+(+r.v||0),0);
+        let label=k;
+        if(String(k).charAt(0)==='#'){
+          const t=T.find(x=>'#'+x.id===k);
+          label=t?((t.ty==='h'?'هیزمی':'شماره '+toFa(t.no||t.id))+' — '+(t.sp||'')):k;
+        } else label=k;
+        map.set(k,{k,label,vol,done:hvIsDone(k)});
+      }
+    });
+  });
+  return [...map.values()];
+}
+function hvRenderSavedList(){
+  const hostId = HV.sub==='tr' ? 'hvTrSaved' : 'hvSpSaved';
+  const host=hvQ(hostId);
+  if(!host) return;
+  const items=hvSavedEntries();
+  if(!items.length){ host.innerHTML=''; return; }
+  const renLock = isRenewalEditLocked() && HV.mode!=='h';
+  host.innerHTML=items.map(it=>
+    '<div class="hvSavedItem" data-k="'+esc(it.k)+'">'
+    +'<div class="hvSiMain">'+(it.done?'<span class="hvDoneBadge">✓</span> ':'')+'<b>'+esc(it.label)+'</b> · '+fa(it.vol,3)+' m³</div>'
+    +'<div class="hvSiAct">'
+    +(renLock?'<small style="color:var(--mu)">قفل</small>':(
+      '<button type="button" class="o" data-hedit="'+esc(it.k)+'">ویرایش</button>'
+      +'<button type="button" class="x" data-hdel="'+esc(it.k)+'">حذف</button>'
+    ))
+    +'</div></div>'
+  ).join('');
+  host.querySelectorAll('[data-hedit]').forEach(b=>{
+    b.onclick=()=>{
+      const k=b.dataset.hedit;
+      if(HV.sub==='tr' && String(k).charAt(0)==='#'){
+        const sel=hvQ('hvTrSel'); if(sel){ sel.value=String(k).slice(1); }
+        hvShowTrForm(+String(k).slice(1));
+      } else {
+        const sel=hvQ('hvSpSel'); if(sel){ sel.value=k; }
+        hvShowSpForm(k);
+      }
+      try{ const f=HV.sub==='tr'?hvQ('hvTrForm'):hvQ('hvSpForm'); if(f) f.scrollIntoView({behavior:'smooth',block:'nearest'}); }catch(e){}
+    };
+  });
+  host.querySelectorAll('[data-hdel]').forEach(b=>{
+    b.onclick=()=> hvDeleteKey(b.dataset.hdel);
+  });
+}
+function hvCloseList(){
+  const l=hvQ('hvList');if(l)l.classList.add('hid');
+  const i=hvQ('hvSearch'),sh=getActiveSheet();
+  if(i&&sh)i.value=sh.name;
+}
+function hvRenderList(filter){
+  const l=hvQ('hvList');if(!l)return;
+  const f=hvNorm(filter);
+  const arr=SHEETS.filter(x=>!f||hvNorm(x.name).includes(f));
+  l.innerHTML=arr.length?arr.map(x=>'<button type="button" class="hvIt'+(x.id===activeId?' on':'')+'" data-id="'+x.id+'"><span>'+esc(x.name)+'</span><small>'+(isProjectSaved(x)?'✓ ذخیره‌شده':'ذخیره‌نشده')+'</small></button>').join(''):'<div class="hvEmpty">عرصه‌ای پیدا نشد.</div>';
+}
+function updateHarvestGate(){
+  const i=hvQ('hvSearch');
+  if(!i)return;
+  const sh=getActiveSheet();
+  if(sh&&document.activeElement!==i)i.value=sh.name;
+  const l=hvQ('hvList');
+  if(l&&!l.classList.contains('hid'))hvRenderList('');
+  if(HV.mode){const m=hvReady(HV.mode);if(m){hvBack();hvMsg(m)}}
+}
+function hvInit(){
+  document.querySelectorAll('#hvHome [data-hv]').forEach(b=>{b.onclick=()=>hvOpen(b.dataset.hv)});
+  hvQ('hvFullBack').onclick=()=>{hvBack();hvMsg('')};
+  hvQ('hvSubSp').onclick=()=>hvSetSub('sp');
+  hvQ('hvSubTr').onclick=()=>hvSetSub('tr');
+  hvQ('hvArrow').onclick=()=>{
+    const l=hvQ('hvList');
+    if(l.classList.contains('hid')){hvRenderList('');l.classList.remove('hid')}else hvCloseList();
+  };
+  hvQ('hvSearch').onfocus=()=>{hvQ('hvSearch').select()};
+  hvQ('hvSearch').oninput=()=>{hvRenderList(hvQ('hvSearch').value);hvQ('hvList').classList.remove('hid')};
+  hvQ('hvList').onclick=e=>{
+    const b=e.target.closest('[data-id]');if(!b)return;
+    const id=+b.dataset.id;
+    hvMsg('');
+    if(id!==activeId)switchSheet(id);
+    hvCloseList();
+    updateHarvestGate();
+  };
+  document.addEventListener('click',e=>{
+    const bar=hvQ('hvBar');
+    if(bar&&!bar.contains(e.target)&&!hvQ('hvList').classList.contains('hid'))hvCloseList();
+  });
+  function hvBindFormHost(host){
+    if(!host || host._hvBound) return;
+    host._hvBound=true;
+    host.onclick=e=>{
+      const body=e.target.closest('[data-hvkey]'); if(!body) return;
+      const rs=body.querySelector('.hvRows');
+      if(e.target.closest('.hvAdd')){rs.insertAdjacentHTML('beforeend',hvRowH(null,rs.children.length)); hvUpdatePipe(body); return}
+      const rm=e.target.closest('.hvRm');
+      if(rm){rm.closest('.hvRow').remove();if(!rs.children.length)rs.insertAdjacentHTML('beforeend',hvRowH(null,0));hvRenum(rs); hvUpdatePipe(body); return}
+      if(e.target.closest('.hvSave')) hvSaveSp(body);
+      if(e.target.closest('.hvDelSaved')){ hvDeleteKey(body.dataset.hvkey||HV.sp); }
+    };
+    host.oninput=e=>{
+      const row=e.target.closest('.hvRow'); if(!row||row.classList.contains('hvHd')) return;
+      const x=hvRowVal(row);
+      const vv=row.querySelector('.hvV'); if(vv) vv.value=x?fa(x.v,3):'';
+      const body=e.target.closest('[data-hvkey]');
+      if(body){ hvUpdatePipe(body); hvKeepDraft(body); }
+    };
+  }
+  hvBindFormHost(hvQ('hvSpForm'));
+  hvBindFormHost(hvQ('hvTrForm'));
+  const spSel=hvQ('hvSpSel');
+  if(spSel) spSel.onchange=()=>{
+    try{ const b=document.querySelector('#hvSpForm [data-hvkey]'); if(b) hvKeepDraft(b); }catch(e){}
+    if(spSel.value) hvShowSpForm(spSel.value);
+    else { const f=hvQ('hvSpForm'); if(f){f.classList.add('hid');f.innerHTML='';} HV.sp=null; }
+  };
+  const trSel=hvQ('hvTrSel');
+  if(trSel) trSel.onchange=()=>{
+    try{ const b=document.querySelector('#hvTrForm [data-hvkey]'); if(b) hvKeepDraft(b); }catch(e){}
+    if(trSel.value) hvShowTrForm(+trSel.value);
+    else { const f=hvQ('hvTrForm'); if(f){f.classList.add('hid');f.innerHTML='';} HV.sp=null; }
+  };
+  updateHarvestGate();
 }
 
 function deepClone(x){try{if(typeof structuredClone==='function')return structuredClone(x);return JSON.parse(JSON.stringify(x))}catch(e){try{return JSON.parse(JSON.stringify(x))}catch(e2){return x}}}
@@ -2771,6 +3591,10 @@ function clr(){
 
 let edId=null,lastSavedId=null,saveTimer=null;
 window.undoLast=()=>{
+  if(typeof isMarkingLocked==='function' && isMarkingLocked()){
+    try{ if(typeof showManualError==='function') showManualError('به‌خاطر وجود دادهٔ تجدید حجم، برگرداندن نشانه‌گذاری ممکن نیست.'); }catch(e){}
+    return;
+  }
   if(lastSavedId === null) return;
   T = T.filter(t => t.id < lastSavedId);
   lastSavedId = null;
@@ -2783,13 +3607,15 @@ let pendingSave=null;
 function askSaveType(callback){
   const m=$('#saveTypeModal');
   m.classList.remove('hid');
+  try{ window.__appBack && window.__appBack.push(); }catch(e){}
   m.querySelectorAll('[data-k]').forEach(b=>{
     b.onclick=()=>{
       m.classList.add('hid');
+      try{ window.__appBack && window.__appBack.backFromUI(); }catch(e){}
       callback(b.dataset.k);
     };
   });
-  $('#saveTypeCancel').onclick=()=>m.classList.add('hid');
+  $('#saveTypeCancel').onclick=()=>{m.classList.add('hid'); try{ window.__appBack && window.__appBack.backFromUI(); }catch(e){}};
 }
 
 /* saveWarnings: فقط تداخل شمارهٔ صنعتی (محدوده‌های قطر/طول در doSave اعمال می‌شوند) */
@@ -2811,25 +3637,143 @@ function saveWarnings(d,h,hz,no,exId,cntN){
   return w;
 }
 
+function showManualError(msg){
+  let t = document.getElementById('manualErrToast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='manualErrToast';
+    t.className='hid';
+    t.setAttribute('aria-live','assertive');
+    document.body.appendChild(t);
+  }
+  // اگر داخل صفحهٔ مخفی باشد به body منتقل کن تا دیده شود
+  if(t.parentElement && t.parentElement.classList.contains('hid')){
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.remove('hid');
+  void t.offsetWidth;
+  t.classList.add('show');
+  clearTimeout(showManualError._tm);
+  showManualError._tm = setTimeout(()=>{
+    t.classList.remove('show');
+    setTimeout(()=> t.classList.add('hid'), 220);
+  }, 3200);
+  try{ const m=document.getElementById('msg'); if(m) m.textContent = msg; }catch(e){}
+}
+
+function renderManualRecentList(){
+  const el = document.getElementById('manualRecentList');
+  if(!el) return;
+  const list = (typeof T!=='undefined' && Array.isArray(T)) ? T.slice() : [];
+  if(!list.length){
+    el.innerHTML = '<div class="m" style="text-align:center;padding:8px">هنوز درختی در این سربرگ ثبت نشده است.</div>';
+    return;
+  }
+  const sorted = list.slice().sort((a,b)=>(b.id||0)-(a.id||0));
+  el.innerHTML = sorted.map(t=>{
+    const no = t.ty==='h' ? 'هیزمی' : (typeof toFa==='function'?toFa(t.no||''):(t.no||''));
+    const vol = (typeof fa==='function') ? fa(t.v,3) : (t.v||0);
+    const d = (typeof fa==='function') ? fa(t.d,1) : (t.d||'');
+    const h = (typeof fa==='function') ? fa(t.h,1) : (t.h||'');
+    const sp = (typeof esc==='function'?esc(t.sp||''):(t.sp||''));
+    const label = t.ty==='h'
+      ? ('<b>هیزمی</b> · '+sp+' · قطر '+d+' · طول '+h+' · حجم <b>'+vol+'</b>')
+      : ('<b>'+no+'</b> · '+sp+' · قطر '+d+' · طول '+h+' · حجم <b>'+vol+'</b>');
+    return '<div class="manualItem" data-id="'+t.id+'">'+
+      '<div class="mi-main">'+label+'</div>'+
+      '<div class="mi-actions">'+
+        '<button type="button" class="o" data-med="'+t.id+'">ویرایش</button>'+
+        '<button type="button" class="x" data-mdel="'+t.id+'">حذف</button>'+
+      '</div></div>';
+  }).join('');
+  const markLock = (typeof isMarkingLocked==='function' && isMarkingLocked());
+  el.querySelectorAll('[data-med]').forEach(b=>{
+    if(markLock){ b.disabled=true; b.style.opacity='.45'; }
+    b.onclick = (e)=>{ e.stopPropagation(); const id=+b.dataset.med; if(typeof window.ed==='function') window.ed(id); };
+  });
+  el.querySelectorAll('[data-mdel]').forEach(b=>{
+    if(markLock){ b.disabled=true; b.style.opacity='.45'; }
+    b.onclick = (e)=>{
+      e.stopPropagation();
+      if(typeof isMarkingLocked==='function' && isMarkingLocked()){
+        if(typeof showManualError==='function') showManualError('به‌خاطر وجود دادهٔ تجدید حجم، حذف نشانه‌گذاری قفل است.');
+        return;
+      }
+      const id=+b.dataset.mdel;
+      if(!confirm('این درخت حذف شود؟')) return;
+      T = T.filter(t=>t.id!==id);
+      try{ store(); draw(); }catch(err){}
+      try{ updateModeLock(); }catch(err){}
+      renderManualRecentList();
+    };
+  });
+}
+
+function openManualFull(){
+  const p = document.getElementById('manualFull');
+  if(!p) return;
+  p.classList.remove('hid');
+  try{ document.body.style.overflow='hidden'; }catch(e){}
+  try{ window.__appBack && window.__appBack.push(); }catch(e){}
+  try{
+    const sh = (typeof getActiveSheet==='function') ? getActiveSheet() : null;
+    const title = document.getElementById('manualFullTitle');
+    if(title) title.textContent = (sh && sh.name) ? sh.name : 'ورود دستی';
+  }catch(e){}
+  try{ renderManualRecentList(); }catch(e){}
+  try{ if(typeof updateModeUI==='function') updateModeUI(); }catch(e){}
+  try{ if(typeof calc==='function') calc(); }catch(e){}
+  try{ if(typeof updateTotSummary==='function') updateTotSummary(); }catch(e){}
+  setTimeout(()=>{ const sp=document.getElementById('sps'); if(sp) try{sp.focus()}catch(e){} }, 200);
+}
+function closeManualFull(fromPop){
+  const p = document.getElementById('manualFull');
+  if(p) p.classList.add('hid');
+  try{ document.body.style.overflow=''; }catch(e){}
+  try{
+    const t=document.getElementById('manualErrToast');
+    if(t){ t.classList.remove('show'); t.classList.add('hid'); }
+  }catch(e){}
+  if(!fromPop){ try{ window.__appBack && window.__appBack.backFromUI(); }catch(e){} }
+}
+function bindManualFullUi(){
+  const openBtn = document.getElementById('manualOpenBtn');
+  const back = document.getElementById('manualFullBack');
+  if(openBtn) openBtn.onclick = ()=> openManualFull();
+  if(back) back.onclick = ()=> closeManualFull();
+}
+try{ bindManualFullUi(); }catch(e){}
+
 function doSave(useCoords, forcedK){
   const sp = $('#sp').value;
   const dRaw = $('#d').value, hRaw = $('#h').value;
   const d = N('#d'), h0 = N('#h');
-  if(!sp){$('#msg').textContent='ابتدا گونه را انتخاب کنید.';return}
+  const _manOpen = !!(document.getElementById('manualFull') && !document.getElementById('manualFull').classList.contains('hid'));
+  const _err = (m)=>{ if(_manOpen && typeof showManualError==='function') showManualError(m); else { try{$('#msg').textContent=m}catch(e){} } };
+  if(!sp){ _err('ابتدا گونه را انتخاب کنید.'); return; }
   const vc = (getActiveSheet() && getActiveSheet().volClass) || 'general';
 
   /* اعتبارسنجی مرکزی */
   const chk = checkTree({sp, d: dRaw, h: hRaw}, vc);
-  if (chk.block) { $('#msg').textContent='ثبت نشد: '+chk.msg.join('، '); return; }
-  if (chk.inc) { if (!confirm('⚠️ '+chk.msg.join('\n⚠️ ')+'\n\nبا همین مقادیر ذخیره شود؟')) return; }
+  if (chk.block || chk.inc) {
+    const issues = (chk.msg && chk.msg.length) ? chk.msg.join('، ') : 'مقادیر ناقص یا نامعتبر است';
+    _err('ثبت نشد — این مشکل را درست کنید: ' + issues);
+    return;
+  }
 
   const hv = resolveHV(sp, d, h0);
   const h = hv.h; /* طول ممکن است از جدول تالار بیاید */
-  if (!(h>0) && !chk.inc) { $('#msg').textContent='ارتفاع یا حجم قابل محاسبه نیست.'; return; }
+  if (!(h>0)) { _err('ثبت نشد — ارتفاع یا حجم قابل محاسبه نیست؛ مقادیر را درست کنید.'); return; }
 
   let coords=null;
   if(useCoords){
-    if(!cur){ $('#svHint').innerHTML='<span style="color:#d33">⛔ مختصات آماده نیست.</span>'; setTimeout(updateGpsUI,5000); return; }
+    if(!cur){
+      const m='⛔ مختصات آماده نیست.';
+      if(_manOpen && typeof showManualError==='function') showManualError(m);
+      else { $('#svHint').innerHTML='<span style="color:#d33">'+m+'</span>'; setTimeout(updateGpsUI,5000); }
+      return;
+    }
     coords={lat:cur.lat,lng:cur.lng,ux:cur.u.E,uy:cur.u.N,uz:cur.u.z,ua:Math.round(cur.acc)};
   }
   
@@ -2867,9 +3811,36 @@ function doSave(useCoords, forcedK){
   saveTimer=setTimeout(()=>{if($('#msg').innerHTML.includes('برگرداندن'))$('#msg').textContent=''},10000);
   if(out)alarm(true);
   clr();
+  try{ renderManualRecentList(); }catch(e){}
+  try{
+    const list=document.getElementById('manualRecentList');
+    if(list) list.scrollTop = 0;
+  }catch(e){}
 }
 
+function preValidateSave(){
+  const sp = $('#sp').value;
+  const dRaw = $('#d').value, hRaw = $('#h').value;
+  const _manOpen = !!(document.getElementById('manualFull') && !document.getElementById('manualFull').classList.contains('hid'));
+  const _err = (m)=>{ if(_manOpen && typeof showManualError==='function') showManualError(m); else { try{$('#msg').textContent=m}catch(e){} } };
+  if(!sp){ _err('ابتدا گونه را انتخاب کنید.'); return false; }
+  const vc = (getActiveSheet() && getActiveSheet().volClass) || 'general';
+  const chk = checkTree({sp, d: dRaw, h: hRaw}, vc);
+  if (chk.block || chk.inc) {
+    const issues = (chk.msg && chk.msg.length) ? chk.msg.join('، ') : 'مقادیر ناقص یا نامعتبر است';
+    _err('ثبت نشد — این مشکل را درست کنید: ' + issues);
+    return false;
+  }
+  const d = N('#d'), h0 = N('#h');
+  const hv = resolveHV(sp, d, h0);
+  if (!(hv.h > 0)) {
+    _err('ثبت نشد — ارتفاع یا حجم قابل محاسبه نیست؛ مقادیر را درست کنید.');
+    return false;
+  }
+  return true;
+}
 $('#sv').onclick=()=>{
+  if(!preValidateSave()) return;
   const m=getActiveSheet().mode;
   if(m==='garden'){
     askSaveType(k=>doSave(true,k));
@@ -2878,6 +3849,7 @@ $('#sv').onclick=()=>{
   }
 };
 $('#svNo').onclick=()=>{
+  if(!preValidateSave()) return;
   const m=getActiveSheet().mode;
   if(m==='garden'){
     askSaveType(k=>doSave(false,k));
@@ -2912,6 +3884,10 @@ function updateEmHKeyVisual() {
 })();
 
 window.ed=id=>{
+  if(typeof isMarkingLocked==='function' && isMarkingLocked()){
+    try{ if(typeof showManualError==='function') showManualError('به‌خاطر وجود دادهٔ تجدید حجم، ویرایش نشانه‌گذاری قفل است. ابتدا همهٔ موارد تجدید حجم (و در صورت نیاز استحصال) را حذف کنید.'); else alert('نشانه‌گذاری قفل است.'); }catch(e){alert('نشانه‌گذاری قفل است.');}
+    return;
+  }
   const t=T.find(x=>x.id==id);if(!t)return;
   edId=id;
   emTyM = false;
@@ -2953,9 +3929,10 @@ window.ed=id=>{
   
   calcEdit();
   document.getElementById('editModal').classList.remove('hid');
+  try{ window.__appBack && window.__appBack.push(); }catch(e){}
 };
 
-$('#emCancel').onclick = () => { document.getElementById('editModal').classList.add('hid'); };
+$('#emCancel').onclick = () => { document.getElementById('editModal').classList.add('hid'); try{ window.__appBack && window.__appBack.backFromUI(); }catch(e){} };
 
 function calcEdit() {
   const sp = $('#emSp').value;
@@ -3024,6 +4001,10 @@ $('#emTy').addEventListener('change', () => {
 });
 
 $('#emSave').onclick = () => {
+  if(typeof isMarkingLocked==='function' && isMarkingLocked()){
+    alert('به‌خاطر وجود دادهٔ تجدید حجم، ویرایش نشانه‌گذاری قفل است.');
+    return;
+  }
   const t = T.find(x => x.id === edId); if(!t) return;
   
   const sp = $('#emSp').value;
@@ -3082,6 +4063,7 @@ $('#emSave').onclick = () => {
   store(); draw();
   mapCheck();
   document.getElementById('editModal').classList.add('hid');
+  try{ window.__appBack && window.__appBack.backFromUI(); }catch(e){}
   
   $('#msg').textContent='ویرایش ذخیره شد.';
   setTimeout(()=>{if($('#msg').textContent==='ویرایش ذخیره شد.')$('#msg').textContent=''},3000);
@@ -3197,7 +4179,7 @@ function draw(){
       const tx = taxOf(t);
       const taxCell = showTax ? `<td class="taxCol">${isPlanted ? '۰' : (tx===null ? '—' : fa(tx,0))}</td>` : '';
       const catCell = G[catOf(t)] || '—';
-      return `<tr><td>${t.ty==='h'?'—':esc(toFa(t.no||''))}</td><td>${esc(t.sp)}</td><td>${catCell}</td><td>${t.ty==='h'?'هیزمی ('+toFa(cnt(t))+')':(isPlanted?'دست‌کاشت':'صنعتی')}</td><td>${fa(t.d,1)}</td><td>${fa(t.h,1)}</td><td>${fa(tv(t),3)}</td>${taxCell}<td${t.ua>10?' style="color:#b78500" title="دقت ضعیف"':''}>${t.ux?toFa(t.ux):'<span style="color:#d33">⚠</span>'}</td><td>${t.uy?toFa(t.uy):'—'}</td><td>${t.uz?toFa(t.uz):'—'}</td><td>${esc(t.ds||'')}</td><td><button class="o chipbtn" onclick="ed(${t.id})">ویرایش</button> <button class="x" onclick="del(${t.id})">حذف</button></td></tr>`;
+      return `<tr><td>${t.ty==='h'?'—':esc(toFa(t.no||''))}</td><td>${esc(t.sp)}</td><td>${catCell}</td><td>${t.ty==='h'?'هیزمی ('+toFa(cnt(t))+')':(isPlanted?'دست‌کاشت':'صنعتی')}</td><td>${fa(t.d,1)}</td><td>${fa(t.h,1)}</td><td>${fa(tv(t),3)}</td>${taxCell}<td${t.ua>10?' style="color:#b78500" title="دقت ضعیف"':''}>${t.ux?toFa(t.ux):'<span style="color:#d33">⚠</span>'}</td><td>${t.uy?toFa(t.uy):'—'}</td><td>${t.uz?toFa(t.uz):'—'}</td><td>${esc(t.ds||'')}</td><td>${(typeof isMarkingLocked==='function'&&isMarkingLocked())?'<small style="color:var(--mu)">قفل</small>':`<button class="o chipbtn" onclick="ed(${t.id})">ویرایش</button> <button class="x" onclick="del(${t.id})">حذف</button>`}</td></tr>`;
     }).join('');
   $('#tot').textContent=fa(sv(list),3);
   const x=sumX();
@@ -3213,16 +4195,16 @@ function draw(){
   updateModeLock();
   try{mapCheck(true)}catch(e){}
   try{updateHarvestGate()}catch(e){}
+  try{ if(document.getElementById('manualFull') && !document.getElementById('manualFull').classList.contains('hid')) renderManualRecentList(); }catch(e){}
 }
-window.del=id=>{if(!confirm('این درخت حذف شود؟'))return;T=T.filter(t=>t.id!==id);store();draw();updateModeLock();};
-$('#sh').onclick=()=>{
-  if(!isProjectSaved()){ alert('ابتدا سربرگ فعلی را از تب سیاهه ذخیره کنید.'); updateHarvestGate(); return; }
-  const t=T.find(x=>x.id==$('#hs2').value);if(!t)return;
-  const d2=N('#d2'),h2=N('#h2');
-  if(d2>0&&h2>0){t.d2=d2;t.h2=h2;t.v2=volSp(t.sp,d2,h2)}
-  if(N('#hv')>0){t.hv=N('#hv');t.hd=$('#hd').value;t.hn=$('#hn').value}
-  store();draw();
+window.del=id=>{
+  if(typeof isMarkingLocked==='function' && isMarkingLocked()){
+    try{ if(typeof showManualError==='function') showManualError('به‌خاطر وجود دادهٔ تجدید حجم، حذف نشانه‌گذاری قفل است. ابتدا همهٔ موارد تجدید حجم را حذف کنید.'); else alert('نشانه‌گذاری قفل است.'); }catch(e){alert('نشانه‌گذاری قفل است.');}
+    return;
+  }
+  if(!confirm('این درخت حذف شود؟'))return;T=T.filter(t=>t.id!==id);store();draw();updateModeLock();
 };
+hvInit();
 
 function fillSp(q){
   q=nz(q||'');
@@ -4149,7 +5131,7 @@ function allSheets(){
   return out;
 }
 
-function harvestSheets(){return [['تجدید و استحصال',[['شماره','گونه','دسته','حجم اولیه (مترمکعب)','قطر جدید','ارتفاع جدید','حجم تجدید (مترمکعب)','تغییر %','حجم استحصال (مترمکعب)','تاریخ استحصال','یادداشت']].concat(T.filter(t=>t.v2||t.hv).map(t=>[t.ty==='h'?'هیزمی':(t.no||''),t.sp,G[catOf(t)]||'—',R3(t.v),t.d2||'',t.h2||'',t.v2?R3(t.v2):'',t.v2?+((t.v2-t.v)/t.v*100).toFixed(1):'',t.hv||'',t.hd||'',t.hn||'']))]]}
+function harvestSheets(){return [['تجدید و استحصال',[['شماره','گونه','دسته','حجم اولیه (مترمکعب)','قطر جدید','ارتفاع جدید','حجم تجدید (مترمکعب)','تغییر %','حجم استحصال (مترمکعب)','تاریخ استحصال','یادداشت']].concat(T.filter(t=>t.v2||t.hv).map(t=>[t.ty==='h'?'هیزمی':(t.no||''),t.sp,G[catOf(t)]||'—',R3(t.v),t.d2||t.rd||'',t.h2||t.rh||'',t.v2?R3(t.v2):'',t.v2?+((t.v2-t.v)/t.v*100).toFixed(1):'',t.hv||'',t.hd||'',t.hn||'']))]]}
 function backupBlob(){ saveActive(); const payload={app:'hyrcanian',v:4,sheets:SHEETS,activeId,trees:T,snaps:SNAPS}; return new Blob([JSON.stringify(payload)],{type:'application/json'}) }
 async function buildKMZ(){
   if(!window.JSZip)throw new Error('JSZip بارگذاری نشد (اینترنت لازم است)');
@@ -4243,7 +5225,7 @@ document.querySelectorAll('nav button').forEach(b=>{
             }
         });
         
-        document.body.dataset.tab=b.dataset.t||''; try{updateHarvestGate()}catch(e){} try{if(typeof renderTabs==='function')renderTabs()}catch(e){} 
+        document.body.dataset.tab=b.dataset.t||''; try{ if(typeof closeManualFull==='function') closeManualFull(); }catch(e){} try{updateHarvestGate()}catch(e){} try{if(typeof renderTabs==='function')renderTabs()}catch(e){} 
         document.dispatchEvent(new Event('hktab'));
         // با ورود به تب AI تاریخچه را از حافظه تازه کن
         if(b.dataset.t==='a'){
