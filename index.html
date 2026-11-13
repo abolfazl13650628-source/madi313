@@ -113,10 +113,18 @@ body[data-tab="h"] #sensors{display:none!important}
 .hvSpH{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;background:none;color:var(--tx);border:0;padding:6px 2px;font-size:15px;text-align:right}
 .hvSpH.on{color:var(--ac)}.hvSpH small{color:var(--mu);font-weight:400}
 .hvBody{margin-top:8px;border-top:1px solid var(--bd);padding-top:8px}
-.hvRow{display:flex;gap:4px;margin-top:6px;align-items:center}.hvRow input{flex:1;min-width:0;text-align:center;padding:6px 2px;font-size:14px}.hvRow .hvV{background:var(--sf)}
+.hvRow{display:flex;gap:3px;margin-top:6px;align-items:center}.hvRow input{flex:1;min-width:0;text-align:center;padding:6px 2px;font-size:13px}.hvRow .hvV{background:var(--sf)}
 .hvN{flex:0 0 22px;text-align:center;color:var(--mu);font-size:12px}
-.hvHd span{flex:1;text-align:center;font-size:11px;color:var(--mu)}.hvHd .hvN{flex:0 0 22px}.hvHd .hvX{flex:0 0 30px}
-.hvRow .hvRm{flex:0 0 30px;padding:4px 0}
+.hvNo{flex:0 0 28px;text-align:center;color:var(--mu);font-size:12px;font-weight:700}
+.hvTy{flex:0 0 74px;text-align:center;font-size:11px;color:var(--ac);font-weight:700;line-height:1.25;white-space:nowrap}
+.hvHd span{flex:1;text-align:center;font-size:11px;color:var(--mu)}.hvHd .hvN{flex:0 0 22px}.hvHd .hvNo{flex:0 0 28px}.hvHd .hvTy{flex:0 0 74px}.hvHd .hvX{flex:0 0 28px}
+.hvRow .hvRm{flex:0 0 28px;padding:4px 0}
+.hvQuickChips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.hvQuickChips button{padding:7px 12px;font-size:12px;border-radius:999px;background:var(--sf);color:var(--tx);border:1px solid var(--bd);font-weight:600}
+.hvQuickChips button.on{background:var(--ac);color:var(--ac2);border-color:var(--ac)}
+.hvQuickChips button.done{border-color:#2e9d4f}
+.hvQuickEmpty{font-size:11px;color:var(--mu);padding:4px 2px}
+.hvTopNote{background:rgba(47,107,60,.10);border:1px solid var(--bd);border-radius:12px;padding:10px 12px;margin:8px 0 4px;font-size:13px;font-weight:700;color:var(--ac);text-align:center;line-height:1.8}
 
 .hvOk2{color:var(--ac);font-weight:700;margin-top:6px;font-size:13px}
 .hvSavedList{margin-top:12px;display:flex;flex-direction:column;gap:4px}
@@ -205,9 +213,9 @@ body[data-tab="h"] #sensors{display:none!important}
 #manualFull label{font-size:13px;margin-top:10px;font-weight:600}
 #manualFull #saveBar{position:sticky;bottom:auto;margin-top:14px}
 #manualFull #saveBar button{padding:14px 10px;font-size:15px;font-weight:700}
-#manualFull #sps{min-height:48px;font-size:16px}
-#manualFull #sp{min-height:48px;font-size:15px}
-#manualFull #simBtn{min-height:48px;font-size:13px;padding:8px}
+#manualFull #sps{min-height:40px!important;font-size:15px;padding:6px 10px!important}
+#manualFull #sp{min-height:40px!important;font-size:14px;padding:6px 10px!important}
+#manualFull #simBtn{min-height:40px!important;font-size:12px;padding:4px 6px!important}
 #manualFull .hvTyRow label{font-size:11px;margin-top:4px;font-weight:500;color:var(--mu)}
 #manualFull .hvTyRow select{min-height:34px!important;font-size:13px!important;padding:4px 8px!important}
 .manualItem{
@@ -328,12 +336,19 @@ th{background:rgba(47,107,60,.1);font-weight:700}tr:nth-child(even) td{backgroun
 #gd1{min-height:2.6em;margin:8px 0;line-height:1.4}
 
 #spSug{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
-#spSug button{background:var(--sf);color:var(--tx);border:1px solid var(--bd);border-radius:16px;padding:5px 12px;font-size:12px;cursor:pointer}
+#spSug button{background:var(--sf);color:var(--tx);border:2px solid #1e88e5;border-radius:16px;padding:5px 12px;font-size:12px;cursor:pointer}
 #recentSp{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0}
 #recentSp button{padding:6px 10px!important;font-size:12px!important;flex:0 0 auto!important;border-radius:16px}
 .chipbtn{padding:2px 8px!important;font-size:12px!important}
 #totSummary{background:var(--sf);border:1px solid var(--bd);border-radius:9px;padding:7px 9px;margin-top:6px;font-size:12px}
 #totSummary b{color:var(--ac)}
+#spTotLine{margin-top:6px;font-size:12px;background:var(--sf);border:1px solid var(--bd);border-radius:9px;padding:6px 9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#spTotLine b{color:var(--ac)}
+#hvDash .c{margin-top:10px}
+.hvMk{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:12px;background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:7px 9px}
+.hvMk b{color:var(--ac)}
+.hvExcess{background:#fff3cd;color:#5c4400;border:1px solid #e0b84a;border-radius:10px;padding:8px 10px;margin-top:10px;font-size:13px;line-height:1.9}
+.hvExcess b{color:#8a3b00}
 #svHint{font-size:12px;margin-bottom:6px;min-height:18px}
 #noCoordBanner{background:#fff3cd;color:#5c4400;border-radius:10px;padding:8px 10px;margin:8px 0;font-size:13px}
 
@@ -1043,11 +1058,11 @@ window.needOcr=async()=>{if(typeof Tesseract==='undefined')await loadLib('https:
     <div id="hvHome">
       <div id="harvestGate" class="c">
         <b>ℹ️ راهنما</b>
-        <div class="m" style="margin-top:6px">برای تجدید حجم، ابتدا باید عرصه را در تب «📋 دریافت سیاهه» با دکمهٔ <b>ذخیرهٔ سربرگ فعلی با نام</b> ذخیره کنید تا فایل انجام عملیات همان‌جا ساخته شود؛ سپس در این تب عملیات را انجام دهید. استحصال هم فقط پس از ذخیرهٔ «تجدید حجم» یا «تجدید حجم و استحصال همزمان» برای همان عرصه ممکن است.</div>
+        <div class="m" style="margin-top:6px">برای شروع، ابتدا عرصه را در تب «📋 دریافت سیاهه» با دکمهٔ <b>ذخیرهٔ سربرگ فعلی با نام</b> ذخیره کنید. سپس یکی از روش‌های زیر را انتخاب کنید. توجه: اگر داده در «تجدید حجم» یا «استحصال» جداگانه وارد شود، تب «همزمان» فقط برای مشاهده، دریافت و صورتجلسه فعال می‌ماند (و برعکس). استحصال جداگانه فقط پس از ثبت تجدید حجم ممکن است.</div>
       </div>
+      <button type="button" class="hvBig" data-hv="b">📐🪓 تجدید حجم و استحصال همزمان</button>
       <button type="button" class="hvBig" data-hv="r">📐 تجدید حجم</button>
       <button type="button" class="hvBig" data-hv="h">🪓 استحصال</button>
-      <button type="button" class="hvBig" data-hv="b">📐🪓 تجدید حجم و استحصال همزمان</button>
     </div>
 
   </section>
@@ -1089,11 +1104,13 @@ window.needOcr=async()=>{if(typeof Tesseract==='undefined')await loadLib('https:
   </div>
   <div class="hvFullBody">
     <div class="hvSeg"><button id="hvSubSp" type="button" class="hvSegB"></button><button id="hvSubTr" type="button" class="hvSegB"></button></div>
+    <div id="hvTopNote" class="hvTopNote hid"></div>
     <div id="hvHint" class="m" style="text-align:center;margin-top:16px">یکی از دو روش بالا را انتخاب کنید.</div>
     <div id="hvSpWrap" class="hid">
       <div class="c hvPick">
         <label style="margin-top:0">انتخاب گونه</label>
         <select id="hvSpSel"><option value="">— گونه را انتخاب کنید —</option></select>
+        <div id="hvSpQuick" class="hvQuickChips"></div>
       </div>
       <div id="hvSpForm" class="hid"></div>
       <div id="hvSpSaved" class="hvSavedList"></div>
@@ -1103,12 +1120,64 @@ window.needOcr=async()=>{if(typeof Tesseract==='undefined')await loadLib('https:
       <div class="c hvPick">
         <label style="margin-top:0">انتخاب درخت</label>
         <select id="hvTrSel"><option value="">— درخت را انتخاب کنید —</option></select>
+        <div id="hvTrQuick" class="hvQuickChips"></div>
       </div>
       <div id="hvTrForm" class="hid"></div>
       <div id="hvTrSaved" class="hvSavedList"></div>
       <div class="c hvHideCard" id="harvestTableCard" style="margin-top:10px">
         <div class="tw"><table id="tb2"></table></div><br>
         <div class="r"><button id="e2">خروجی اکسل</button><button id="e2s" class="o">📤 اشتراک‌گذاری</button></div>
+        <div class="m xs"></div>
+      </div>
+    </div>
+
+    <div id="hvDash">
+      <div class="c" id="hvSumCard">
+        <b id="hvSumTitle">📊 خلاصه وضعیت درختان تجدید حجم شده</b>
+        <div class="tw" style="margin-top:6px"><table id="hvSm"></table></div>
+        <div class="hvMk" id="hvMarkedLine"></div>
+        <div id="hvExcess" class="hvExcess hid"></div>
+      </div>
+      <div class="c" id="hvHarvSumCard">
+        <b id="hvHarvSumTitle">📋 سیاهه استحصال</b>
+        <div class="tw" style="margin-top:6px;overflow-x:auto"><table id="hvSmH" style="font-size:12px"></table></div>
+        <div class="hvMk" id="hvMarkedLineH"></div>
+      </div>
+      <div class="c" id="hvImportCard">
+        <b>📥 ورود داده‌ها</b>
+        <div class="m" style="margin:6px 0 8px">فایل اکسل، ورد، PDF یا عکس برگه را وارد کنید، یا دستی تایپ کنید. فقط مواردی که هنوز مقدار ندارند پر می‌شوند و مقادیر قبلی دست نمی‌خورند. ابتدا یکی از دو روش بالا را انتخاب کنید.</div>
+        <input type="file" id="hvImportFile" accept=".xlsx,.xls,.csv,.docx,.doc,.pdf,.jpg,.jpeg,.png,.webp,.gif,.bmp,.heic,.heif,.tif,.tiff" class="hid">
+        <button id="hvImportBtn" type="button" style="width:100%;padding:12px;font-size:15px;margin-bottom:6px">انتخاب فایل (اکسل، ورد، PDF، عکس)</button>
+        <button id="hvQuickBtn" type="button" class="o" style="width:100%;padding:12px;font-size:15px">⌨️ ورود سریع دستی (تایپ)</button>
+      </div>
+      <div class="c" id="hvRegCard">
+        <b>✅ ثبت عملیات</b>
+        <div class="m" style="font-size:12px;margin:4px 0 8px;line-height:1.8">پس از وارد کردن کاتین‌ها و مقدار هیزم، روی «ثبت» بزنید تا صورتجلسه و خروجی فعال شود. برای انجام استحصال، در تب تجدید حجم باید «ذخیره برای استحصال» هم زده شود.</div>
+        <div id="hvRegRow" style="display:flex;gap:8px;align-items:stretch">
+          <button id="hvRegBtn" type="button" style="flex:1;min-width:0;padding:14px 6px;font-size:16px;font-weight:700;background:#2f6b3c">ثبت</button>
+          <button id="hvRevSaveBtn" type="button" class="hid" style="flex:1;min-width:0;padding:14px 6px;font-size:15px;font-weight:700;background:#8a5a00">ذخیره برای استحصال</button>
+        </div>
+        <div id="hvRegOk" class="m" style="margin-top:6px;min-height:18px;color:var(--ac);font-weight:700"></div>
+        <div id="hvRevSaveOk" class="m" style="margin-top:4px;min-height:18px;font-weight:700"></div>
+      </div>
+      <div class="c hid" id="hvMinutesCard">
+        <b>📝 صورتجلسه</b>
+        <div class="m" style="font-size:12px;margin:4px 0 8px">پس از ثبت، می‌توانید صورتجلسه را بسازید.</div>
+        <button id="hvMmBtn" type="button" style="width:100%;padding:12px;font-size:15px;font-weight:700;background:#2f6b3c">صورتجلسه تجدید حجم و استحصال همزمان</button>
+      </div>
+      <div class="c hid" id="hvExpCard">
+        <b>خروجی و اشتراک‌گذاری</b>
+        <div class="m" style="font-size:12px;margin:0 0 8px">پس از ثبت، نوع فایل را انتخاب کنید.</div>
+        <label>نوع فایل</label>
+        <select id="hvExpType">
+          <option value="b">اکسل — تجدید حجم و استحصال همزمان</option>
+          <option value="r">اکسل — تجدید حجم</option>
+          <option value="h">اکسل — استحصال</option>
+          <option value="x1">اکسل — سیاهه نشانه‌گذاری این زمین</option>
+          <option value="kmz">Google Earth (KMZ)</option>
+          <option value="bk">پشتیبان کامل (JSON)</option>
+        </select>
+        <div class="r" style="margin-top:8px"><button id="hvExpSave" type="button" class="o">💾 ذخیره روی گوشی</button><button id="hvExpShare" type="button">📤 اشتراک‌گذاری</button></div>
         <div class="m xs"></div>
       </div>
     </div>
@@ -1142,6 +1211,7 @@ window.needOcr=async()=>{if(typeof Tesseract==='undefined')await loadLib('https:
         <button id="simBtn" class="o" type="button" title="پس از ذخیره، گونه تغییر نکند" style="flex:0.55; white-space:nowrap;">🔁 مشابه</button>
       </div>
       <div id="spSug" class="hid"></div>
+      <div id="spTotLine"></div>
 
       <div class="r" style="margin-top:6px;">
         <div><label>قطر سینه (cm)</label><input id="d" type="text" inputmode="decimal" class="tall-input"></div>
@@ -1197,6 +1267,8 @@ window.needOcr=async()=>{if(typeof Tesseract==='undefined')await loadLib('https:
     <div class="seg" id="mmTypeSeg" style="margin-bottom:10px">
       <button type="button" data-type="neshane" class="on">نشانه‌گذاری</button>
       <button type="button" data-type="avali">بازدید اولیه</button>
+      <button type="button" data-type="tajdid">تجدید حجم</button>
+      <button type="button" data-type="estehsal">استحصال</button>
     </div>
 
     <div style="background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:10px;margin-bottom:10px">
@@ -1732,11 +1804,50 @@ function hvHasRev(){
   const sh=getActiveSheet();
   return T.some(t=>t.v2>0)||!!(sh&&sh.hvg&&sh.hvg.r&&Object.values(sh.hvg.r).some(a=>a&&a.length));
 }
+function hvRevSaved(){ const sh=getActiveSheet(); return !!(sh&&sh.hvRevSaved); }
+function hvHarvestAllowed(){
+  /* استحصال فقط پس از «ذخیره برای استحصال» در تب تجدید حجم؛ دادهٔ استحصال موجود یا مسیر همزمان (فقط مشاهده) مستثنا است */
+  const sh=getActiveSheet(); if(!sh) return false;
+  if(sh.hvRevSaved) return true;
+  if(sh.hvEntryPath==='b') return true;
+  if(hvHasHvgData('h')) return true;
+  return false;
+}
+/* حجم تجدید حجم هر درخت؛ برای درختی که تجدید حجم ندارد همان حجم نشانه‌گذاری */
+function hvRenMap(){
+  const sh=getActiveSheet(); const out=new Map();
+  const src=(sh&&sh.hvg&&sh.hvg.r)||{}, hw=(sh&&sh.hvw&&sh.hvw.r)||{};
+  const sum=k=>(src[k]||[]).reduce((a,r)=>a+(+r.v||0),0)+0.6*(+hw[k]||0);
+  const byKey=new Map(T.map(t=>['#'+t.id,t]));
+  const bySp=new Map();
+  T.forEach(t=>{ const k=t.sp||'نامشخص'; if(!bySp.has(k)) bySp.set(k,[]); bySp.get(k).push(t); });
+  Object.keys(src).forEach(k=>{
+    if(!src[k]||!src[k].length) return;
+    if(String(k).charAt(0)==='#'){
+      const t=byKey.get(k); if(t) out.set(t.id,{v:sum(k),d:(+t.rd||+t.d||0),h:(+t.rh||+t.h||0),ren:true});
+    } else {
+      const list=bySp.get(k)||[]; const base=list.reduce((a,t)=>a+tv(t),0); if(!(base>0)) return;
+      const tot=sum(k);
+      list.forEach(t=>{ if(!out.has(t.id)) out.set(t.id,{v:tot*tv(t)/base,d:null,h:null,ren:true}); });
+    }
+  });
+  T.forEach(t=>{ if(!out.has(t.id)) out.set(t.id,{v:tv(t),d:+t.d||0,h:+t.h||0,ren:false}); });
+  return out;
+}
+function hvVolOf(t,map){
+  if(HV.mode!=='h') return tv(t);
+  map=map||hvRenMap(); const r=map.get(t.id); return r?r.v:tv(t);
+}
+function hvRenTotal(){
+  const map=hvRenMap();
+  return T.filter(t=>t.k!=='planted').reduce((a,t)=>a+(map.get(t.id)||{v:tv(t)}).v,0);
+}
 function hvReady(mode){
   const sh=getActiveSheet();
   if(!sh)return 'ابتدا یک عرصه انتخاب کنید.';
   if(!isProjectSaved(sh))return '⚠️ این عرصه هنوز در تب «📋 دریافت سیاهه» ذخیره نشده است. ابتدا در آن تب با دکمهٔ «ذخیرهٔ سربرگ فعلی با نام» ذخیره کنید، سپس این عملیات را انجام دهید.';
-  if(mode==='h'&&!hvHasRev())return '⚠️ برای این عرصه هنوز «تجدید حجم» ذخیره نشده است. ابتدا در بخش «تجدید حجم» یا «تجدید حجم و استحصال همزمان» ذخیره کنید، سپس استحصال را انجام دهید.';
+  if(mode==='h'&&!hvHasRev())return '⚠️ برای این عرصه هنوز «تجدید حجم» ثبت نشده است. ابتدا در تب «تجدید حجم» داده را وارد کنید و دکمهٔ «ذخیره برای استحصال» را بزنید، سپس استحصال را انجام دهید.';
+  if(mode==='h'&&!hvHarvestAllowed())return '⚠️ استحصال هنوز امکان‌پذیر نیست؛ چون در تب «تجدید حجم» دکمهٔ «ذخیره برای استحصال» زده نشده است. ابتدا تجدید حجم را کامل کنید و آن دکمه را بزنید، سپس به تب استحصال برگردید.';
   return '';
 }
 function hvMsg(t){const e=hvQ('hvMsg');if(!e)return;e.textContent=t||'';e.classList.toggle('hid',!t)}
@@ -1744,19 +1855,65 @@ function hvOpen(mode){
   const m=hvReady(mode);
   if(m){hvMsg(m);return}
   hvMsg('');HV.mode=mode;
+  HV.viewOnly = hvIsViewOnly(mode);
   hvQ('hvFullTitle').textContent=getActiveSheet().name;
   hvQ('hvSubSp').textContent=HV_T[mode]+(mode==='b'?' همزمان':'')+' گونه‌های مشابه';
   hvQ('hvSubTr').textContent=HV_T[mode]+(mode==='b'?' همزمان':'')+' درخت به درخت';
+  const topNote=hvQ('hvTopNote');
+  if(topNote){
+    if(HV.viewOnly){
+      topNote.textContent=hvViewOnlyMsg(mode);
+      topNote.classList.remove('hid');
+    } else if(mode==='r' && isRenewalEditLocked()){
+      topNote.textContent='🔒 استحصال ثبت شده است؛ تجدید حجم قفل است. برای تغییر، ابتدا داده‌های استحصال را پاک کنید.';
+      topNote.classList.remove('hid');
+    } else if(mode==='h'){
+      topNote.textContent='حجم درختان در این تب بر پایهٔ «تجدید حجم» نمایش داده می‌شود (نه نشانه‌گذاری).';
+      topNote.classList.remove('hid');
+    } else if(mode==='b'){
+      topNote.textContent='استحصال را وارد کنید؛ تجدید حجم به‌صورت خودکار تکمیل می‌گردد.';
+      topNote.classList.remove('hid');
+    } else {
+      topNote.textContent='';
+      topNote.classList.add('hid');
+    }
+  }
   hvSetSub(null);
   hvUpdateMethodButtons();
+  try{ hvDashSetup(); }catch(e){ console.error(e); }
   const hc=hvQ('harvestTableCard');
-  if(hc){ /* فقط در استحصال خالص جدول اکسل استحصال دیده شود — بدون تاریخ/استحصال در تجدید حجم */
+  if(hc){
     if(HV.mode==='h') hc.classList.remove('hvHideCard');
     else hc.classList.add('hvHideCard');
+  }
+  try{ hvApplyViewOnlyUI(); }catch(e){}
+  if(HV.viewOnly && hvHasAnyHvData()){
+    HV.registered = true;
+    try{ hvUpdatePostRegUI(); }catch(e){}
   }
   const f=hvQ('hvFull');f.classList.remove('hid');f.scrollTop=0;
   document.body.style.overflow='hidden';
   try{ window.__appBack && window.__appBack.push(); }catch(e){}
+}
+function hvLockRenForm(form){
+  if(!form||HV.mode!=='r'||!isRenewalEditLocked()) return;
+  form.querySelectorAll('input').forEach(i=>{ i.readOnly=true; });
+  form.querySelectorAll('.hvAdd,.hvRm').forEach(b=>{ b.style.display='none'; });
+  if(!form.querySelector('.hvLockNote')) form.insertAdjacentHTML('afterbegin','<div class="hvTopNote hvLockNote">🔒 استحصال ثبت شده است؛ تجدید حجم قفل است. برای تغییر، ابتدا داده‌های استحصال را پاک کنید.</div>');
+}
+function hvApplyViewOnlyUI(){
+  const vo = !!(HV && HV.viewOnly);
+  ['hvImportCard','hvRegCard','hvHint'].forEach(id=>{
+    const el=hvQ(id); if(!el) return;
+    el.classList.toggle('hid', vo);
+  });
+  ['hvSpWrap','hvTrWrap'].forEach(id=>{
+    const el=hvQ(id); if(!el) return;
+    if(vo) el.classList.add('hid');
+  });
+  const seg=document.querySelector('#hvFull .hvSeg');
+  if(seg) seg.style.display = vo ? 'none' : '';
+  if(vo){ try{ hvUpdatePostRegUI(); }catch(e){} }
 }
 function hvDraftKey(key){ return String(HV.mode||'')+'|'+String(HV.sub||'')+'|'+String(key||''); }
 function hvReadDraftRows(body){
@@ -1771,8 +1928,16 @@ function hvReadDraftRows(body){
 function hvKeepDraft(body){
   if(!body||!HV.sp) return;
   if(!HV.draft) HV.draft={};
-  HV.draft[hvDraftKey(HV.sp)] = hvReadDraftRows(body);
+  const _r=hvReadDraftRows(body); const _z=body.querySelector('.hvHzIn'); _r.hz=_z?(+toEn(_z.value)||0):0;
+  HV.draft[hvDraftKey(HV.sp)] = _r;
 }
+function hvLoadHz(key){
+  const dk=hvDraftKey(key);
+  if(HV.draft&&HV.draft[dk]&&HV.draft[dk].length&&HV.draft[dk].hz!=null) return +HV.draft[dk].hz||0;
+  const sh=getActiveSheet(), k0=HV_KEYS[HV.mode]&&HV_KEYS[HV.mode][0];
+  return +((sh&&sh.hvw&&k0&&sh.hvw[k0]&&sh.hvw[k0][key])||0)||0;
+}
+function hvCalcHz(body){ const z=body.querySelector('.hvHzIn'); return z?(+toEn(z.value)||0):0; }
 function hvLoadRows(key){
   if(!HV.draft) HV.draft={};
   const dk=hvDraftKey(key);
@@ -1798,6 +1963,38 @@ function isMarkingLocked(){
 function isRenewalEditLocked(){
   /* پس از اولین ذخیرهٔ استحصال، تجدید حجم قفل ویرایش/حذف می‌شود */
   return hvHasHvgData('h');
+}
+function hvAnyHvData(){
+  return hvHasHvgData('r') || hvHasHvgData('h');
+}
+function hvGetEntryPath(){
+  const sh=getActiveSheet();
+  if(!sh) return null;
+  if(sh.hvEntryPath==='b' || sh.hvEntryPath==='sep') return sh.hvEntryPath;
+  if(hvAnyHvData()) return 'sep';
+  return null;
+}
+function hvSetEntryPath(path){
+  const sh=getActiveSheet(); if(!sh) return;
+  if(path==='b' || path==='sep') sh.hvEntryPath=path;
+  else delete sh.hvEntryPath;
+}
+function hvSyncEntryPath(){
+  const sh=getActiveSheet(); if(!sh) return;
+  if(!hvAnyHvData()){ delete sh.hvEntryPath; return; }
+  if(sh.hvEntryPath!=='b' && sh.hvEntryPath!=='sep') sh.hvEntryPath='sep';
+}
+function hvIsViewOnly(mode){
+  const path=hvGetEntryPath();
+  if(!path || !hvAnyHvData()) return false;
+  if(mode==='b') return path==='sep';
+  if(mode==='r' || mode==='h') return path==='b';
+  return false;
+}
+function hvViewOnlyMsg(mode){
+  if(mode==='b')
+    return '⚠️ برای این عرصه داده در تب «تجدید حجم» یا «استحصال» جداگانه وارد شده است. تب «تجدید حجم و استحصال همزمان» فقط برای مشاهده، دریافت خروجی و صورتجلسه فعال است و امکان ویرایش/ورود جدید ندارد. اگر می‌خواهید از تب همزمان استفاده کنید، ابتدا همهٔ موارد واردشده در تب‌های جداگانه را پاک کنید.';
+  return '⚠️ برای این عرصه داده از مسیر «تجدید حجم و استحصال همزمان» ثبت شده است. تب‌های جداگانه فقط برای مشاهده، دریافت خروجی و صورتجلسه فعال‌اند و امکان ویرایش/ورود جدید ندارند. اگر می‌خواهید از تب جداگانه استفاده کنید، ابتدا موارد مسیر همزمان را پاک کنید.';
 }
 function hvMethodLocked(){
   /* قفل روش تجمیعی/درخت‌به‌درخت فقط وقتی دادهٔ ذخیره‌شده باشد؛ با خالی شدن دوباره باز می‌شود */
@@ -1830,12 +2027,13 @@ function hvUpdateMethodButtons(){
   bTr.style.pointerEvents = bTr.disabled ? 'none' : '';
 }
 function hvBack(fromPop){
+  try{ hvFlushSave(); }catch(e){}
   try{
     const body=document.querySelector('#hvFull [data-hvkey]');
     if(body) hvKeepDraft(body);
   }catch(e){}
   const hadSub=!!(window.HV&&HV.sub);
-  HV.mode=null; HV.sub=null; HV.sp=null;
+  HV.mode=null; HV.sub=null; HV.sp=null; HV.viewOnly=false;
   hvQ('hvFull').classList.add('hid');
   document.body.style.overflow='';
   try{ hvUpdateMethodButtons(); }catch(e){}
@@ -1849,6 +2047,7 @@ function hvBack(fromPop){
   }
 }
 function hvSetSub(s){
+  try{ hvFlushSave(); }catch(e){}
   const lock=hvMethodLocked();
   if(s && lock && lock!==s){
     hvErr(lock==='tr'
@@ -1873,10 +2072,49 @@ function hvSetSub(s){
   if(s){ try{ window.__appBack && window.__appBack.push(); }catch(e){} }
 }
 function hvGroups(){
-  if(HV.sub==='tr')return T.map(t=>({k:'#'+t.id,label:(t.ty==='h'?'هیزمی':'شماره '+toFa(t.no||t.id))+' — '+(t.sp||''),sub:'قطر '+fa(t.d,0)+' · '+toFa(cnt(t))+' اصله',v:tv(t),list:[t]}));
+  const _rm=(HV.mode==='h')?hvRenMap():null;
+  if(HV.sub==='tr')return T.map(t=>({k:'#'+t.id,label:(t.ty==='h'?'هیزمی':'شماره '+toFa(t.no||t.id))+' — '+(t.sp||''),sub:'قطر '+fa(t.d,0)+' · '+toFa(cnt(t))+' اصله',v:hvVolOf(t,_rm),list:[t]}));
   const m=new Map();
-  T.forEach(t=>{const k=t.sp||'نامشخص';if(!m.has(k))m.set(k,{k,label:k,n:0,v:0,list:[]});const g=m.get(k);g.n+=cnt(t);g.v+=tv(t);g.list.push(t)});
+  T.forEach(t=>{const k=t.sp||'نامشخص';if(!m.has(k))m.set(k,{k,label:k,n:0,v:0,list:[]});const g=m.get(k);g.n+=cnt(t);g.v+=hvVolOf(t,_rm);g.list.push(t)});
   return [...m.values()].sort((a,b)=>a.k.localeCompare(b.k,'fa')).map(g=>Object.assign(g,{sub:toFa(g.n)+' اصله'}));
+}
+function hvUseKindCols(){ return HV.mode==='h' || HV.mode==='b'; }
+function hvKindFromD(d){
+  d=+d||0;
+  if(d<10) return null;
+  if(Math.abs(d-Math.round(d))>1e-9) return null;
+  d=Math.round(d);
+  if(d%2!==0) return null;
+  if(d>=30) return 'kb';
+  if(d>=20) return 'ki';
+  if(d>=10) return 'kh';
+  return null;
+}
+function hvKindLabel(k){ return ({kb:'کرده بینه',ki:'کاتین صنعتی',kh:'کاتین هیزمی'})[k]||''; }
+function hvKbBaseOutside(exceptKey){
+  const sh=getActiveSheet(); if(!sh||!sh.hvg||!HV.mode) return 0;
+  const which = (HV.mode==='h') ? 'h' : 'r';
+  const src=(sh.hvg[which])||{};
+  let n=0;
+  Object.keys(src).forEach(k=>{
+    if(exceptKey!=null && String(k)===String(exceptKey)) return;
+    (src[k]||[]).forEach(r=>{ if((r.kind||hvKindFromD(r.d))==='kb') n++; });
+  });
+  return n;
+}
+function hvRenumberKinds(box){
+  if(!box) return;
+  let n=hvKbBaseOutside(box.dataset.hvkey);
+  box.querySelectorAll('.hvRow:not(.hvHd)').forEach(row=>{
+    const d=+toEn((row.querySelector('.hvD')||{}).value)||0;
+    const kind=hvKindFromD(d);
+    const tyEl=row.querySelector('.hvTy'), noEl=row.querySelector('.hvNo');
+    if(tyEl) tyEl.textContent=kind?hvKindLabel(kind):'—';
+    if(noEl){
+      if(kind==='kb'){ n++; noEl.textContent=toFa(n); noEl.dataset.no=String(n); }
+      else { noEl.textContent='_'; noEl.dataset.no=''; }
+    }
+  });
 }
 function hvRowH(r,i){
   const d = (r && r.d!=null && r.d!=='') ? (typeof toFa==='function'?toFa(r.d):r.d) : '';
@@ -1884,24 +2122,43 @@ function hvRowH(r,i){
   const nRaw = (r && r.n!=null && r.n!=='') ? r.n : 1;
   const n = (typeof toFa==='function'?toFa(nRaw):nRaw);
   const vv = (r && +r.v>0) ? fa(r.v,3) : '';
+  if(hvUseKindCols()){
+    const dNum = (r && r.d!=null && r.d!=='') ? +toEn(String(r.d)) : 0;
+    const kind = (r && r.kind) || hvKindFromD(dNum);
+    const ty = kind ? hvKindLabel(kind) : '—';
+    const no = (kind==='kb' && r && r.no!=null && r.no!=='') ? toFa(r.no) : '_';
+    return '<div class="hvRow">'
+      +'<span class="hvNo" data-no="'+(kind==='kb'&&r&&r.no!=null?String(r.no):'')+'">'+no+'</span>'
+      +'<span class="hvTy">'+ty+'</span>'
+      +'<input class="hvD" type="text" inputmode="numeric" dir="rtl" lang="fa" placeholder="قطر" value="'+d+'">'
+      +'<input class="hvH" type="text" inputmode="decimal" dir="rtl" lang="fa" placeholder="طول" value="'+h+'">'
+      +'<input class="hvC" type="text" inputmode="numeric" dir="rtl" lang="fa" placeholder="تعداد" value="'+n+'">'
+      +'<input class="hvV" type="text" readonly dir="rtl" lang="fa" placeholder="حجم کل" value="'+vv+'">'
+      +'<button type="button" class="x hvRm" aria-label="حذف">×</button></div>';
+  }
   return '<div class="hvRow">'
     +'<span class="hvN">'+toFa((i||0)+1)+'</span>'
     +'<input class="hvD" type="text" inputmode="decimal" dir="rtl" lang="fa" placeholder="قطر" value="'+d+'">'
     +'<input class="hvH" type="text" inputmode="decimal" dir="rtl" lang="fa" placeholder="طول" value="'+h+'">'
     +'<input class="hvC" type="text" inputmode="numeric" dir="rtl" lang="fa" placeholder="تعداد" value="'+n+'">'
-    +'<input class="hvV" type="text" readonly dir="rtl" lang="fa" placeholder="حجم کل" value="'+vv+'">'
+    +'<input class="hvV" type="text" readonly dir="rtl" lang="fa" placeholder="حجم" value="'+vv+'">'
     +'<button type="button" class="x hvRm" aria-label="حذف">×</button></div>';
 }
-function hvRenum(box){box.querySelectorAll('.hvRow').forEach((r,i)=>{r.querySelector('.hvN').textContent=toFa(i+1)})}
+function hvRenum(box){
+  if(!box) return;
+  if(hvUseKindCols()){ hvRenumberKinds(box); return; }
+  box.querySelectorAll('.hvRow').forEach((r,i)=>{const el=r.querySelector('.hvN'); if(el) el.textContent=toFa(i+1)});
+}
 function hvBaseVol(key){
   if(!key) return 0;
   if(String(key).charAt(0)==='#'){
     const t=T.find(x=>'#'+x.id===key);
-    return t?tv(t):0;
+    return t?hvVolOf(t):0;
   }
   const g=(HV.groups||[]).find(x=>x.k===key);
   if(g) return g.v||0;
-  return T.filter(t=>(t.sp||'نامشخص')===key).reduce((a,t)=>a+tv(t),0);
+  const _m=(HV.mode==='h')?hvRenMap():null;
+  return T.filter(t=>(t.sp||'نامشخص')===key).reduce((a,t)=>a+hvVolOf(t,_m),0);
 }
 function hvBaseDiam(key){
   /* بزرگ‌ترین قطر نشانه‌گذاری مرتبط با این کلید */
@@ -1921,7 +2178,7 @@ function hvSavedVol(key){
   keys.forEach(x=>{
     const rows=sh.hvg[x]&&sh.hvg[x][key];
     if(rows&&rows.length){
-      const s=rows.reduce((a,r)=>a+(+r.v||0),0);
+      const s=rows.reduce((a,r)=>a+(+r.v||0),0)+0.6*(+((sh.hvw&&sh.hvw[x]&&sh.hvw[x][key])||0)||0);
       if(s>best) best=s;
     }
   });
@@ -1936,8 +2193,9 @@ function hvIsDone(key){
 }
 function hvPipeHtml(base, applied){
   const max=base>0?base*1.2:0;
+  const LB=(HV.mode==='h')?'تجدید حجم':'نشانه‌گذاری';
   if(!(max>0)){
-    return '<div class="hvPipeMeta"><span>حجم نشانه‌گذاری: —</span></div><div class="hvPipeWrap"><div class="hvPipe"></div></div>';
+    return '<div class="hvPipeMeta"><span>حجم '+LB+': —</span></div><div class="hvPipeWrap"><div class="hvPipe"></div></div>';
   }
   const a=Math.max(0, +applied||0);
   const gPct=Math.min(100, (Math.min(a,base)/max)*100);
@@ -1945,11 +2203,11 @@ function hvPipeHtml(base, applied){
   const markPct=(base/max)*100; /* خط مرز نشانه‌گذاری = شروع بازهٔ ۲۰٪ */
   const pctMark=Math.round((a/base)*100);
   return '<div class="hvPipeMeta">'
-    +'<span>نشانه‌گذاری: <b>'+fa(base,3)+'</b> m³</span>'
+    +'<span>'+LB+': <b>'+fa(base,3)+'</b> m³</span>'
     +'<span>اعمال‌شده: <b>'+fa(a,3)+'</b> m³ ('+toFa(pctMark)+'٪)</span>'
     +'<span>سقف +۲۰٪: <b>'+fa(max,3)+'</b> m³</span>'
     +'</div>'
-    +'<div class="hvPipeWrap" title="خط تیره = حجم نشانه‌گذاری؛ بعد از آن تا +۲۰٪ نارنجی">'
+    +'<div class="hvPipeWrap" title="خط تیره = حجم '+LB+'؛ بعد از آن تا +۲۰٪ نارنجی">'
     +'<div class="hvPipeMark" style="left:'+markPct+'%" data-lab="۱۰۰٪"></div>'
     +'<div class="hvPipe">'
     +'<div class="g" style="width:'+gPct+'%"></div>'
@@ -1962,22 +2220,29 @@ function hvErr(msg){
 }
 function hvFormHtml(g, rows){
   const base=g.v||0;
-  const applied=(rows||[]).reduce((a,r)=>a+(r&&r.v?+r.v:0),0);
+  const hz=hvLoadHz(g.k);
+  const applied=(rows||[]).reduce((a,r)=>a+(r&&r.v?+r.v:0),0)+hz*0.6;
   const done=base>0 && applied>=base*0.8 && applied<=base*1.2;
   const tick=done?'<span class="hvDoneBadge" title="در محدودهٔ مجاز">✓</span> ':'';
-  const tableRows=(g.list||[]).map(t=>'<tr><td>'+(t.ty==='h'?'هیزمی':esc(toFa(t.no||'')))+'</td><td>'+fa(t.d,1)+'</td><td>'+fa(t.h,1)+'</td><td>'+fa(tv(t),3)+'</td></tr>').join('');
+  const _isH=(HV.mode==='h'), _rm=_isH?hvRenMap():null;
+  const tableRows=(g.list||[]).map(t=>{
+    if(_isH){ const r=_rm.get(t.id)||{v:tv(t),d:t.d,h:t.h};
+      return '<tr><td>'+(t.ty==='h'?'هیزمی':esc(toFa(t.no||'')))+'</td><td>'+(r.d?fa(r.d,1):'—')+'</td><td>'+(r.h?fa(r.h,1):'—')+'</td><td>'+fa(r.v,3)+'</td></tr>'; }
+    return '<tr><td>'+(t.ty==='h'?'هیزمی':esc(toFa(t.no||'')))+'</td><td>'+fa(t.d,1)+'</td><td>'+fa(t.h,1)+'</td><td>'+fa(tv(t),3)+'</td></tr>';
+  }).join('');
   return '<div class="c hvFormBox" data-hvkey="'+esc(g.k)+'">'
     +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;font-weight:700;color:var(--ac)">'
     +tick+esc(g.label)
     +'</div>'
     +hvPipeHtml(base, applied)
-    +'<div class="tw"><table><tr><th>شماره</th><th>قطر</th><th>طول</th><th>حجم اولیه</th></tr>'+tableRows+'</table></div>'
-    +'<div class="m" style="margin-top:10px">اندازه‌های جدید — حجم کاتین (استوانه‌ای). حداکثر ۲۰٪ بیش از نشانه‌گذاری:</div>'
-    +'<div class="hvRow hvHd"><span class="hvN">ردیف</span><span>قطر (cm)</span><span>طول (m)</span><span>تعداد</span><span>حجم کل</span><span class="hvX"></span></div>'
+    +'<div class="tw"><table><tr><th>شماره</th><th>قطر</th><th>طول</th><th>'+(_isH?'حجم تجدید حجم':'حجم اولیه')+'</th></tr>'+tableRows+'</table></div>'
+    +'<div class="m" style="margin-top:10px">'+(HV.mode==='h'?'استحصال حداکثر تا ۲۰٪ بالاتر از حجم تجدید حجم (و قطر نشانه‌گذاری) امکان‌پذیر است.':((HV.mode==='b')?'استحصال و تجدید حجم':'تجدید حجم')+' حداکثر تا ۲۰٪ بالاتر از قطر و حجم نشانه‌گذاری امکان‌پذیر است.')+'</div>'
+    +(hvUseKindCols()
+      ? '<div class="hvRow hvHd"><span class="hvNo">شماره</span><span class="hvTy">نوع</span><span>قطر</span><span>طول</span><span>تعداد</span><span>حجم کل</span><span class="hvX"></span></div>'
+      : '<div class="hvRow hvHd"><span class="hvN">ردیف</span><span>قطر (cm)</span><span>طول (m)</span><span>تعداد</span><span>حجم</span><span class="hvX"></span></div>')
     +'<div class="hvRows">'+(rows&&rows.length?rows:[{}]).map(hvRowH).join('')+'</div>'
-    +'<div class="r" style="margin-top:8px"><button type="button" class="o hvAdd">＋ افزودن</button><button type="button" class="hvSave">💾 ذخیره</button>'
-    +(rows&&rows.length?'<button type="button" class="x hvDelSaved">🗑 حذف ذخیره</button>':'')
-    +'</div>'
+    +'<div class="r" style="margin-top:8px"><button type="button" class="o hvAdd">＋ افزودن</button></div>'
+    +'<div class="hvHz" style="margin-top:10px"><label style="margin-top:0">مقدار هیزم</label><div style="display:flex;align-items:center;gap:8px;margin-top:4px"><input class="hvHzIn" type="text" inputmode="decimal" dir="rtl" lang="fa" placeholder="پس از درج همهٔ کاتین‌ها، مقدار هیزم را بنویسید" value="'+(hz>0?toFa(hz):'')+'" style="flex:1"><span style="font-weight:700">استر</span></div><div class="m" style="margin-top:4px;font-size:11px">(محاسبه استر: هر استر ۰٫۶ متر مکعب است)</div></div>'
     +'<div class="hvOk2"></div></div>';
 }
 function hvUpdatePipe(box){
@@ -1985,7 +2250,7 @@ function hvUpdatePipe(box){
   const key=box.dataset.hvkey||HV.sp;
   const base=hvBaseVol(key);
   const rows=[...box.querySelectorAll('.hvRow:not(.hvHd)')].map(hvRowVal).filter(Boolean);
-  const applied=rows.reduce((a,r)=>a+r.v,0);
+  const applied=rows.reduce((a,r)=>a+r.v,0)+0.6*hvCalcHz(box);
   const meta=box.querySelector('.hvPipeMeta');
   const wrap=box.querySelector('.hvPipeWrap')||box.querySelector('.hvPipe');
   if(!wrap) return;
@@ -2005,6 +2270,87 @@ function hvUpdatePipe(box){
     }
   }
 }
+function hvRenderQuickChips(){
+  const hostId = HV.sub==='tr' ? 'hvTrQuick' : 'hvSpQuick';
+  const host=hvQ(hostId);
+  if(!host) return;
+  const items = (typeof hvSavedEntries==='function' ? hvSavedEntries() : []);
+  const groups = (HV.groups && HV.groups.length) ? HV.groups : (typeof hvGroups==='function'?hvGroups():[]);
+  const savedKeys = new Set(items.map(it=>String(it.k)));
+  const chips = [];
+  items.forEach(it=> chips.push({k:it.k, label:it.label, done:!!it.done}));
+  groups.forEach(g=>{ if(!savedKeys.has(String(g.k))) chips.push({k:g.k, label:g.label, done:hvIsDone(g.k)}); });
+  if(!chips.length){ host.innerHTML='<div class="hvQuickEmpty">برای انتخاب سریع، از فهرست بالا یک مورد را باز کنید.</div>'; return; }
+  const cur = HV.sp!=null ? String(HV.sp) : '';
+  host.innerHTML = chips.map(c=>{
+    let name = String(c.label||'');
+    if(HV.sub==='sp' && String(c.k).charAt(0)!=='#') name = String(c.k);
+    else if(HV.sub==='tr'){
+      const parts = name.split('—');
+      if(parts.length>1) name = parts[parts.length-1].split('·')[0].trim();
+    }
+    const cls=(String(c.k)===cur?'on ':'')+(c.done?'done ':'');
+    return '<button type="button" class="'+cls.trim()+'" data-hq="'+esc(String(c.k))+'">'+(c.done?'✓ ':'')+esc(name)+'</button>';
+  }).join('');
+  host.querySelectorAll('[data-hq]').forEach(b=>{
+    b.onclick=()=>{
+      const k=b.dataset.hq;
+      if(HV.sub==='tr' && String(k).charAt(0)==='#'){
+        const sel=hvQ('hvTrSel'); if(sel) sel.value=String(k).slice(1);
+        hvShowTrForm(+String(k).slice(1));
+      } else {
+        const sel=hvQ('hvSpSel'); if(sel) sel.value=k;
+        hvShowSpForm(k);
+      }
+      hvRenderQuickChips();
+    };
+  });
+}
+function hvHasAnyHvData(){
+  const sh=getActiveSheet(); if(!sh||!sh.hvg||!HV.mode) return false;
+  const keys = HV.mode==='h' ? ['h'] : (HV.mode==='r' ? ['r'] : ['r','h']);
+  return keys.some(k => sh.hvg[k] && Object.values(sh.hvg[k]).some(a => a && a.length));
+}
+function hvUpdatePostRegUI(){
+  const regOk = !!(HV && HV.registered);
+  const hasData = hvHasAnyHvData();
+  const mm=hvQ('hvMinutesCard'), ex=hvQ('hvExpCard');
+  if(mm) mm.classList.toggle('hid', !(regOk && hasData));
+  if(ex) ex.classList.toggle('hid', !(regOk && hasData));
+  const btn=hvQ('hvMmBtn');
+  if(btn){
+    if(HV.mode==='b') btn.textContent='صورتجلسه تجدید حجم و استحصال همزمان';
+    else if(HV.mode==='h') btn.textContent='صورتجلسه استحصال';
+    else btn.textContent='صورتجلسه تجدید حجم';
+  }
+  const sel=hvQ('hvExpType');
+  if(sel){
+    const want = HV.mode==='b' ? 'b' : (HV.mode==='h' ? 'h' : 'r');
+    if([...sel.options].some(o=>o.value===want)) sel.value=want;
+  }
+  const regMsg=hvQ('hvRegOk'), regBtn=hvQ('hvRegBtn');
+  if(regMsg){
+    if(regOk && hasData) regMsg.textContent='✓ ثبت شد — صورتجلسه و خروجی فعال است.';
+    else if(hasData) regMsg.textContent='داده وارد شده؛ روی «ثبت» بزنید.';
+    else regMsg.textContent='';
+  }
+  if(regBtn) regBtn.disabled = !hasData;
+  const rsBtn=hvQ('hvRevSaveBtn'), rsMsg=hvQ('hvRevSaveOk');
+  const isR = !!(HV && HV.mode==='r');
+  if(rsBtn){
+    rsBtn.classList.toggle('hid', !isR);
+    const locked=hvHasHvgData('h');
+    rsBtn.disabled = !isR || !hasData || locked;
+    rsBtn.style.opacity = rsBtn.disabled ? '.5' : '';
+  }
+  if(rsMsg){
+    if(!isR){ rsMsg.textContent=''; }
+    else if(hvHasHvgData('h')){ rsMsg.style.color='#b45309'; rsMsg.textContent='🔒 استحصال ثبت شده است؛ تجدید حجم قفل است. برای تغییر، ابتدا داده‌های استحصال را پاک کنید.'; }
+    else if(hasData && hvRevSaved()){ rsMsg.style.color='var(--ac)'; rsMsg.textContent='✓ برای استحصال ذخیره شد — اکنون استحصال امکان‌پذیر است.'; }
+    else if(hasData){ rsMsg.style.color='#b45309'; rsMsg.textContent='برای انجام استحصال، «ذخیره برای استحصال» را بزنید.'; }
+    else rsMsg.textContent='';
+  }
+}
 function hvRenderSp(){
   const sel=hvQ('hvSpSel'), form=hvQ('hvSpForm');
   if(!sel||!form) return;
@@ -2016,9 +2362,10 @@ function hvRenderSp(){
     opts.push('<option value="'+esc(g.k)+'"'+(g.k===prev?' selected':'')+'>'+esc(g.label)+' · '+g.sub+' · '+fa(g.v,3)+' m³'+(done?' ✓':'')+'</option>');
   });
   sel.innerHTML=opts.join('');
-  if(!sel.value){ form.classList.add('hid'); form.innerHTML=''; HV.sp=null; hvRenderSavedList(); return; }
+  if(!sel.value){ form.classList.add('hid'); form.innerHTML=''; HV.sp=null; hvRenderSavedList(); try{hvRenderQuickChips()}catch(e){} return; }
   hvShowSpForm(sel.value);
   hvRenderSavedList();
+  try{hvRenderQuickChips()}catch(e){}
 }
 function hvShowSpForm(spKey){
   const form=hvQ('hvSpForm'); if(!form) return;
@@ -2029,6 +2376,8 @@ function hvShowSpForm(spKey){
   const rows=hvLoadRows(g.k);
   form.classList.remove('hid');
   form.innerHTML=hvFormHtml(g, rows);
+  try{ if(typeof hvUseKindCols==='function' && hvUseKindCols()) hvRenumberKinds(form); }catch(e){}
+  try{ hvLockRenForm(form); }catch(e){}
 }
 function hvRenderTr(){
   const sel=hvQ('hvTrSel'), form=hvQ('hvTrForm');
@@ -2042,125 +2391,597 @@ function hvRenderTr(){
     opts.push('<option value="'+t.id+'"'+(String(t.id)===String(prev)?' selected':'')+'>'+esc(lab)+'</option>');
   });
   sel.innerHTML=opts.join('');
-  if(!sel.value){ form.classList.add('hid'); form.innerHTML=''; HV.sp=null; hvRenderSavedList(); return; }
+  if(!sel.value){ form.classList.add('hid'); form.innerHTML=''; HV.sp=null; hvRenderSavedList(); try{hvRenderQuickChips()}catch(e){} return; }
   hvShowTrForm(+sel.value);
   hvRenderSavedList();
+  try{hvRenderQuickChips()}catch(e){}
 }
 function hvShowTrForm(tid){
   const form=hvQ('hvTrForm'); if(!form) return;
   const t=T.find(x=>x.id==tid); if(!t){ form.classList.add('hid'); form.innerHTML=''; return; }
   const k='#'+t.id;
   HV.sp=k;
-  const g={k, label:(t.ty==='h'?'هیزمی':'شماره '+toFa(t.no||t.id))+' — '+(t.sp||''), v:tv(t), list:[t]};
+  const g={k, label:(t.ty==='h'?'هیزمی':'شماره '+toFa(t.no||t.id))+' — '+(t.sp||''), v:hvVolOf(t), list:[t]};
   const rows=hvLoadRows(k);
   form.classList.remove('hid');
   form.innerHTML=hvFormHtml(g, rows);
+  try{ if(typeof hvUseKindCols==='function' && hvUseKindCols()) hvRenumberKinds(form); }catch(e){}
+  try{ hvLockRenForm(form); }catch(e){}
 }
 function hvRowVal(r){
   const d=+toEn(r.querySelector('.hvD').value),h=+toEn(r.querySelector('.hvH').value),n=Math.round(+toEn(r.querySelector('.hvC').value))||1;
-  return (d>0&&h>0)?{d,h,n,v:vol(d,h,1)*n}:null;
+  if(!(d>0&&h>0)) return null;
+  const kind=hvUseKindCols()?hvKindFromD(d):null;
+  const noEl=r.querySelector('.hvNo');
+  const no=(kind==='kb' && noEl && noEl.dataset.no)?(+noEl.dataset.no||null):null;
+  return {d,h,n,v:vol(d,h,1)*n,kind:kind||undefined,no:no||undefined};
 }
-function hvSaveSp(body){
-  const sh=getActiveSheet(),k=HV.sp,keys=HV_KEYS[HV.mode];
-  if(!k){ hvErr('ابتدا یک مورد را انتخاب کنید.'); return; }
-  const rows=[...body.querySelectorAll('.hvRow:not(.hvHd)')].map(hvRowVal).filter(Boolean);
-  if(!rows.length){
-    const ok2=body.querySelector('.hvOk2');
-    if(ok2) ok2.textContent='ابتدا قطر و طول معتبر وارد کنید.';
-    return;
-  }
+
+function hvCalcRows(body){return [...body.querySelectorAll('.hvRow:not(.hvHd)')].map(hvRowVal).filter(Boolean)}
+function hvHasSavedKey(k){
+  const sh=getActiveSheet(); if(!sh||!sh.hvg||!HV.mode) return false;
+  return (HV_KEYS[HV.mode]||[]).some(x=>sh.hvg[x]&&sh.hvg[x][k]&&sh.hvg[x][k].length);
+}
+function hvCheckRows(k,rows,hz){
   const baseD=hvBaseDiam(k);
   if(baseD>0){
     const maxD=baseD*1.2;
-    const badD=rows.filter(r=>r.d>maxD+1e-9);
-    if(badD.length){
-      hvErr('ثبت نشد — قطر واردشده بیش از ۲۰٪ قطر نشانه‌گذاری است. قطر نشانه‌گذاری: '+fa(baseD,1)+' cm — سقف مجاز: '+fa(maxD,1)+' cm. مقادیر را درست کنید.');
-      return;
-    }
+    if(rows.some(r=>r.d>maxD+1e-9)) return 'ثبت نشد — قطر واردشده بیش از ۲۰٪ قطر نشانه‌گذاری است. قطر نشانه‌گذاری: '+fa(baseD,1)+' cm — سقف مجاز: '+fa(maxD,1)+' cm.';
   }
-  const tot=rows.reduce((a,x)=>a+x.v,0);
-  const base=hvBaseVol(k);
-  if(base>0 && tot>base*1.2+1e-9){
-    hvErr('ثبت نشد — حجم اعمال‌شده ('+fa(tot,3)+' m³) بیش از ۲۰٪ حجم نشانه‌گذاری ('+fa(base,3)+' m³) است. سقف مجاز: '+fa(base*1.2,3)+' m³. مقادیر را درست کنید.');
-    return;
-  }
-  if(base>0 && tot<base*0.8-1e-9){
-    const pct=Math.round((1-tot/base)*100);
-    const ok=confirm('حجم اعمال‌شده ('+fa(tot,3)+' m³) بیش از ۲۰٪ کمتر از حجم نشانه‌گذاری ('+fa(base,3)+' m³) است (حدود '+toFa(pct)+'٪ کاهش).\n\nدر صورت تأیید، ذخیره می‌شود.');
-    if(!ok) return;
-  }
+  const tot=rows.reduce((a,x)=>a+x.v,0)+0.6*(+hz||0), base=hvBaseVol(k);
+  if(base>0 && tot>base*1.2+1e-9) return 'ثبت نشد — حجم ('+fa(tot,3)+' m³) بیش از ۲۰٪ حجم '+(HV.mode==='h'?'تجدید حجم':'نشانه‌گذاری')+' ('+fa(base,3)+' m³) است. سقف مجاز: '+fa(base*1.2,3)+' m³.';
+  return '';
+}
+function hvCommit(k,rows,hz){
+  const sh=getActiveSheet();
+  if(HV.mode==='r' && isRenewalEditLocked()) return 0;
+  hz=+hz||0;
+  const tot=rows.reduce((a,x)=>a+x.v,0)+0.6*hz;
   if(!sh.hvg)sh.hvg={r:{},h:{}};
-  /* فقط دادهٔ مرتبط با حالت فعلی — بدون تاریخ؛ استحصال فقط در حالت استحصال */
-  const saveKeys = (HV.mode==='h') ? ['h'] : (HV.mode==='b' ? ['r','h'] : ['r']);
+  if(!sh.hvw)sh.hvw={r:{},h:{}};
+  const saveKeys=(HV.mode==='h')?['h']:(HV.mode==='b'?['r','h']:['r']);
   saveKeys.forEach(x=>{
     if(!sh.hvg[x])sh.hvg[x]={};
-    sh.hvg[x][k]=rows.map(r=>({d:r.d,h:r.h,n:r.n,v:r.v}));
+    sh.hvg[x][k]=rows.map(r=>({d:r.d,h:r.h,n:r.n,v:r.v,kind:r.kind||(typeof hvKindFromD==='function'?hvKindFromD(r.d):undefined)||undefined,no:r.no||undefined}));
+    if(!sh.hvw[x]) sh.hvw[x]={};
+    if(hz>0) sh.hvw[x][k]=hz; else delete sh.hvw[x][k];
   });
-  ['r','h'].forEach(x=>{
-    if(!saveKeys.includes(x) && sh.hvg[x]) delete sh.hvg[x][k];
-  });
+  if(HV.mode==='r' && sh.hvg.h) delete sh.hvg.h[k];
+  if(HV.mode==='r') delete sh.hvRevSaved; /* با تغییر تجدید حجم، باید دوباره «ذخیره برای استحصال» زده شود */
   const tg=String(k).charAt(0)==='#'?T.find(t=>'#'+t.id===k):null;
   if(tg){
     if(saveKeys.includes('r')){
       delete tg.d2; delete tg.h2;
       tg.v2=tot/cnt(tg); tg.rd=rows[0].d; tg.rh=rows[0].h;
     }
-    if(HV.mode==='h' || HV.mode==='b'){
-      tg.hv=tot;
-    }
-    delete tg.hd; /* تاریخ ذخیره نشود */
-    if(HV.mode==='r'){
-      delete tg.hv; /* تجدید حجم خالص: بدون استحصال */
-    }
+    if(HV.mode==='h' || HV.mode==='b'){ tg.hv=tot; }
+    delete tg.hd;
+    if(HV.mode==='r'){ delete tg.hv; }
+  }
+  try{ if(HV.draft) delete HV.draft[hvDraftKey(k)]; }catch(e){}
+  if(HV.mode==='b') hvSetEntryPath('b');
+  else if(HV.mode==='r' || HV.mode==='h'){
+    const cur=hvGetEntryPath();
+    if(cur!=='b') hvSetEntryPath('sep');
   }
   store();
-  if(tg)draw();
-  try{ if(HV.draft) delete HV.draft[hvDraftKey(k)]; }catch(e){}
+  try{ draw(); }catch(e){}
+  return tot;
+}
+function hvScheduleSave(body){
+  HV._stBody=body;
+  if(HV._st) clearTimeout(HV._st);
+  HV._st=setTimeout(()=>{ HV._st=null; const b=HV._stBody; HV._stBody=null; try{ hvAutoSave(b); }catch(e){ console.error(e); } },700);
+}
+function hvFlushSave(){
+  if(HV._st){
+    clearTimeout(HV._st); HV._st=null;
+    const b=HV._stBody; HV._stBody=null;
+    try{ hvAutoSave(b); }catch(e){ console.error(e); }
+  }
+}
+function hvRefreshOpts(){
+  if(HV.sub==='sp'){
+    const sel=hvQ('hvSpSel'); if(!sel) return;
+    HV.groups=hvGroups();
+    const prev=sel.value;
+    const opts=['<option value="">— گونه را انتخاب کنید —</option>'];
+    HV.groups.forEach(g=>{
+      const done=hvIsDone(g.k);
+      opts.push('<option value="'+esc(g.k)+'"'+(g.k===prev?' selected':'')+'>'+esc(g.label)+' · '+g.sub+' · '+fa(g.v,3)+' m³'+(done?' ✓':'')+'</option>');
+    });
+    sel.innerHTML=opts.join(''); sel.value=prev;
+  } else if(HV.sub==='tr'){
+    const sel=hvQ('hvTrSel'); if(!sel) return;
+    const prev=sel.value;
+    const opts=['<option value="">— درخت را انتخاب کنید —</option>'];
+    T.forEach(t=>{
+      const done=hvIsDone('#'+t.id);
+      const lab=(t.ty==='h'?'هیزمی':'شماره '+toFa(t.no||t.id))+' — '+(t.sp||'')+' · قطر '+fa(t.d,0)+(done?' ✓':'');
+      opts.push('<option value="'+t.id+'"'+(String(t.id)===String(prev)?' selected':'')+'>'+esc(lab)+'</option>');
+    });
+    sel.innerHTML=opts.join(''); sel.value=prev;
+  }
+}
+function hvAutoSave(body){
+  if(!body||!document.body.contains(body)||!HV.mode) return;
+  if(HV.viewOnly) return;
+  const k=body.dataset.hvkey; if(!k) return;
   const ok2=body.querySelector('.hvOk2');
-  const done=base>0 && tot>=base*0.8 && tot<=base*1.2;
-  if(ok2) ok2.innerHTML=(done?'<span class="hvDoneBadge">✓</span> ':'')+'ذخیره شد — حجم کل: '+fa(tot,3)+' m³';
-  hvUpdatePipe(body.closest('[data-hvkey]')||body);
-  hvUpdateMethodButtons();
-  if(HV.sub==='sp') hvRenderSp();
-  if(HV.sub==='tr') hvRenderTr();
-  hvRenderSavedList();
+  const setMsg=(t,err)=>{ if(ok2){ ok2.innerHTML=t; ok2.style.color=err?'#d33':''; } };
+  const sh=getActiveSheet(); if(!sh) return;
+  if(HV.mode==='r' && isRenewalEditLocked()){ setMsg('به‌خاطر وجود دادهٔ استحصال، ویرایش تجدید حجم قفل است.',1); return; }
+  const rowEls=[...body.querySelectorAll('.hvRow:not(.hvHd)')];
+  const hz=hvCalcHz(body);
+  const anyInput=hz>0||rowEls.some(r=>['.hvD','.hvH'].some(q=>String(r.querySelector(q).value).trim()!==''));
+  const rows=hvCalcRows(body);
+  if(!rows.length){
+    if(!anyInput){
+      if(hvHasSavedKey(k)){
+        hvClearKey(k,true); setMsg('');
+        hvUpdatePipe(body); hvUpdateMethodButtons(); hvRefreshOpts(); hvRenderSummary(); try{hvRenderQuickChips(); hvUpdatePostRegUI()}catch(e){}
+      } else setMsg('');
+    } else setMsg('قطر و طول کاتین‌ها را کامل وارد کنید تا ذخیره شود.',1);
+    return;
+  }
+  const err=hvCheckRows(k,rows,hz);
+  if(err){ setMsg(esc(err),1); return; }
+  hvCommit(k,rows,hz);
+  setMsg('');
+  hvUpdatePipe(body); hvUpdateMethodButtons(); hvRefreshOpts(); hvRenderSummary(); try{hvRenderQuickChips(); hvUpdatePostRegUI()}catch(e){}
+}
+function hvClearKey(key,quiet){
+  const sh=getActiveSheet(); if(!sh) return;
+  if(!sh.hvg) sh.hvg={r:{},h:{}};
+  const clearKeys = quiet ? (HV_KEYS[HV.mode]||['r','h']) : ['r','h'];
+  clearKeys.forEach(x=>{ if(sh.hvg[x]) delete sh.hvg[x][key]; if(sh.hvw&&sh.hvw[x]) delete sh.hvw[x][key]; });
+  if(HV.mode==='r' && clearKeys.includes('r')) delete sh.hvRevSaved;
+  const tg=String(key).charAt(0)==='#'?T.find(t=>'#'+t.id===key):null;
+  if(tg){
+    if(clearKeys.includes('r')){ delete tg.v2; delete tg.rd; delete tg.rh; delete tg.d2; delete tg.h2; }
+    if(clearKeys.includes('h') || HV.mode==='h' || HV.mode==='b'){ delete tg.hv; }
+    delete tg.hd;
+  }
+  try{ if(HV.draft) delete HV.draft[hvDraftKey(key)]; }catch(e){}
+  const _hasRows=(w)=>!!(sh.hvg&&sh.hvg[w]&&Object.values(sh.hvg[w]).some(a=>a&&a.length));
+  if(!_hasRows('r')){ T.forEach(t=>{ delete t.v2; delete t.rd; delete t.rh; delete t.d2; delete t.h2; }); }
+  if(!_hasRows('h')){ T.forEach(t=>{ delete t.hv; delete t.hd; }); }
+  try{ hvSyncEntryPath(); }catch(e){}
+  store();
+  try{ draw(); }catch(e){}
+  if(!quiet){
+    HV.sp=null;
+    hvUpdateMethodButtons();
+    if(HV.sub==='sp') hvRenderSp();
+    if(HV.sub==='tr') hvRenderTr();
+    hvRenderSavedList();
+    try{ if(typeof renderManualRecentList==='function') renderManualRecentList(); }catch(e){}
+  }
 }
 function hvDeleteKey(key){
   if(!key) return;
+  if(HV.viewOnly){ hvErr(hvViewOnlyMsg(HV.mode)); return; }
   if(isRenewalEditLocked() && HV.mode!=='h'){
     hvErr('به‌خاطر وجود دادهٔ استحصال، ویرایش/حذف تجدید حجم قفل است. ابتدا همهٔ موارد استحصال را حذف کنید.');
     return;
   }
   if(!confirm('این مورد ذخیره‌شده حذف شود؟')) return;
-  const sh=getActiveSheet();
-  if(!sh) return;
-  if(!sh.hvg) sh.hvg={r:{},h:{}};
-  ['r','h'].forEach(x=>{ if(sh.hvg[x]) delete sh.hvg[x][key]; });
-  const tg=String(key).charAt(0)==='#'?T.find(t=>'#'+t.id===key):null;
-  if(tg){
-    delete tg.v2; delete tg.rd; delete tg.rh; delete tg.d2; delete tg.h2;
-    if(HV.mode==='h' || HV.mode==='b'){ delete tg.hv; }
-    delete tg.hd;
-  }
-  try{ if(HV.draft) delete HV.draft[hvDraftKey(key)]; }catch(e){}
-  /* اگر دیگر ردیفی در hvg نماند، فیلدهای مشتق را پاک کن تا قفل‌ها باز شوند */
-  const _hasRows=(w)=>!!(sh.hvg&&sh.hvg[w]&&Object.values(sh.hvg[w]).some(a=>a&&a.length));
-  if(!_hasRows('r')){
-    T.forEach(t=>{ delete t.v2; delete t.rd; delete t.rh; delete t.d2; delete t.h2; });
-  }
-  if(!_hasRows('h')){
-    T.forEach(t=>{ delete t.hv; delete t.hd; });
-  }
-  store();
-  if(tg)draw();
-  else try{ draw(); }catch(e){}
-  HV.sp=null;
-  hvUpdateMethodButtons();
-  if(HV.sub==='sp') hvRenderSp();
-  if(HV.sub==='tr') hvRenderTr();
-  hvRenderSavedList();
-  try{ if(typeof renderManualRecentList==='function') renderManualRecentList(); }catch(e){}
+  hvClearKey(key,false);
 }
+
+/* ===== خلاصه وضعیت تجدید حجم / استحصال ===== */
+function hvWhich(){ return HV.mode==='h'?'h':'r'; }
+function hvAgg(which){
+  which=which||hvWhich();
+  const sh=getActiveSheet();
+  const out={rows:new Map(),tot:[0,0,0],marked:0,renewed:0,exVol:0,exMoney:0,exUnk:0};
+  T.filter(t=>t.k!=='planted').forEach(t=>{out.marked+=tv(t)});
+  const src=(sh&&sh.hvg&&sh.hvg[which])||{};
+  const hw=(sh&&sh.hvw&&sh.hvw[which])||{};
+  const add=(sp,vi,vh,mk)=>{ if(!out.rows.has(sp)) out.rows.set(sp,[0,0,0]); const e=out.rows.get(sp); e[0]+=vi;e[1]+=vh;e[2]+=mk; };
+  const money=(t,v)=>{
+    if(t.ty==='h') return Math.round(v/STER_VOLUME*FIREWOOD_RATE);
+    const c=catOf(t); if(!c){ out.exUnk+=v; return 0; }
+    return Math.round(v*(TAX_RATE[c]||TAX_RATE[3]));
+  };
+  Object.keys(src).forEach(k=>{
+    const rows=src[k]; if(!rows||!rows.length) return;
+    let ind=0,fw=0;
+    rows.forEach(r=>{ if(+r.d>=20) ind+=(+r.v||0); else fw+=(+r.v||0); });
+    fw+=0.6*(+hw[k]||0);
+    const rv=ind+fw;
+    let trees;
+    if(String(k).charAt(0)==='#'){ const t=T.find(x=>'#'+x.id===k); trees=t?[t]:[]; }
+    else trees=T.filter(t=>(t.sp||'نامشخص')===k);
+    if(!trees.length) return;
+    const base=trees.reduce((a,t)=>a+tv(t),0);
+    if(!(base>0)) return;
+    const np=trees.filter(t=>t.k!=='planted');
+    const baseNP=np.reduce((a,t)=>a+tv(t),0);
+    if(!(baseNP>0)) return;
+    const f=baseNP/base;
+    add(trees[0].sp||'نامشخص',ind*f,fw*f,baseNP);
+    out.renewed+=rv*f;
+    if(rv>base+1e-9){
+      const ex=rv-base;
+      np.forEach(t=>{ const e=ex*tv(t)/base; out.exVol+=e; out.exMoney+=money(t,e); });
+    }
+  });
+  out.rows.forEach(e=>{ for(let i=0;i<3;i++) out.tot[i]+=e[i]; });
+  return out;
+}
+function hvSortedEntries(a){
+  return [...a.rows.entries()].sort((x,y)=>(((SP[x[0]]||[0,3])[1])-((SP[y[0]]||[0,3])[1]))||String(x[0]).localeCompare(String(y[0]),'fa'));
+}
+function hvDetailRows(which){
+  const sh=getActiveSheet(); const src=(sh&&sh.hvg&&sh.hvg[which])||{};
+  const cuts=[], hzList=[];
+  let kbSeq=0;
+  Object.keys(src).forEach(k=>{
+    const rows=src[k]; if(!rows||!rows.length) return;
+    let label,sp;
+    if(String(k).charAt(0)==='#'){
+      const t=T.find(x=>'#'+x.id===k); if(!t) return;
+      label=t.ty==='h'?'هیزمی':('شماره '+toFa(t.no||t.id)); sp=t.sp||'';
+    } else { label='گونه‌های مشابه'; sp=k; }
+    rows.forEach(r=>{
+      const kind=r.kind||(typeof hvKindFromD==='function'?hvKindFromD(r.d):null);
+      let no='_';
+      if(kind==='kb'){ kbSeq++; no=(r.no!=null&&r.no!=='')?r.no:kbSeq; }
+      cuts.push({label,sp,d:r.d,h:r.h,n:Math.round(+r.n)||1,v:+r.v||0,kind,no,tyLabel:(typeof hvKindLabel==='function'?hvKindLabel(kind):'')});
+    });
+    const z=+(((sh.hvw||{})[which]||{})[k])||0;
+    if(z>0) hzList.push({label,sp,d:'',h:'',n:'',v:z*0.6,ster:z,note:'هیزم',kind:'hz',no:'_',tyLabel:'هیزم',isHz:true});
+  });
+  return cuts.concat(hzList);
+}
+function hvFillSumTable(tb, a, lab){
+  if(!tb) return;
+  const ents=hvSortedEntries(a);
+  let h='<tr><th rowspan="2">ردیف</th><th rowspan="2">گونه</th><th colspan="2">'+lab+'</th><th rowspan="2">مجموع '+lab+'</th><th rowspan="2">نشانه‌گذاری</th></tr><tr><th>حجم صنعتی</th><th>حجم هیزمی</th></tr>';
+  if(!ents.length) h+='<tr><td colspan="6" class="m">هنوز دادهٔ '+lab+' ثبت نشده است.</td></tr>';
+  else{
+    ents.forEach(([sp,e],i)=>{ h+='<tr><td>'+fa(i+1)+'</td><td>'+esc(sp)+'</td><td>'+fa(e[0],3)+'</td><td>'+fa(e[1],3)+'</td><td>'+fa(e[0]+e[1],3)+'</td><td>'+fa(e[2],3)+'</td></tr>'; });
+    h+='<tr style="font-weight:700"><td colspan="2">مجموع</td><td>'+fa(a.tot[0],3)+'</td><td>'+fa(a.tot[1],3)+'</td><td>'+fa(a.tot[0]+a.tot[1],3)+'</td><td>'+fa(a.tot[2],3)+'</td></tr>';
+  }
+  tb.innerHTML=h;
+}
+function hvFillHarvestDetailTable(tb){
+  if(!tb) return;
+  const det=hvDetailRows('h');
+  let h='<tr><th>گونه</th><th>شماره</th><th>نوع</th><th>قطر</th><th>طول</th><th>تعداد</th><th>حجم کل</th></tr>';
+  const cuts=det.filter(r=>!r.isHz), hzs=det.filter(r=>r.isHz);
+  if(!cuts.length && !hzs.length){
+    h+='<tr><td colspan="7" class="m">هنوز دادهٔ استحصال ثبت نشده است.</td></tr>';
+  } else {
+    let totV=0, totN=0;
+    cuts.forEach(r=>{
+      totV+=(+r.v||0); totN+=(+r.n||0);
+      h+='<tr><td>'+esc(r.sp||'—')+'</td><td>'+(r.kind==='kb'?toFa(r.no):'_')+'</td><td>'+esc(r.tyLabel||'—')+'</td><td>'+((r.d===''||r.d==null)?'—':fa(r.d,0))+'</td><td>'+((r.h===''||r.h==null)?'—':fa(r.h,1))+'</td><td>'+toFa(r.n||1)+'</td><td>'+fa(r.v,3)+'</td></tr>';
+    });
+    hzs.forEach(r=>{
+      const ster=r.ster!=null?r.ster:(r.v/0.6);
+      totV+=(+r.v||0);
+      h+='<tr style="background:rgba(47,107,60,.06)"><td>'+esc(r.sp||'—')+'</td><td>_</td><td>هیزم</td><td>—</td><td>—</td><td>'+fa(ster,2)+' استر</td><td>'+fa(r.v,3)+'</td></tr>';
+    });
+    h+='<tr style="font-weight:700"><td colspan="5">جمع</td><td>'+toFa(totN)+'</td><td>'+fa(totV,3)+'</td></tr>';
+  }
+  tb.innerHTML=h;
+}
+function hvRenderSummary(){
+  if(!HV.mode) return;
+  const cardR=hvQ('hvSumCard'), cardH=hvQ('hvHarvSumCard');
+  const showR = HV.mode==='r' || HV.mode==='b';
+  const showH = HV.mode==='h' || HV.mode==='b';
+  if(cardR) cardR.classList.toggle('hid', !showR);
+  if(cardH) cardH.classList.toggle('hid', !showH);
+  if(showR){
+    const a=hvAgg('r');
+    const tt=hvQ('hvSumTitle'); if(tt) tt.textContent='📊 خلاصه وضعیت درختان تجدید حجم شده';
+    hvFillSumTable(hvQ('hvSm'), a, 'تجدید حجم');
+    const mk=hvQ('hvMarkedLine');
+    if(mk) mk.innerHTML='<span>حجم نشانه‌گذاری شده: <b>'+fa(a.marked,3)+'</b> مترمکعب</span><span>حجم تجدید حجم: <b>'+fa(a.renewed,3)+'</b> مترمکعب</span>';
+    const ex=hvQ('hvExcess');
+    if(ex){
+      if(a.exVol>1e-9){ ex.innerHTML='⚠ حجم تجدید حجم درختان خودرو به‌اندازهٔ <b>'+fa(a.exVol,3)+'</b> مترمکعب بیش از حجم نشانه‌گذاری شده است.'; ex.classList.remove('hid'); }
+      else { ex.innerHTML=''; ex.classList.add('hid'); }
+    }
+  }
+  if(showH){
+    const a=hvAgg('h');
+    const tt=hvQ('hvHarvSumTitle'); if(tt) tt.textContent='📋 سیاهه استحصال';
+    hvFillHarvestDetailTable(hvQ('hvSmH'));
+    const mk=hvQ('hvMarkedLineH');
+    if(mk) mk.innerHTML='<span>حجم تجدید حجم شده: <b>'+fa(HV.mode==='h'?hvRenTotal():a.marked,3)+'</b> مترمکعب</span><span>حجم استحصال: <b>'+fa(a.renewed,3)+'</b> مترمکعب</span>';
+  }
+  try{ hvUpdatePostRegUI(); }catch(e){}
+}
+function sh0(){ try{ return getActiveSheet(); }catch(e){ return null; } }
+function hvDashSetup(){
+  HV.registered = false;
+  hvRenderSummary();
+  try{ hvUpdatePostRegUI(); }catch(e){}
+}
+function hvSheets(which){
+  which=which||hvWhich();
+  const R=R3;
+  const sh=getActiveSheet();
+  const sheets=[];
+
+  function allDetail(w){
+    const src=(sh&&sh.hvg&&sh.hvg[w])||{};
+    const hw=(sh&&sh.hvw&&sh.hvw[w])||{};
+    const cuts=[], hz=[];
+    let kbNo=0;
+    Object.keys(src).forEach(k=>{
+      const rows=src[k]; if(!rows||!rows.length) return;
+      let sp;
+      if(String(k).charAt(0)==='#'){ const t=T.find(x=>'#'+x.id===k); if(!t) return; sp=t.sp||''; }
+      else sp=k;
+      rows.forEach(r=>{
+        const d=+r.d||0, h=+r.h||0, n=Math.round(+r.n)||1, v=+r.v||0;
+        let kind=r.kind;
+        if(!kind){ if(d>=30) kind='kb'; else if(d>=20) kind='ki'; else if(d>=10) kind='kh'; else kind=''; }
+        let no='';
+        if(kind==='kb'){ kbNo++; no=(r.no!=null&&r.no!=='')?r.no:kbNo; }
+        cuts.push({sp,d,h,n,v,kind,no});
+      });
+      const z=+hw[k]||0;
+      if(z>0) hz.push({sp, ster:z, v:z*0.6});
+    });
+    return {cuts, hz};
+  }
+
+  function sheetGardebine(cuts){
+    const rows=[];
+    rows.push(['استحصال گرده بینه','','','','','']);
+    rows.push(['ردیف','جنس','طول','قطر','حجم','ملاحظات']);
+    const logs=cuts.filter(c=>c.kind==='kb' || (+c.d>=30));
+    let totV=0, totN=0; const bySp=new Map();
+    logs.forEach((r,i)=>{
+      totV+=r.v; totN+=r.n;
+      rows.push([i+1, r.sp, r.h, r.d, R(r.v), '']);
+      if(!bySp.has(r.sp)) bySp.set(r.sp,{n:0,v:0});
+      const e=bySp.get(r.sp); e.n+=r.n; e.v+=r.v;
+    });
+    rows.push(['جمع','','','',R(totV),'']);
+    rows.push(['','','','','','']);
+    rows.push(['','','خلاصه گرده بینه','','','']);
+    rows.push(['','','ردیف','گونه','تعداد','حجم']);
+    let i=0; bySp.forEach((e,sp)=>{ i++; rows.push(['','',i,sp,e.n,R(e.v)]); });
+    rows.push(['','','جمع','',totN,R(totV)]);
+    return ['استحصال گرده بینه', rows];
+  }
+
+  function sheetKatin(cuts, hz){
+    const WASTE=0.03;
+    const rows=[];
+    rows.push(['جنس','نوع چوب آلات','طول','عرض','قطر','حجم یک اصله','تعداد','حجم مستحصله','مقدار افت','حجم کل']);
+    const katins=cuts.filter(c=>c.kind!=='kb' && !(+c.d>=30));
+    const bySp=new Map();
+    katins.forEach(r=>{
+      if(!bySp.has(r.sp)) bySp.set(r.sp,{ind:[],fw:[]});
+      const g=bySp.get(r.sp);
+      if(+r.d>=20) g.ind.push(r); else g.fw.push(r);
+    });
+    const sumSp=new Map();
+    bySp.forEach((g,sp)=>{
+      if(!sumSp.has(sp)) sumSp.set(sp,{kiN:0,kiV:0,khN:0,khV:0});
+      const writeBlock=(list, isInd)=>{
+        if(!list.length) return;
+        list.forEach((r,idx)=>{
+          const unit=r.n? r.v/r.n : r.v;
+          rows.push([idx===0?sp:'', 'گرده کاتین', r.h, '', r.d, R(unit), r.n, R(r.v), '', '']);
+          const e=sumSp.get(sp);
+          if(isInd){ e.kiN+=r.n; e.kiV+=r.v; } else { e.khN+=r.n; e.khV+=r.v; }
+        });
+        const totN=list.reduce((a,x)=>a+x.n,0);
+        const totV=list.reduce((a,x)=>a+x.v,0);
+        rows.push(['', isInd?'جمع صنعتی':'جمع هیزمی', '', '', '', '', totN, R(totV), R(totV*WASTE), R(totV*(1+WASTE))]);
+      };
+      writeBlock(g.ind, true);
+      writeBlock(g.fw, false);
+    });
+    if(hz.length){
+      rows.push(['','','','','','','','','','']);
+      rows.push(['هیزم (استر)','','','','','','','','','']);
+      hz.forEach(z=> rows.push([z.sp, 'هیزم', '', '', '', '', z.ster+' استر', R(z.v), '', R(z.v)]));
+    }
+    rows.push(['','','','','','','','','','']);
+    rows.push(['خلاصه استحصال','','','','','','','','','']);
+    rows.push(['ردیف','جنس','گرده بینه تعداد','گرده بینه حجم','حجم صنعتی (کاتین بالای ۲۰) تعداد','حجم صنعتی حجم','هیزمی مستحصله تعداد','هیزمی مستحصله حجم','','']);
+    const kbBy=new Map();
+    cuts.filter(c=>c.kind==='kb'||+c.d>=30).forEach(r=>{
+      if(!kbBy.has(r.sp)) kbBy.set(r.sp,{n:0,v:0});
+      const e=kbBy.get(r.sp); e.n+=r.n; e.v+=r.v;
+    });
+    const allSp=new Set([...sumSp.keys(), ...kbBy.keys()]);
+    let i=0, tKbN=0,tKbV=0,tKiN=0,tKiV=0,tKhN=0,tKhV=0;
+    allSp.forEach(sp=>{
+      i++;
+      const kb=kbBy.get(sp)||{n:0,v:0};
+      const s=sumSp.get(sp)||{kiN:0,kiV:0,khN:0,khV:0};
+      const hzV=hz.filter(z=>z.sp===sp).reduce((a,z)=>a+z.v,0);
+      const khN=s.khN, khV=s.khV+hzV;
+      tKbN+=kb.n; tKbV+=kb.v; tKiN+=s.kiN; tKiV+=s.kiV; tKhN+=khN; tKhV+=khV;
+      rows.push([i, sp, kb.n, R(kb.v), s.kiN, R(s.kiV), khN, R(khV), '', '']);
+    });
+    rows.push(['جمع','', tKbN, R(tKbV), tKiN, R(tKiV), tKhN, R(tKhV), '', '']);
+    return ['استحصال کاتین', rows];
+  }
+
+  function sheetTajdid(){
+    const aR=hvAgg('r');
+    const detH=allDetail('h');
+    const rows=[];
+    rows.push(['ردیف','گونه','تعداد','حجم صنعتی','حجم هیزمی','حجم کل تجدید حجم','حجم نشانه‌گذاری','صنعتی','کاتین هیزمی','موجودی هیزم','کسر حجم','اضافه حجم','باقیمانده تعداد','باقیمانده حجم']);
+    const map=new Map();
+    hvSortedEntries(aR).forEach(([sp,e])=>{ map.set(sp,{n:0, vi:e[0], vh:e[1], vt:e[0]+e[1], mk:e[2], hInd:0, hKh:0, hHz:0}); });
+    T.filter(t=>t.k!=='planted').forEach(t=>{
+      const sp=t.sp||'نامشخص';
+      if(!map.has(sp)) map.set(sp,{n:0,vi:0,vh:0,vt:0,mk:0,hInd:0,hKh:0,hHz:0});
+      map.get(sp).n += 1;
+    });
+    detH.cuts.forEach(r=>{
+      if(!map.has(r.sp)) map.set(r.sp,{n:0,vi:0,vh:0,vt:0,mk:0,hInd:0,hKh:0,hHz:0});
+      const e=map.get(r.sp);
+      if(r.kind==='kb'||r.kind==='ki'||+r.d>=20) e.hInd+=r.v; else e.hKh+=r.v;
+    });
+    detH.hz.forEach(z=>{
+      if(!map.has(z.sp)) map.set(z.sp,{n:0,vi:0,vh:0,vt:0,mk:0,hInd:0,hKh:0,hHz:0});
+      map.get(z.sp).hHz+=z.v;
+    });
+    let i=0, tN=0,tVi=0,tVh=0,tVt=0,tMk=0,tHi=0,tHkh=0,tHhz=0,tKasr=0,tEzafe=0;
+    [...map.entries()].sort((a,b)=>String(a[0]).localeCompare(String(b[0]),'fa')).forEach(([sp,e])=>{
+      i++;
+      const mojood=Math.max(0, e.vh - e.hKh);
+      const kasr=Math.max(0, e.mk - e.vt);
+      const ezafe=Math.max(0, e.vt - e.mk);
+      tN+=e.n; tVi+=e.vi; tVh+=e.vh; tVt+=e.vt; tMk+=e.mk;
+      tHi+=e.hInd; tHkh+=e.hKh; tHhz+=e.hHz; tKasr+=kasr; tEzafe+=ezafe;
+      rows.push([i,sp,e.n,R(e.vi),R(e.vh),R(e.vt),R(e.mk),R(e.hInd),R(e.hKh),R(e.hHz||mojood),R(kasr),R(ezafe),0,0]);
+    });
+    rows.push(['جمع کل','',tN,R(tVi),R(tVh),R(tVt),R(tMk),R(tHi),R(tHkh),R(tHhz),R(tKasr),R(tEzafe),0,0]);
+    return ['تجدید حجم', rows];
+  }
+
+  const wantH = (which==='h') || (HV.mode==='h') || (HV.mode==='b');
+  const wantR = (which==='r') || (HV.mode==='r') || (HV.mode==='b') || (which!=='h' && HV.mode!=='h');
+  if(wantH){
+    const d=allDetail('h');
+    sheets.push(sheetGardebine(d.cuts));
+    sheets.push(sheetKatin(d.cuts, d.hz));
+  }
+  if(wantR){
+    sheets.push(sheetTajdid());
+    const a=hvAgg('r');
+    const sum=[['ردیف','گونه','حجم صنعتی','حجم هیزمی','مجموع تجدید حجم','نشانه‌گذاری']];
+    hvSortedEntries(a).forEach(([sp,e],i)=>sum.push([i+1,sp,R(e[0]),R(e[1]),R(e[0]+e[1]),R(e[2])]));
+    sum.push(['','مجموع',R(a.tot[0]),R(a.tot[1]),R(a.tot[0]+a.tot[1]),R(a.tot[2])]);
+    sheets.push(['خلاصه وضعیت تجدید حجم', sum]);
+  }
+  if(!sheets.length){
+    const a=hvAgg(which), lab=which==='h'?'استحصال':'تجدید حجم';
+    const sum=[['ردیف','گونه','حجم صنعتی','حجم هیزمی','مجموع '+lab,'نشانه‌گذاری']];
+    hvSortedEntries(a).forEach(([sp,e],i)=>sum.push([i+1,sp,R3(e[0]),R3(e[1]),R3(e[0]+e[1]),R3(e[2])]));
+    sum.push(['','مجموع',R3(a.tot[0]),R3(a.tot[1]),R3(a.tot[0]+a.tot[1]),R3(a.tot[2])]);
+    sheets.push(['خلاصه وضعیت '+lab, sum]);
+  }
+  return sheets;
+}
+function buildHvMinutesHtml(type){
+  const which=type==='estehsal'?'h':'r', lab=which==='h'?'استحصال':'تجدید حجم';
+  const a=hvAgg(which), det=hvDetailRows(which), R=R3;
+  const garden=((sh0()||{}).mode||'garden')==='garden';
+  let h='<table><thead><tr><th>ردیف</th><th>شماره / مورد</th><th>گونه</th><th>قطر جدید (cm)</th><th>طول جدید (m)</th><th>تعداد</th><th>حجم (m³)</th></tr></thead><tbody>';
+  let sn=0,sv2=0;
+  det.forEach((r,i)=>{ sn+=(+r.n||0); sv2+=r.v; h+='<tr><td>'+(i+1)+'</td><td>'+mmEsc(r.label)+'</td><td>'+mmEsc(r.sp)+'</td><td>'+mmEsc(r.d)+'</td><td>'+mmEsc(r.h)+'</td><td>'+(r.note?mmEsc(r.note):r.n)+'</td><td>'+R(r.v)+'</td></tr>'; });
+  h+='<tr><td colspan="5"><b>جمع</b></td><td><b>'+sn+'</b></td><td><b>'+R(sv2)+'</b></td></tr></tbody></table>';
+  h+='<p style="font-weight:700;margin:10px 0 4px">خلاصه وضعیت درختان — '+lab+'</p>';
+  h+='<table><thead><tr><th rowspan="2">ردیف</th><th rowspan="2">گونه</th><th colspan="2">'+lab+'</th><th rowspan="2">مجموع '+lab+'</th><th rowspan="2">نشانه‌گذاری</th></tr><tr><th>حجم صنعتی</th><th>حجم هیزمی</th></tr></thead><tbody>';
+  hvSortedEntries(a).forEach(([sp,e],i)=>{ h+='<tr><td>'+(i+1)+'</td><td>'+mmEsc(sp)+'</td><td>'+R(e[0])+'</td><td>'+R(e[1])+'</td><td>'+R(e[0]+e[1])+'</td><td>'+R(e[2])+'</td></tr>'; });
+  h+='<tr><td colspan="2"><b>مجموع</b></td><td><b>'+R(a.tot[0])+'</b></td><td><b>'+R(a.tot[1])+'</b></td><td><b>'+R(a.tot[0]+a.tot[1])+'</b></td><td><b>'+R(a.tot[2])+'</b></td></tr></tbody></table>';
+  h+='<p style="font-size:12px;margin:6px 0">حجم نشانه‌گذاری شده: '+R(a.marked)+' متر مکعب — حجم '+lab+': '+R(a.renewed)+' متر مکعب</p>';
+  if(a.exVol>1e-9){
+    h+='<p style="font-size:12px;margin:6px 0;font-weight:700">حجم '+lab+' درختان خودرو '+R(a.exVol)+' متر مکعب بیش از حجم نشانه‌گذاری است'+(garden?' — مبلغ مازاد (عوارض): '+Math.round(a.exMoney).toLocaleString('en-US')+' ریال':'')+'.</p>';
+  }
+  return h;
+}
+
+/* ===== ورود داده‌ها در تجدید حجم / استحصال ===== */
+function hvImpRowHtml(r){
+  r=r||{};
+  const f=x=>(x===0||x==null||x==='')?'':toFa(x);
+  return '<tr style="border-bottom:1px solid var(--bd)">'
+   +'<td style="padding:4px"><input type="text" class="hi-no" value="'+esc(r.no||'')+'" style="padding:6px;text-align:center;width:45px"></td>'
+   +'<td style="padding:4px"><input type="text" class="hi-sp" list="spList" value="'+esc(r.sp||'')+'" style="padding:6px;text-align:center;width:80px"></td>'
+   +'<td style="padding:4px"><input type="text" inputmode="decimal" class="hi-d" value="'+f(r.d)+'" style="padding:6px;text-align:center;width:58px"></td>'
+   +'<td style="padding:4px"><input type="text" inputmode="decimal" class="hi-h" value="'+f(r.h)+'" style="padding:6px;text-align:center;width:58px"></td>'
+   +'<td style="padding:4px"><input type="text" inputmode="decimal" class="hi-n" value="'+toFa(r.n||1)+'" style="padding:6px;text-align:center;width:46px"></td>'
+   +'<td class="hi-v" style="padding:4px;text-align:center;font-weight:bold;color:var(--ac)">—</td>'
+   +'<td style="padding:4px;text-align:center"><button class="x" onclick="this.closest(\'tr\').remove()">×</button></td></tr>';
+}
+function hvOpenImport(items,note){
+  if(HV.viewOnly){ hvErr(hvViewOnlyMsg(HV.mode)); return; }
+  if(!HV.mode||!HV.sub){ hvErr('ابتدا یکی از دو روش «گونه‌های مشابه» یا «درخت به درخت» را انتخاب کنید.'); return; }
+  const norm=(items||[]).map(it=>({
+    no:String(toEn(it.no||'')).trim(),
+    sp:(typeof matchSp==='function'?matchSp(it.sp||it.spRaw||''):'')||it.sp||it.spRaw||'',
+    d:it.d, h:it.h, n:it.n||1
+  }));
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;z-index:9999;background:#0009;display:flex;flex-direction:column;padding:12px;';
+  ov.innerHTML='<div style="background:var(--sf);border-radius:14px;padding:16px;flex:1;display:flex;flex-direction:column;max-height:95vh;">'
+   +'<h3 style="margin:0 0 6px 0;color:var(--ac)">ورود داده‌ها — '+esc(HV_T[HV.mode])+'</h3>'
+   +'<div class="m" style="margin:0 0 8px 0;font-size:12px">'+(HV.sub==='tr'?'ردیف‌ها با «شماره درخت» به درخت‌ها تطبیق داده می‌شوند (در نبود شماره، با گونه و به‌ترتیب).':'ردیف‌ها بر اساس «گونه» گروه‌بندی و در گونهٔ مربوط درج می‌شوند.')+' فقط مواردی که هنوز مقدار ندارند پر می‌شوند. حداکثر مجاز: ۲۰٪ بالاتر از قطر و حجم نشانه‌گذاری.</div>'
+   +(note?'<div class="m" style="margin:0 0 8px 0;font-size:12px">'+esc(note)+'</div>':'')
+   +'<div style="flex:1;overflow:auto;border:1px solid var(--bd);border-radius:8px;"><table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap">'
+   +'<thead style="position:sticky;top:0;background:var(--bg);z-index:2"><tr><th>شماره</th><th>گونه</th><th>قطر</th><th>طول</th><th>تعداد</th><th>حجم</th><th>حذف</th></tr></thead>'
+   +'<tbody id="hiBody">'+(norm.length?norm.map(hvImpRowHtml).join(''):hvImpRowHtml())+'</tbody></table></div>'
+   +'<div class="r" style="margin-top:12px"><button id="hiAdd" class="o" style="flex:1">+ سطر جدید</button><button id="hiCancel" class="o" style="flex:1">انصراف</button><button id="hiOk" style="flex:1;background:#2e9d4f">ثبت</button></div></div>';
+  document.body.append(ov);
+  const tb=ov.querySelector('#hiBody');
+  const upd=()=>tb.querySelectorAll('tr').forEach(tr=>{
+    const d=parseNum(tr.querySelector('.hi-d').value), h=parseNum(tr.querySelector('.hi-h').value), n=Math.max(1,Math.round(parseNum(tr.querySelector('.hi-n').value))||1);
+    tr.querySelector('.hi-v').textContent=(d>0&&h>0)?fa(vol(d,h,1)*n,3):'—';
+  });
+  tb.addEventListener('input',upd); upd();
+  ov.querySelector('#hiAdd').onclick=()=>{ tb.insertAdjacentHTML('beforeend',hvImpRowHtml()); };
+  ov.querySelector('#hiCancel').onclick=()=>ov.remove();
+  ov.querySelector('#hiOk').onclick=()=>{
+    const items2=[...tb.querySelectorAll('tr')].map(tr=>{
+      const spRaw=tr.querySelector('.hi-sp').value.trim();
+      return {
+        no:String(toEn(tr.querySelector('.hi-no').value)).trim(),
+        sp:(typeof matchSp==='function'?matchSp(spRaw):'')||spRaw,
+        d:parseNum(tr.querySelector('.hi-d').value), h:parseNum(tr.querySelector('.hi-h').value),
+        n:Math.max(1,Math.round(parseNum(tr.querySelector('.hi-n').value))||1)
+      };
+    }).filter(x=>x.d>0&&x.h>0);
+    if(!items2.length){ alert('سطر معتبری (قطر و طول) پیدا نشد.'); return; }
+    hvApplyImport(items2);
+    ov.remove();
+  };
+}
+function hvApplyImport(items){
+  const sh=getActiveSheet(); if(!sh||!HV.mode||!HV.sub) return;
+  if(HV.viewOnly){ hvErr(hvViewOnlyMsg(HV.mode)); return; }
+  if(HV.mode==='r' && isRenewalEditLocked()){ hvErr('به‌خاطر وجود دادهٔ استحصال، ویرایش تجدید حجم قفل است.'); return; }
+  const res={ok:0,had:0,bad:[],nomatch:0};
+  const mk=it=>({d:it.d,h:it.h,n:it.n,v:vol(it.d,it.h,1)*it.n});
+  if(HV.sub==='tr'){
+    const used=new Set();
+    items.forEach(it=>{
+      let t=null;
+      if(it.no){ t=T.find(x=>x.ty!=='h'&&String(toEn(x.no||'')).trim()===it.no); }
+      else { t=T.find(x=>!used.has(x.id)&&!hvHasSavedKey('#'+x.id)&&(!it.sp||x.sp===it.sp)); }
+      if(!t){ res.nomatch++; return; }
+      const k='#'+t.id;
+      if(used.has(t.id)||hvHasSavedKey(k)){ res.had++; return; }
+      const rows=[mk(it)];
+      if(hvCheckRows(k,rows)){ res.bad.push(t.ty==='h'?'هیزمی':('شماره '+toFa(t.no||t.id))); return; }
+      hvCommit(k,rows); used.add(t.id); res.ok++;
+    });
+  } else {
+    const by=new Map();
+    items.forEach(it=>{ if(!it.sp){ res.nomatch++; return; } if(!by.has(it.sp)) by.set(it.sp,[]); by.get(it.sp).push(mk(it)); });
+    by.forEach((rows,sp)=>{
+      if(!T.some(t=>(t.sp||'نامشخص')===sp)){ res.nomatch+=rows.length; return; }
+      if(hvHasSavedKey(sp)){ res.had++; return; }
+      if(hvCheckRows(sp,rows)){ res.bad.push(sp); return; }
+      hvCommit(sp,rows); res.ok++;
+    });
+  }
+  hvUpdateMethodButtons();
+  if(HV.sub==='sp') hvRenderSp(); else hvRenderTr();
+  hvRenderSummary();
+  const parts=[toFa(res.ok)+' مورد پر شد.'];
+  if(res.had) parts.push(toFa(res.had)+' مورد از قبل مقدار داشت و تغییر نکرد.');
+  if(res.bad.length) parts.push(toFa(res.bad.length)+' مورد به‌علت بیش از ۲۰٪ بالاتر از قطر/حجم نشانه‌گذاری ثبت نشد ('+res.bad.slice(0,6).join('، ')+').');
+  if(res.nomatch) parts.push(toFa(res.nomatch)+' مورد با هیچ درخت/گونهٔ این عرصه تطبیق نخورد.');
+  alert(parts.join('\n'));
+}
+
 function hvSavedEntries(){
   const sh=getActiveSheet();
   if(!sh||!sh.hvg||!HV.mode) return [];
@@ -2183,6 +3004,8 @@ function hvSavedEntries(){
   return [...map.values()];
 }
 function hvRenderSavedList(){
+  ['hvSpSaved','hvTrSaved'].forEach(i=>{const h=hvQ(i); if(h) h.innerHTML='';});
+  return;
   const hostId = HV.sub==='tr' ? 'hvTrSaved' : 'hvSpSaved';
   const host=hvQ(hostId);
   if(!host) return;
@@ -2235,6 +3058,16 @@ function updateHarvestGate(){
   const l=hvQ('hvList');
   if(l&&!l.classList.contains('hid'))hvRenderList('');
   if(HV.mode){const m=hvReady(HV.mode);if(m){hvBack();hvMsg(m)}}
+  try{
+    const path=hvGetEntryPath();
+    const any=hvAnyHvData();
+    document.querySelectorAll('#hvHome [data-hv]').forEach(b=>{
+      const mode=b.dataset.hv;
+      const vo = any && ((mode==='b' && path==='sep') || ((mode==='r'||mode==='h') && path==='b'));
+      b.style.opacity = vo ? '.72' : '';
+      b.title = vo ? 'فقط مشاهده / دریافت / صورتجلسه' : '';
+    });
+  }catch(e){}
 }
 function hvInit(){
   document.querySelectorAll('#hvHome [data-hv]').forEach(b=>{b.onclick=()=>hvOpen(b.dataset.hv)});
@@ -2265,30 +3098,75 @@ function hvInit(){
     host.onclick=e=>{
       const body=e.target.closest('[data-hvkey]'); if(!body) return;
       const rs=body.querySelector('.hvRows');
-      if(e.target.closest('.hvAdd')){rs.insertAdjacentHTML('beforeend',hvRowH(null,rs.children.length)); hvUpdatePipe(body); return}
+      if(e.target.closest('.hvAdd')){rs.insertAdjacentHTML('beforeend',hvRowH(null,rs.children.length)); hvRenum(body); hvUpdatePipe(body); return}
       const rm=e.target.closest('.hvRm');
-      if(rm){rm.closest('.hvRow').remove();if(!rs.children.length)rs.insertAdjacentHTML('beforeend',hvRowH(null,0));hvRenum(rs); hvUpdatePipe(body); return}
-      if(e.target.closest('.hvSave')) hvSaveSp(body);
-      if(e.target.closest('.hvDelSaved')){ hvDeleteKey(body.dataset.hvkey||HV.sp); }
+      if(rm){rm.closest('.hvRow').remove();if(!rs.children.length)rs.insertAdjacentHTML('beforeend',hvRowH(null,0));hvRenum(rs); hvUpdatePipe(body); hvKeepDraft(body); hvScheduleSave(body); return}
     };
     host.oninput=e=>{
+      if(e.target.classList&&e.target.classList.contains('hvHzIn')){ const b=e.target.closest('[data-hvkey]'); if(b){ hvUpdatePipe(b); hvKeepDraft(b); hvScheduleSave(b); } return; }
       const row=e.target.closest('.hvRow'); if(!row||row.classList.contains('hvHd')) return;
+      const body=e.target.closest('[data-hvkey]');
+      if(body && typeof hvUseKindCols==='function' && hvUseKindCols()) hvRenumberKinds(body);
       const x=hvRowVal(row);
       const vv=row.querySelector('.hvV'); if(vv) vv.value=x?fa(x.v,3):'';
-      const body=e.target.closest('[data-hvkey]');
-      if(body){ hvUpdatePipe(body); hvKeepDraft(body); }
+      if(body){ hvUpdatePipe(body); hvKeepDraft(body); hvScheduleSave(body); }
     };
   }
   hvBindFormHost(hvQ('hvSpForm'));
   hvBindFormHost(hvQ('hvTrForm'));
+  const _ib=hvQ('hvImportBtn');
+  if(_ib) _ib.onclick=()=>{
+    if(!HV.sub){ hvErr('ابتدا یکی از دو روش «گونه‌های مشابه» یا «درخت به‌درخت» را بالا انتخاب کنید.'); return; }
+    hvQ('hvImportFile').click();
+  };
+  const _iq=hvQ('hvQuickBtn');
+  if(_iq) _iq.onclick=()=>{
+    if(!HV.sub){ hvErr('ابتدا یکی از دو روش «گونه‌های مشابه» یا «درخت به‌درخت» را بالا انتخاب کنید.'); return; }
+    hvOpenImport([],'');
+  };
+  const _if=hvQ('hvImportFile');
+  if(_if) _if.onchange=e=>{
+    if(e.target.files&&e.target.files[0]) window.__hvImp=true;
+    const h=document.getElementById('smartImportFile').onchange;
+    if(h) h.call(document.getElementById('smartImportFile'),e);
+  };
+  const _reg=hvQ('hvRegBtn');
+  if(_reg) _reg.onclick=()=>{
+    try{ hvFlushSave(); }catch(e){}
+    if(!hvHasAnyHvData()){ alert('ابتدا کاتین یا دادهٔ عملیات را وارد کنید.'); return; }
+    HV.registered = true;
+    hvUpdatePostRegUI();
+    try{ const mm=hvQ('hvMinutesCard'); if(mm) mm.scrollIntoView({behavior:'smooth', block:'nearest'}); }catch(e){}
+  };
+  const _rsb=hvQ('hvRevSaveBtn');
+  if(_rsb) _rsb.onclick=()=>{
+    try{ hvFlushSave(); }catch(e){}
+    const sh=getActiveSheet(); if(!sh||HV.mode!=='r') return;
+    if(isRenewalEditLocked()){ hvErr('به‌خاطر وجود دادهٔ استحصال، تجدید حجم قفل است. برای تغییر، ابتدا داده‌های استحصال را پاک کنید.'); return; }
+    if(!hvHasHvgData('r')){ hvErr('ابتدا داده‌های تجدید حجم را وارد کنید، سپس «ذخیره برای استحصال» را بزنید.'); return; }
+    const bad=[...document.querySelectorAll('#hvFull [data-hvkey] .hvOk2')].find(e=>e.textContent.trim());
+    if(bad){ hvErr('ابتدا خطای فرم تجدید حجم را برطرف کنید: '+bad.textContent.trim()); return; }
+    sh.hvRevSaved=true; store();
+    hvUpdatePostRegUI();
+  };
+  const _mmBtn=hvQ('hvMmBtn');
+  if(_mmBtn) _mmBtn.onclick=()=>{
+    if(HV.mode==='h') openMinutesWithType('estehsal');
+    else openMinutesWithType('tajdid');
+  };
+  const _es=hvQ('hvExpSave'), _esh=hvQ('hvExpShare');
+  if(_es) _es.onclick=()=>runExport(hvQ('hvExpType').value,false);
+  if(_esh) _esh.onclick=()=>runExport(hvQ('hvExpType').value,true);
   const spSel=hvQ('hvSpSel');
   if(spSel) spSel.onchange=()=>{
+    try{ hvFlushSave(); }catch(e){}
     try{ const b=document.querySelector('#hvSpForm [data-hvkey]'); if(b) hvKeepDraft(b); }catch(e){}
     if(spSel.value) hvShowSpForm(spSel.value);
     else { const f=hvQ('hvSpForm'); if(f){f.classList.add('hid');f.innerHTML='';} HV.sp=null; }
   };
   const trSel=hvQ('hvTrSel');
   if(trSel) trSel.onchange=()=>{
+    try{ hvFlushSave(); }catch(e){}
     try{ const b=document.querySelector('#hvTrForm [data-hvkey]'); if(b) hvKeepDraft(b); }catch(e){}
     if(trSel.value) hvShowTrForm(+trSel.value);
     else { const f=hvQ('hvTrForm'); if(f){f.classList.add('hid');f.innerHTML='';} HV.sp=null; }
@@ -4078,6 +4956,12 @@ function sumX(){
 }
 
 function invTrees(){return T.slice();}
+function updateSpTotLine(){
+  const el=document.getElementById('spTotLine'); if(!el) return;
+  const sel=document.getElementById('sp'); const sp=sel?sel.value:'';
+  const list=sp?T.filter(t=>t.sp===sp):T;
+  el.innerHTML=(sp?'گونهٔ '+esc(sp)+': ':'کل درختان: ')+'تعداد <b>'+toFa(ct(list))+'</b> اصله · حجم تجمیعی <b>'+fa(sv(list),3)+'</b> مترمکعب';
+}
 
 function updateNoCoord(){
   const el=$('#noCoordBanner');if(!el)return;
@@ -4192,6 +5076,8 @@ function draw(){
   $('#tb2').innerHTML='<tr><th>#</th><th>گونه</th><th>حجم اولیه</th><th>حجم تجدید</th><th>تغییر٪</th><th>استحصال</th><th>تاریخ</th></tr>'+
     T.filter(t=>t.v2||t.hv).map(t=>`<tr><td>${t.ty==='h'?'هیزمی':esc(toFa(t.no||t.id))}</td><td>${esc(t.sp)}</td><td>${fa(t.v,3)}</td><td>${fa(t.v2,3)}</td><td>${t.v2?fa((t.v2-t.v)/t.v*100,1):'—'}</td><td>${fa(t.hv,3)}</td><td>${esc(t.hd||'—')}</td></tr>`).join('');
   
+  try{updateSpTotLine()}catch(e){}
+  try{ if(window.HV&&HV.mode) hvRenderSummary(); }catch(e){}
   updateModeLock();
   try{mapCheck(true)}catch(e){}
   try{updateHarvestGate()}catch(e){}
@@ -4275,6 +5161,7 @@ $('#volClass').addEventListener('change',()=>{
 });
 
 function calc(){
+  try{updateSpTotLine()}catch(e){}
   autoTy();
   const sp = $('#sp').value;
   const isTala = getActiveSheet()?.volClass === 'tala';
@@ -4441,7 +5328,8 @@ const parseNum = s => {
 document.getElementById('btnSmartImport').onclick = () => document.getElementById('smartImportFile').click();
 document.getElementById('smartImportFile').onchange = async (e) => {
   const file = e.target.files[0]; if (!file) return; e.target.value = '';
-  const btn = document.getElementById('btnSmartImport'); const originalText = btn.innerHTML;
+  const __hv = !!window.__hvImp; window.__hvImp = false;
+  const btn = document.getElementById(__hv ? 'hvImportBtn' : 'btnSmartImport'); const originalText = btn.innerHTML;
   const fname = (file.name || '').toLowerCase();
   const fext = fname.split('.').pop();
   try {
@@ -4543,6 +5431,7 @@ document.getElementById('smartImportFile').onchange = async (e) => {
     }
     btn.innerHTML = originalText;
     if (extractedData.length === 0) { alert('داده‌ای پیدا نشد.'); return; }
+    if (__hv) { hvOpenImport(extractedData, importNote); return; }
     if (aiRows) { openQuickEntry(aiRows, importNote); return; }
     showImportPreview(extractedData, importNote, importExtra);
   } catch (err) { btn.innerHTML = originalText; alert('خطا: ' + err.message); }
@@ -5175,6 +6064,12 @@ async function runExport(kind,share){
       const sheets = [buildInventorySheet(getActiveSheet().name)];
       if(getActiveSheet().mode==='garden') sheets.push(buildTaxSheet());
       return await exp(fnm(),sheets,share);
+    }
+    if(kind==='hv' || kind==='r' || kind==='h' || kind==='b'){
+      const mode = (kind==='hv') ? (HV.mode||'r') : kind;
+      const which = (mode==='h') ? 'h' : 'r';
+      const prefix = mode==='b' ? 'tajdid-estehsal' : (mode==='h' ? 'estehsal' : 'tajdid');
+      return await exp(prefix+'-'+fnm(), hvSheets(which), share);
     }
     if(kind==='x3') return await exp('all-lands-'+today(),allSheets(),share);
     if(kind==='kmz'){
@@ -7305,7 +8200,7 @@ function openMinutesWithType(type){
   openMinutesForm();
   mmType = type;
   document.querySelectorAll('#mmTypeSeg button').forEach(b=>b.classList.toggle('on', b.dataset.type === type));
-  if(Q('#mmNeshaneFields')) Q('#mmNeshaneFields').classList.toggle('hid', type !== 'neshane');
+  if(Q('#mmNeshaneFields')) Q('#mmNeshaneFields').classList.toggle('hid', type === 'avali');
   if(Q('#mmAvaliFields')) Q('#mmAvaliFields').classList.toggle('hid', type !== 'avali');
 }
 
@@ -7320,7 +8215,7 @@ document.querySelectorAll('#mmTypeSeg button').forEach(b=>{
   b.onclick=()=>{
     mmType=b.dataset.type;
     document.querySelectorAll('#mmTypeSeg button').forEach(x=>x.classList.toggle('on',x===b));
-    if(Q('#mmNeshaneFields')) Q('#mmNeshaneFields').classList.toggle('hid',mmType!=='neshane');
+    if(Q('#mmNeshaneFields')) Q('#mmNeshaneFields').classList.toggle('hid',mmType==='avali');
     if(Q('#mmAvaliFields')) Q('#mmAvaliFields').classList.toggle('hid',mmType!=='avali');
   };
 });
@@ -7397,6 +8292,7 @@ function buildMinutesInventoryHtml(allTrees){
   return h;
 }
 
+function mmTypeLabel(t){return ({neshane:'نشانه‌گذاری',avali:'بازدید اولیه',tajdid:'تجدید حجم',estehsal:'استحصال'})[t]||'نشانه‌گذاری'}
 function buildMinutesDocument(opts){
   const {
     type, ost, shahrestan, date, area, series, coord,
@@ -7407,11 +8303,14 @@ function buildMinutesDocument(opts){
   let intro = '';
   if(type==='neshane'){
     intro = 'در تاریخ '+date+' در اجرای حکم ماموریت شماره '+decreeNo+' مورخ '+decreeDate+' اداره کل منابع طبیعی و آبخیزداری استان '+ost+'، اینجانبان امضاءکنندگان ذیل ورقه به محل مورد نظر به مختصات جغرافیایی '+coord+' واقع در '+area+(series?' سری '+series:'')+' عزیمت و پس از بررسی کامل، نسبت به نشانه‌گذاری درختان موضوع حکم مذکور با رنگ '+hammerColor+' و چکش مدور به شماره '+hammerNo+' در عرصه به شرح ذیل اقدام گردید.';
+  } else if(type==='tajdid'||type==='estehsal'){
+    intro = 'در تاریخ '+date+' در اجرای حکم ماموریت شماره '+decreeNo+' مورخ '+decreeDate+' اداره کل منابع طبیعی و آبخیزداری استان '+ost+'، اینجانبان امضاءکنندگان ذیل ورقه به محل مورد نظر به مختصات جغرافیایی '+coord+' واقع در '+area+(series?' سری '+series:'')+' عزیمت و پس از بررسی کامل، نسبت به '+(type==='tajdid'?'تجدید حجم درختان نشانه‌گذاری‌شده (حداکثر تا ۲۰٪ بالاتر از قطر و حجم نشانه‌گذاری)':'استحصال درختان موضوع حکم مذکور')+' در عرصه به شرح ذیل اقدام گردید.';
   } else {
     intro = 'در تاریخ '+date+' در اجرای دستور پی‌نوشتی درخواست شماره '+letterNo+' مورخ '+letterDate+'، اینجانبان امضاءکنندگان ذیل ورقه به محل مورد نظر به مختصات جغرافیایی '+coord+' واقع در '+area+(series?' سری '+series:'')+' عزیمت و مشاهده نمودیم '+(reason||'……')+'، لذا مراتب جهت هرگونه اقدام بعدی به امضا حاضرین رسیده است.';
   }
 
-  const invHtml = buildMinutesInventoryHtml(trees);
+  const isHv = (type==='tajdid'||type==='estehsal');
+  const invHtml = isHv ? buildHvMinutesHtml(type) : buildMinutesInventoryHtml(trees);
 
   let sigHtml = '<div class="mmSig">';
   (members||[]).forEach(m=>{
@@ -7445,15 +8344,15 @@ function buildMinutesDocument(opts){
           (peyvast?'<div class="mmPey">پیوست: '+mmEsc(peyvast)+'</div>':'')+
         '</div>'+
       '</div>'+
-      '<div class="mmTitle">صورتمجلس '+(type==='neshane'?'نشانه‌گذاری':'بازدید اولیه')+'</div>'+
+      '<div class="mmTitle">صورتمجلس '+mmTypeLabel(type)+'</div>'+
     '</div>';
 
   const html = head + '<p class="mmIntro">'+mmEsc(intro)+'</p>' +
-    '<p style="font-weight:700;margin:12px 0 4px;text-align:center">سیاهه درختان</p>' + invHtml + sigHtml;
+    '<p style="font-weight:700;margin:12px 0 4px;text-align:center">'+(isHv?'سیاهه درختان پس از '+mmTypeLabel(type):'سیاهه درختان')+'</p>' + invHtml + sigHtml;
 
   const plain = 'وزارت جهاد کشاورزی\nسازمان منابع طبیعی و آبخیزداری کشور\nاداره کل منابع طبیعی و آبخیزداری استان '+ost+
     '\nاداره منابع طبیعی و آبخیزداری شهرستان '+shahrestan+
-    '\nصورتمجلس '+(type==='neshane'?'نشانه‌گذاری':'بازدید اولیه')+
+    '\nصورتمجلس '+mmTypeLabel(type)+
     '\nشماره: '+(mmNo||'……')+' | تاریخ: '+date+' | پیوست: '+(peyvast||'……')+
     '\n\n'+intro+'\n\n[سیاهه درختان در فایل ورد پیوست است]\n\n'+
     (members||[]).map(m=>m.name+' — '+m.title).join('\n');
@@ -7463,7 +8362,7 @@ function buildMinutesDocument(opts){
 
 if(Q('#mmGo')) Q('#mmGo').onclick=async ()=>{
   saveMmSettings();
-  const sh=SHEETS.find(s=>s.id===+(Q('#mmSheet')&&Q('#mmSheet').value))||getActiveSheet();
+  const sh=(mmType==='tajdid'||mmType==='estehsal')?getActiveSheet():(SHEETS.find(s=>s.id===+(Q('#mmSheet')&&Q('#mmSheet').value))||getActiveSheet());
   const members=[];
   if(Q('#mmMembers')) Q('#mmMembers').querySelectorAll('div').forEach(row=>{
     const inputs=row.querySelectorAll('input');
@@ -7495,7 +8394,7 @@ if(Q('#mmGo')) Q('#mmGo').onclick=async ()=>{
   };
 
   const doc = buildMinutesDocument(opts);
-  if(sh && sh.minutesText && String(sh.minutesText).trim()){
+  if(sh && sh.minutesText && String(sh.minutesText).trim() && !(mmType==='tajdid'||mmType==='estehsal')){
     const aiTxt = String(sh.minutesText).trim();
     let invHtml='';
     try{ invHtml = buildMinutesInventoryHtml(opts.trees||trees)||''; }catch(e){}
@@ -7513,7 +8412,7 @@ if(Q('#mmGo')) Q('#mmGo').onclick=async ()=>{
 if(Q('#mmDlDoc')) Q('#mmDlDoc').onclick=async ()=>{
   if(!_mmLast) return;
   const day = (typeof isoLocal==='function'?isoLocal():new Date().toISOString().slice(0,10));
-  const name = 'صورتجلسه-'+(_mmLast.type==='neshane'?'نشانهگذاری':'بازدید-اولیه')+'-'+day+'.doc';
+  const name = 'صورتجلسه-'+mmTypeLabel(_mmLast.type).replace(/[\s\u200c]+/g,'-')+'-'+day+'.doc';
   const html = '<html dir="rtl"><head><meta charset="utf-8"><style>'+
     'body{font-family:Tahoma,"B Nazanin",Vazirmatn,sans-serif;font-size:12.5pt;line-height:1.85;padding:1.2cm 1.4cm;color:#111;direction:rtl}'+
     '.mmLetterhead{margin:0 0 10px;padding:0 0 6px;border-bottom:1px solid #222}'+
@@ -7540,6 +8439,10 @@ if(Q('#mmDlDoc')) Q('#mmDlDoc').onclick=async ()=>{
 };
 
 if(Q('#mmDlXlsx')) Q('#mmDlXlsx').onclick=async ()=>{
+  if(_mmLast&&(_mmLast.type==='tajdid'||_mmLast.type==='estehsal')){
+    try{ await exp('صورتجلسه-'+mmTypeLabel(_mmLast.type).replace(/[\s\u200c]+/g,'-')+'-'+(typeof isoLocal==='function'?isoLocal():''), hvSheets(_mmLast.type==='tajdid'?'r':'h'), false); }catch(e){ alert('خطا در اکسل: '+(e.message||e)); }
+    return;
+  }
   if(!_mmLast||!_mmLast.sheet) return;
   try{
     const sh=_mmLast.sheet;
