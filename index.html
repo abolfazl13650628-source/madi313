@@ -825,22 +825,22 @@ body.kp-open .manualFullBody{overflow-y:auto}
 body.kp-open #editModal{padding-bottom:calc(var(--kp-h,0px) + 12px);overflow-y:auto}
 
 /* ===== ورود با صدا (آفلاین) ===== */
-#vcBar{margin:8px 0 4px;padding:8px;border:1px dashed var(--bd);border-radius:12px;background:var(--sf)}
-#vcMic{width:100%;padding:14px 8px;font-size:17px;font-weight:800;border-radius:12px;background:#7a2e2e;color:#fff;border:none}
-#vcMic.on{background:#c0392b;animation:vcPulse 1.1s infinite}
+#vcBar,#hvVcBar{margin:8px 0 4px;padding:8px;border:1px dashed var(--bd);border-radius:12px;background:var(--sf)}
+#vcMic,#hvVcMic{width:100%;padding:14px 8px;font-size:17px;font-weight:800;border-radius:12px;background:#7a2e2e;color:#fff;border:none}
+#vcMic.on,#hvVcMic.on{background:#c0392b;animation:vcPulse 1.1s infinite}
 @keyframes vcPulse{0%,100%{box-shadow:0 0 0 0 #c0392b88}50%{box-shadow:0 0 0 10px #c0392b00}}
-#vcSt{font-size:12px;color:var(--mu);margin-top:6px;min-height:18px;line-height:1.6}
-#vcProg{height:6px;border-radius:4px;background:var(--bd);overflow:hidden;margin-top:6px}
-#vcProg>i{display:block;height:100%;width:0;background:var(--ac);transition:width .2s}
-#vcCf{margin-top:8px}
-#vcCf .vcRow{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
-#vcCf .vcChip{flex:1 1 40%;padding:8px 10px;border-radius:10px;border:2px solid var(--ac);background:var(--bg);font-size:15px;font-weight:700}
-#vcCf .vcChip small{display:block;font-size:10px;color:var(--mu);font-weight:400}
-#vcCf .vcChip.miss{border-color:#c0392b;color:#c0392b}
-#vcCf .vcChip.warn{border-color:#d68910}
-#vcCf .vcHeard{font-size:12px;color:var(--mu);margin-bottom:6px}
-#vcCf .vcAct{display:flex;gap:6px}
-#vcCf .vcAct button{flex:1;padding:13px 6px;font-size:15px;font-weight:700;border-radius:12px}
+#vcSt,#hvVcSt{font-size:12px;color:var(--mu);margin-top:6px;min-height:18px;line-height:1.6}
+#vcProg,#hvVcProg{height:6px;border-radius:4px;background:var(--bd);overflow:hidden;margin-top:6px}
+#vcProg>i,#hvVcProg>i{display:block;height:100%;width:0;background:var(--ac);transition:width .2s}
+#vcCf,#hvVcCf{margin-top:8px}
+#vcCf .vcRow,#hvVcCf .vcRow{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+#vcCf .vcChip,#hvVcCf .vcChip{flex:1 1 40%;padding:8px 10px;border-radius:10px;border:2px solid var(--ac);background:var(--bg);font-size:15px;font-weight:700}
+#vcCf .vcChip small,#hvVcCf .vcChip small{display:block;font-size:10px;color:var(--mu);font-weight:400}
+#vcCf .vcChip.miss,#hvVcCf .vcChip.miss{border-color:#c0392b;color:#c0392b}
+#vcCf .vcChip.warn,#hvVcCf .vcChip.warn{border-color:#d68910}
+#vcCf .vcHeard,#hvVcCf .vcHeard{font-size:12px;color:var(--mu);margin-bottom:6px}
+#vcCf .vcAct,#hvVcCf .vcAct{display:flex;gap:6px}
+#vcCf .vcAct button,#hvVcCf .vcAct button{flex:1;padding:13px 6px;font-size:15px;font-weight:700;border-radius:12px}
 #vcGr{font-size:11px;color:var(--mu);margin-top:6px;display:flex;align-items:center;gap:6px}
 #vcGr input{width:auto;margin:0}
 </style>
@@ -1174,6 +1174,12 @@ window.needOcr=async()=>{if(typeof Tesseract==='undefined')await loadLib('https:
   <div class="hvFullBody">
     <div class="hvSeg"><button id="hvSubSp" type="button" class="hvSegB"></button><button id="hvSubTr" type="button" class="hvSegB"></button></div>
     <div id="hvTopNote" class="hvTopNote hid"></div>
+    <div id="hvVcBar">
+      <button id="hvVcMic" type="button">🎙️ ورود با صدا (آفلاین)</button>
+      <div id="hvVcProg" class="hid"><i></i></div>
+      <div id="hvVcSt">مثال: «توسکا، قطر بیست، طول پانزده، تعداد دو، قطر سی، طول ده» — یا «هیزم پنج»</div>
+      <div id="hvVcCf" class="hid"></div>
+    </div>
     <div id="hvHint" class="m" style="text-align:center;margin-top:16px">یکی از دو روش بالا را انتخاب کنید.</div>
     <div id="hvSpWrap" class="hid">
       <div class="c hvPick">
@@ -9143,13 +9149,14 @@ renderModeBar();render();fit();grow();
   var FILE='hk-vosk-fa-model.tar.gz', CACHE='hk-vosk-model';
   var model=null, rec=null, ctx=null, node=null, stream=null, listening=false, busy=false;
   var texts=[], partial='', stopTimer=null, parsed=null;
+  var UI_M={mic:mic,label:'🎙️ ورود با صدا (آفلاین)',st:'vcSt',prog:'vcProg',cf:'vcCf',onText:null}; var cur=UI_M;
   var FA='۰۱۲۳۴۵۶۷۸۹';
   var fa=function(n){ return String(n).replace(/\d/g,function(d){return FA[+d]}).replace(/\./g,'٫'); };
   var en=function(t){ return String(t).replace(/[۰-۹]/g,function(d){return FA.indexOf(d)}).replace(/[٫،,]/g,'.'); };
   var norm=function(t){ return String(t).replace(/ي/g,'ی').replace(/ك/g,'ک').replace(/ة/g,'ه').replace(/[\u200c\u200f]/g,' ').replace(/\s+/g,' ').trim(); };
   var nz2=function(t){ return norm(t).replace(/آ/g,'ا').replace(/\s/g,''); };
-  function st(m,err){ var e=q('vcSt'); e.textContent=m; e.style.color=err?'#c0392b':''; }
-  function prog(p){ var b=q('vcProg'); if(p==null){ b.classList.add('hid'); return; } b.classList.remove('hid'); b.firstElementChild.style.width=Math.round(p*100)+'%'; }
+  function st(m,err){ var e=q(cur.st); if(!e) return; e.textContent=m; e.style.color=err?'#c0392b':''; }
+  function prog(p){ var b=q(cur.prog); if(!b) return; if(p==null){ b.classList.add('hid'); return; } b.classList.remove('hid'); b.firstElementChild.style.width=Math.round(p*100)+'%'; }
   function loadScript(src,test){
     return new Promise(function(res,rej){
       if(test()) return res();
@@ -9272,8 +9279,8 @@ renderModeBar();render();fit();grow();
     if(!a.length){ var sp=q('sp'); if(sp) a=Array.prototype.map.call(sp.options,function(o){return o.value}).filter(Boolean); }
     return a;
   }
-  function matchSpecies(words){
-    var names=speciesList(); if(!names.length||!words.length) return null;
+  function matchSpecies(words,namesOpt){
+    var names=namesOpt||speciesList(); if(!names.length||!words.length) return null;
     var best=null,bs=0;
     for(var w=1;w<=Math.min(3,words.length);w++){
       for(var st0=0;st0+w<=words.length;st0++){
@@ -9332,7 +9339,7 @@ renderModeBar();render();fit();grow();
     q('vcOk').onclick=applyParsed; q('vcRe').onclick=function(){ hideConfirm(); startListen(); }; q('vcNo').onclick=hideConfirm;
     st((r.sp||r.d!=null||r.h!=null)?'بررسی کنید و تأیید بزنید.':'چیزی تشخیص داده نشد؛ دوباره و شمرده‌تر بگویید.', !(r.sp||r.d!=null||r.h!=null));
   }
-  function hideConfirm(){ var cf=q('vcCf'); cf.classList.add('hid'); cf.innerHTML=''; parsed=null; }
+  function hideConfirm(){ var cf=q(cur.cf); if(cf){ cf.classList.add('hid'); cf.innerHTML=''; } parsed=null; }
   function setVal(id,v){ var el=q(id); if(!el) return; el.value=fa(v); el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true})); }
   function applyParsed(){
     var r=parsed; if(!r) return;
@@ -9370,7 +9377,7 @@ renderModeBar();render();fit();grow();
       node=ctx.createScriptProcessor(4096,1,1);
       node.onaudioprocess=function(ev){ try{ rec.acceptWaveform(ev.inputBuffer); }catch(e){} };
       var mute=ctx.createGain(); mute.gain.value=0; src.connect(node); node.connect(mute); mute.connect(ctx.destination);
-      listening=true; busy=false; mic.classList.add('on'); mic.textContent='⏹ در حال گوش دادن… (برای پایان لمس کنید)'; st('بگویید: گونه، قطر، طول، تعداد…');
+      listening=true; busy=false; cur.mic.classList.add('on'); cur.mic.textContent='⏹ در حال گوش دادن… (برای پایان لمس کنید)'; st('بگویید: گونه، قطر، طول، تعداد…');
       clearTimeout(stopTimer); stopTimer=setTimeout(function(){ if(listening&&!texts.length&&!partial) stopListen(); },12000);
     }catch(e){
       busy=false; cleanup();
@@ -9382,7 +9389,7 @@ renderModeBar();render();fit();grow();
     }
   }
   function cleanup(){
-    listening=false; mic.classList.remove('on'); mic.textContent='🎙️ ورود با صدا (آفلاین)';
+    listening=false; cur.mic.classList.remove('on'); cur.mic.textContent=cur.label;
     clearTimeout(stopTimer);
     try{ node&&(node.onaudioprocess=null,node.disconnect()); }catch(e){}
     try{ ctx&&ctx.close(); }catch(e){}
@@ -9398,11 +9405,87 @@ renderModeBar();render();fit();grow();
     var text=(texts.join(' ')+' '+(texts.length?'':partial)).trim();
     cleanup();
     if(!text){ st('صدایی تشخیص داده نشد؛ دوباره امتحان کنید.',true); return; }
-    showConfirm(parseText(text));
+    cur.onText(text);
   }
-  mic.onclick=function(){ if(listening) stopListen(); else startListen(); };
+  UI_M.onText=function(t){ showConfirm(parseText(t)); };
+  mic.onclick=function(){ if(listening) stopListen(); else { cur=UI_M; startListen(); } };
   try{ var cb=q('vcGrCb'); cb.checked=localStorage.getItem('vcGrammar')==='1'; cb.onchange=function(){ try{ localStorage.setItem('vcGrammar',cb.checked?'1':'0'); }catch(e){} }; }catch(e){}
   window.__vc={parse:parseText};
+
+  /* ===== ورود با صدا در تجدید حجم / استحصال ===== */
+  var hvMic=q('hvVcMic');
+  if(hvMic){
+    var UI_H={mic:hvMic,label:'🎙️ ورود با صدا (آفلاین)',st:'hvVcSt',prog:'hvVcProg',cf:'hvVcCf',onText:null};
+    var hvPlan=null;
+    var hvHV=function(){ try{ return (typeof HV!=='undefined')?HV:null; }catch(e){ return null; } };
+    function hvBox(){ var b=document.querySelectorAll('#hvFull [data-hvkey]'); for(var i=0;i<b.length;i++){ if(b[i].offsetParent!==null) return b[i]; } return null; }
+    function parseHv(text){
+      var tk=norm(text).split(' ').filter(Boolean), hz=null, i;
+      for(i=0;i<tk.length;i++){ if(tk[i]==='هیزم'){ var n=readNum(tk,i+1); if(n){ hz=n.val; tk.splice(i,n.next-i); i--; } else { tk.splice(i,1); i--; } } }
+      var idx=[]; tk.forEach(function(w,j){ if(w==='قطر'||w==='دیامتر') idx.push(j); });
+      var pre=[], rows=[];
+      if(idx.length){
+        pre=tk.slice(0,idx[0]);
+        idx.forEach(function(sti,k){ var seg=tk.slice(sti,k+1<idx.length?idx[k+1]:tk.length); var p=parseText(seg.join(' ')); rows.push({d:p.d,h:p.h,n:p.n}); });
+      } else {
+        var p0=parseText(tk.join(' ')); if(p0.d!=null||p0.h!=null) rows.push({d:p0.d,h:p0.h,n:p0.n}); pre=p0.rest?p0.rest.split(' '):[];
+      }
+      var H=hvHV(), group=null;
+      if(H&&H.groups&&pre.length){
+        if(H.sub==='tr'){
+          for(i=0;i<pre.length;i++){ if(pre[i]==='شماره'||pre[i]==='درخت'){ var nn=readNum(pre,i+1); if(nn){ group=H.groups.find(function(g){ return g.list&&g.list[0]&&String(en(g.list[0].no))===String(nn.val); })||null; break; } } }
+        } else {
+          var ms=matchSpecies(pre,H.groups.map(function(g){return g.k}));
+          if(ms) group=H.groups.find(function(g){return g.k===ms.name})||null;
+        }
+      }
+      return {rows:rows,hz:hz,group:group,heard:text};
+    }
+    function hvShowConfirm(pl){
+      hvPlan=pl; var cf=q('hvVcCf'); var H=hvHV();
+      var box=hvBox(), gl=pl.group?pl.group.label:(box?(box.querySelector('div[style*="font-weight:700"]')||{}).textContent:'');
+      var any=pl.rows.length||pl.hz!=null||pl.group;
+      var h='<div class="vcHeard">شنیده شد: «'+String(pl.heard).replace(/[<>&]/g,'')+'»</div>';
+      h+='<div class="vcRow">'+chip('گروه (گونه/درخت)',gl?String(gl).replace(/[<>&]/g,''):null,gl?'':'miss')+'</div>';
+      pl.rows.forEach(function(r,i){
+        var okD=r.d!=null&&r.d>=5&&r.d<=250, okH=r.h!=null&&r.h>=1&&r.h<=60;
+        h+='<div class="vcRow">'+chip('ردیف '+fa(i+1)+' · قطر',r.d!=null?fa(r.d):null,r.d==null?'miss':(okD?'':'warn'))+chip('طول',r.h!=null?fa(r.h):null,r.h==null?'miss':(okH?'':'warn'))+chip('تعداد',fa(r.n!=null?r.n:1),'')+'</div>';
+      });
+      if(pl.hz!=null) h+='<div class="vcRow">'+chip('هیزم (استر)',fa(pl.hz),'')+'</div>';
+      h+='<div class="vcAct"><button type="button" id="hvVcOk" style="background:#2f6b3c;color:#fff">✓ تأیید و درج</button><button type="button" id="hvVcRe" class="o">↻ دوباره</button><button type="button" id="hvVcNo" class="o">✕</button></div>';
+      cf.innerHTML=h; cf.classList.remove('hid');
+      q('hvVcOk').onclick=applyHv; q('hvVcRe').onclick=function(){ hideConfirm(); cur=UI_H; startListen(); }; q('hvVcNo').onclick=hideConfirm;
+      st(any?'بررسی کنید و تأیید بزنید.':'چیزی تشخیص داده نشد؛ شمرده‌تر بگویید.',!any);
+    }
+    function setIn(el,v){ el.value=fa(v); el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true})); }
+    function applyHv(){
+      var pl=hvPlan; if(!pl) return;
+      try{ if(window.__kp) window.__kp.close(); }catch(e){}
+      var H=hvHV(), box=hvBox();
+      if(pl.group&&(!box||box.dataset.hvkey!==pl.group.k)){
+        var sel=q(H&&H.sub==='tr'?'hvTrSel':'hvSpSel');
+        if(sel){ sel.value=pl.group.k; sel.dispatchEvent(new Event('change',{bubbles:true})); }
+        box=hvBox();
+      }
+      if(!box){ st('ابتدا گونه یا درخت را انتخاب کنید (یا نام گونه را هم بگویید).',true); return; }
+      var d0=box.querySelector('.hvD');
+      if(d0&&d0.readOnly){ st('🔒 این بخش قفل است؛ استحصال ثبت شده و تجدید حجم قابل تغییر نیست.',true); return; }
+      var cnt=0;
+      pl.rows.forEach(function(r){
+        if(r.d==null||r.h==null) return;
+        var rows=[].slice.call(box.querySelectorAll('.hvRow:not(.hvHd)'));
+        var t=rows.find(function(x){ var a=x.querySelector('.hvD'),b=x.querySelector('.hvH'); return a&&b&&!a.value.trim()&&!b.value.trim(); });
+        if(!t){ var ad=box.querySelector('.hvAdd'); if(ad) ad.click(); rows=[].slice.call(box.querySelectorAll('.hvRow:not(.hvHd)')); t=rows[rows.length-1]; }
+        if(!t) return;
+        setIn(t.querySelector('.hvD'),r.d); setIn(t.querySelector('.hvH'),r.h); setIn(t.querySelector('.hvC'),r.n!=null?r.n:1); cnt++;
+      });
+      if(pl.hz!=null){ var hz=box.querySelector('.hvHzIn'); if(hz) setIn(hz,pl.hz); }
+      hideConfirm(); st('✓ درج شد ('+fa(cnt)+' ردیف'+(pl.hz!=null?' + هیزم':'')+'). نتیجه را در نوار حجم ببینید.');
+    }
+    UI_H.onText=function(t){ hvShowConfirm(parseHv(t)); };
+    hvMic.onclick=function(){ if(listening) stopListen(); else { cur=UI_H; startListen(); } };
+    window.__vc.parseHv=parseHv;
+  }
 })();
 </script>
 </body>
