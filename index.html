@@ -113,12 +113,15 @@ body[data-tab="h"] #sensors{display:none!important}
 .hvSpH{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;background:none;color:var(--tx);border:0;padding:6px 2px;font-size:15px;text-align:right}
 .hvSpH.on{color:var(--ac)}.hvSpH small{color:var(--mu);font-weight:400}
 .hvBody{margin-top:8px;border-top:1px solid var(--bd);padding-top:8px}
-.hvRow{display:flex;gap:3px;margin-top:6px;align-items:center}.hvRow input{flex:1;min-width:0;text-align:center;padding:6px 2px;font-size:13px}.hvRow .hvV{background:var(--sf)}
-.hvN{flex:0 0 22px;text-align:center;color:var(--mu);font-size:12px}
-.hvNo{flex:0 0 28px;text-align:center;color:var(--mu);font-size:12px;font-weight:700}
-.hvTy{flex:0 0 74px;text-align:center;font-size:11px;color:var(--ac);font-weight:700;line-height:1.25;white-space:nowrap}
-.hvHd span{flex:1;text-align:center;font-size:11px;color:var(--mu)}.hvHd .hvN{flex:0 0 22px}.hvHd .hvNo{flex:0 0 28px}.hvHd .hvTy{flex:0 0 74px}.hvHd .hvX{flex:0 0 28px}
-.hvRow .hvRm{flex:0 0 28px;padding:4px 0}
+.hvRow{display:flex;gap:4px;margin-top:7px;align-items:center}.hvRow input{flex:1;min-width:0;text-align:center;padding:9px 4px;font-size:15px;min-height:40px;border-radius:10px}.hvRow .hvV{background:var(--sf);font-weight:700;color:var(--ac)}
+.hvN{flex:0 0 26px;text-align:center;color:var(--mu);font-size:13px;font-weight:700}
+.hvNo{flex:0 0 32px;text-align:center;color:var(--mu);font-size:13px;font-weight:700}
+.hvTy{display:none!important}
+.hvHd span{flex:1;text-align:center;font-size:12px;color:var(--mu);font-weight:600}.hvHd .hvN{flex:0 0 26px}.hvHd .hvNo{flex:0 0 32px}.hvHd .hvTy{display:none!important}.hvHd .hvX{flex:0 0 34px}.hvHd .hvPlus{visibility:hidden;pointer-events:none}
+.hvRow .hvRm{flex:0 0 34px;padding:6px 0;min-height:40px;font-size:16px}
+.hvPlus{flex:0 0 40px;min-width:40px;min-height:40px;padding:0;border-radius:12px;background:var(--ac);color:var(--ac2);border:0;font-size:22px;font-weight:800;line-height:1;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(47,107,60,.28)}
+.hvPlus:active{transform:scale(.94);opacity:.92}
+.hvRow .hvC{flex:0 0 56px;max-width:64px;font-weight:700}
 .hvQuickChips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .hvQuickChips button{padding:7px 12px;font-size:12px;border-radius:999px;background:var(--sf);color:var(--tx);border:1px solid var(--bd);font-weight:600}
 .hvQuickChips button.on{background:var(--ac);color:var(--ac2);border-color:var(--ac)}
@@ -1991,7 +1994,7 @@ function hvOpen(mode){
 function hvLockRenForm(form){
   if(!form||HV.mode!=='r'||!isRenewalEditLocked()) return;
   form.querySelectorAll('input').forEach(i=>{ i.readOnly=true; });
-  form.querySelectorAll('.hvAdd,.hvRm').forEach(b=>{ b.style.display='none'; });
+  form.querySelectorAll('.hvAdd,.hvRm,.hvPlus').forEach(b=>{ b.style.display='none'; });
   if(!form.querySelector('.hvLockNote')) form.insertAdjacentHTML('afterbegin','<div class="hvTopNote hvLockNote">🔒 استحصال ثبت شده است؛ تجدید حجم قفل است. برای تغییر، ابتدا داده‌های استحصال را پاک کنید.</div>');
 }
 function hvApplyViewOnlyUI(){
@@ -2215,16 +2218,16 @@ function hvRowH(r,i){
   const nRaw = (r && r.n!=null && r.n!=='') ? r.n : 1;
   const n = (typeof toFa==='function'?toFa(nRaw):nRaw);
   const vv = (r && +r.v>0) ? fa(r.v,3) : '';
+  const plusBtn = '<button type="button" class="hvPlus" aria-label="افزایش تعداد" title="افزایش تعداد">+</button>';
   if(hvUseKindCols()){
     const dNum = (r && r.d!=null && r.d!=='') ? +toEn(String(r.d)) : 0;
     const kind = (r && r.kind) || hvKindFromD(dNum);
-    const ty = kind ? hvKindLabel(kind) : '—';
     const no = (kind==='kb' && r && r.no!=null && r.no!=='') ? toFa(r.no) : '_';
     return '<div class="hvRow">'
       +'<span class="hvNo" data-no="'+(kind==='kb'&&r&&r.no!=null?String(r.no):'')+'">'+no+'</span>'
-      +'<span class="hvTy">'+ty+'</span>'
       +'<input class="hvD" type="text" inputmode="numeric" dir="rtl" lang="fa" placeholder="قطر" value="'+d+'">'
       +'<input class="hvH" type="text" inputmode="decimal" dir="rtl" lang="fa" placeholder="طول" value="'+h+'">'
+      +plusBtn
       +'<input class="hvC" type="text" inputmode="numeric" dir="rtl" lang="fa" placeholder="تعداد" value="'+n+'">'
       +'<input class="hvV" type="text" readonly dir="rtl" lang="fa" placeholder="حجم کل" value="'+vv+'">'
       +'<button type="button" class="x hvRm" aria-label="حذف">×</button></div>';
@@ -2233,6 +2236,7 @@ function hvRowH(r,i){
     +'<span class="hvN">'+toFa((i||0)+1)+'</span>'
     +'<input class="hvD" type="text" inputmode="decimal" dir="rtl" lang="fa" placeholder="قطر" value="'+d+'">'
     +'<input class="hvH" type="text" inputmode="decimal" dir="rtl" lang="fa" placeholder="طول" value="'+h+'">'
+    +plusBtn
     +'<input class="hvC" type="text" inputmode="numeric" dir="rtl" lang="fa" placeholder="تعداد" value="'+n+'">'
     +'<input class="hvV" type="text" readonly dir="rtl" lang="fa" placeholder="حجم" value="'+vv+'">'
     +'<button type="button" class="x hvRm" aria-label="حذف">×</button></div>';
@@ -2331,10 +2335,10 @@ function hvFormHtml(g, rows){
     +'<div class="tw"><table><tr><th>شماره</th><th>قطر</th><th>طول</th><th>'+(_isH?'حجم تجدید حجم':'حجم اولیه')+'</th></tr>'+tableRows+'</table></div>'
     +'<div class="m" style="margin-top:10px">'+(HV.mode==='h'?'استحصال حداکثر تا ۲۰٪ بالاتر از حجم تجدید حجم (و قطر نشانه‌گذاری) امکان‌پذیر است.':((HV.mode==='b')?'استحصال و تجدید حجم':'تجدید حجم')+' حداکثر تا ۲۰٪ بالاتر از قطر و حجم نشانه‌گذاری امکان‌پذیر است.')+'</div>'
     +(hvUseKindCols()
-      ? '<div class="hvRow hvHd"><span class="hvNo">شماره</span><span class="hvTy">نوع</span><span>قطر</span><span>طول</span><span>تعداد</span><span>حجم کل</span><span class="hvX"></span></div>'
-      : '<div class="hvRow hvHd"><span class="hvN">ردیف</span><span>قطر (cm)</span><span>طول (m)</span><span>تعداد</span><span>حجم</span><span class="hvX"></span></div>')
+      ? '<div class="hvRow hvHd"><span class="hvNo">شماره</span><span>قطر</span><span>طول</span><button type="button" class="hvPlus" tabindex="-1" aria-hidden="true">+</button><span>تعداد</span><span>حجم کل</span><span class="hvX"></span></div>'
+      : '<div class="hvRow hvHd"><span class="hvN">ردیف</span><span>قطر</span><span>طول</span><button type="button" class="hvPlus" tabindex="-1" aria-hidden="true">+</button><span>تعداد</span><span>حجم</span><span class="hvX"></span></div>')
     +'<div class="hvRows">'+(rows&&rows.length?rows:[{}]).map(hvRowH).join('')+'</div>'
-    +'<div class="r" style="margin-top:8px"><button type="button" class="o hvAdd">＋ افزودن</button></div>'
+    +'<div class="r" style="margin-top:8px"><button type="button" class="o hvAdd">＋ افزودن ردیف</button></div>'
     +'<div class="hvHz" style="margin-top:10px"><label style="margin-top:0">مقدار هیزم</label><div style="display:flex;align-items:center;gap:8px;margin-top:4px"><input class="hvHzIn" type="text" inputmode="decimal" dir="rtl" lang="fa" placeholder="پس از درج همهٔ کاتین‌ها، مقدار هیزم را بنویسید" value="'+(hz>0?toFa(hz):'')+'" style="flex:1"><span style="font-weight:700">استر</span></div><div class="m" style="margin-top:4px;font-size:11px">(محاسبه استر: هر استر ۰٫۶ متر مکعب است)</div></div>'
     +'<div class="hvOk2"></div></div>';
 }
@@ -3192,6 +3196,19 @@ function hvInit(){
       const body=e.target.closest('[data-hvkey]'); if(!body) return;
       const rs=body.querySelector('.hvRows');
       if(e.target.closest('.hvAdd')){rs.insertAdjacentHTML('beforeend',hvRowH(null,rs.children.length)); hvRenum(body); hvUpdatePipe(body); return}
+      const plus=e.target.closest('.hvPlus');
+      if(plus){
+        const row=plus.closest('.hvRow');
+        if(!row||row.classList.contains('hvHd')) return;
+        const cEl=row.querySelector('.hvC');
+        if(!cEl||cEl.readOnly||cEl.disabled) return;
+        const cur=Math.round(+toEn(cEl.value))||0;
+        const next=Math.min(9999, cur+1);
+        cEl.value=(typeof toFa==='function'?toFa(next):String(next));
+        try{ cEl.dispatchEvent(new Event('input',{bubbles:true})); }catch(_){}
+        try{ cEl.dispatchEvent(new Event('change',{bubbles:true})); }catch(_){}
+        return;
+      }
       const rm=e.target.closest('.hvRm');
       if(rm){rm.closest('.hvRow').remove();if(!rs.children.length)rs.insertAdjacentHTML('beforeend',hvRowH(null,0));hvRenum(rs); hvUpdatePipe(body); hvKeepDraft(body); hvScheduleSave(body); return}
     };
