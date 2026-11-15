@@ -361,6 +361,15 @@ th{background:rgba(47,107,60,.1);font-weight:700}tr:nth-child(even) td{backgroun
 
 #spSug{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
 #spSug button{background:var(--sf);color:var(--tx);border:2px solid #1e88e5;border-radius:16px;padding:5px 12px;font-size:12px;cursor:pointer}
+.spBubBar{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;max-height:108px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.spBubBar button{background:var(--sf);color:var(--tx);border:2px solid #1e88e5;border-radius:16px;padding:6px 14px;font-size:13px;cursor:pointer;flex:0 0 auto}
+#livePeers{margin:8px 0}
+#livePeers .lpCard{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:10px 12px;line-height:1.9;font-size:13px}
+#livePeers .lpRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#livePeers .lpDot{width:12px;height:12px;border-radius:50%;flex:0 0 auto;border:2px solid #fff;box-shadow:0 0 0 1px #0004}
+#livePeers .lpSub{color:var(--mu);font-size:12px}
+#livePeers .lpOff{opacity:.55}
+#hkToast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#1e88e5;color:#fff;padding:9px 16px;border-radius:20px;font-size:13px;z-index:10001;box-shadow:0 4px 14px #0005;max-width:90vw;text-align:center}
 #recentSp{display:flex;gap:4px;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;margin:4px 0;padding:2px 0;max-width:100%;-webkit-overflow-scrolling:touch}
 #recentSp button{padding:6px 10px!important;font-size:12px!important;flex:0 0 auto!important;border-radius:16px}
 #manualFull #manualFormCard>label:first-of-type{margin-top:4px}
@@ -958,7 +967,7 @@ window.needOcr=async()=>{if(typeof Tesseract==='undefined')await loadLib('https:
 
   <!-- Tab Content: Neshanegozari -->
   <section id="sec-m" class="hid">
-    
+    <div id="livePeers" class="hid"></div>
     <details class="c" id="mapDetails">
       <summary>🗺️ نقشه، محدوده و مرز</summary>
       <div class="sec" id="mp">
@@ -3242,12 +3251,44 @@ function buildHvMinutesHtml(type){
 }
 
 /* ===== ورود داده‌ها در تجدید حجم / استحصال ===== */
+/* ===== حباب‌های آبی جستجوی سریع گونه (با اولین حروف ظاهر می‌شوند) ===== */
+function hkSpBubbles(ov, tb, inSel, nextSel){
+  const bar=document.createElement('div');
+  bar.className='spBubBar hid';
+  const rows=ov.querySelectorAll('.r'); const row=rows[rows.length-1];
+  if(row&&row.parentNode) row.parentNode.insertBefore(bar,row); else ov.firstElementChild.appendChild(bar);
+  let curIn=null;
+  const hide=()=>{bar.classList.add('hid');bar.innerHTML=''};
+  const show=inp=>{
+    curIn=inp;
+    const q=nz(inp.value||'');
+    if(!q){hide();return}
+    const a=NAMES.filter(n=>nz(n).startsWith(q)).concat(NAMES.filter(n=>!nz(n).startsWith(q)&&nz(n).includes(q)));
+    if(!a.length||(a.length===1&&nz(a[0])===q)){hide();return}
+    bar.innerHTML=a.map(k=>'<button type="button" data-sp="'+esc(k)+'">'+esc(k)+'</button>').join('');
+    bar.classList.remove('hid');
+  };
+  bar.addEventListener('pointerdown',e=>e.preventDefault());
+  bar.addEventListener('mousedown',e=>e.preventDefault());
+  bar.addEventListener('click',e=>{
+    const b=e.target.closest('button[data-sp]'); if(!b||!curIn) return;
+    curIn.value=b.dataset.sp;
+    curIn.dispatchEvent(new Event('input',{bubbles:true}));
+    curIn.dispatchEvent(new Event('change',{bubbles:true}));
+    hide();
+    const tr=curIn.closest('tr'); const nx=tr&&tr.querySelector(nextSel);
+    if(nx) try{nx.focus()}catch(_){}
+  });
+  tb.addEventListener('input',e=>{ if(e.target.matches(inSel)) show(e.target); });
+  tb.addEventListener('focusin',e=>{ if(e.target.matches(inSel)) show(e.target); else hide(); });
+  return bar;
+}
 function hvImpRowHtml(r){
   r=r||{};
   const f=x=>(x===0||x==null||x==='')?'':toFa(x);
   return '<tr style="border-bottom:1px solid var(--bd)">'
    +'<td style="padding:4px"><input type="text" class="hi-no" value="'+esc(r.no||'')+'" style="padding:6px;text-align:center;width:45px"></td>'
-   +'<td style="padding:4px"><input type="text" class="hi-sp" list="spList" value="'+esc(r.sp||'')+'" style="padding:6px;text-align:center;width:80px"></td>'
+   +'<td style="padding:4px"><input type="text" class="hi-sp" autocomplete="off" value="'+esc(r.sp||'')+'" style="padding:6px;text-align:center;width:80px"></td>'
    +'<td style="padding:4px"><input type="text" inputmode="decimal" class="hi-d" value="'+f(r.d)+'" style="padding:6px;text-align:center;width:58px"></td>'
    +'<td style="padding:4px"><input type="text" inputmode="decimal" class="hi-h" value="'+f(r.h)+'" style="padding:6px;text-align:center;width:58px"></td>'
    +'<td style="padding:4px"><input type="text" inputmode="decimal" class="hi-n" value="'+toFa(r.n||1)+'" style="padding:6px;text-align:center;width:46px"></td>'
@@ -3279,6 +3320,7 @@ function hvOpenImport(items,note){
     tr.querySelector('.hi-v').textContent=(d>0&&h>0)?fa(vol(d,h,1)*n,3):'—';
   });
   tb.addEventListener('input',upd); upd();
+  try{ hkSpBubbles(ov,tb,'.hi-sp','.hi-d'); }catch(e){}
   ov.querySelector('#hiAdd').onclick=()=>{ tb.insertAdjacentHTML('beforeend',hvImpRowHtml()); };
   ov.querySelector('#hiCancel').onclick=()=>ov.remove();
   ov.querySelector('#hiOk').onclick=()=>{
@@ -3616,7 +3658,10 @@ function saveActive(){
   else delete sh.map;
   if(TRACK && TRACK.length>0) sh.track=deepClone(TRACK);
   else delete sh.track;
-  sh.ua=Date.now();
+  try{
+    const sg=(function(str){let h=5381;for(let i=0;i<str.length;i++)h=(h*33^str.charCodeAt(i))>>>0;return h+':'+str.length})(JSON.stringify(sh,(k,v)=>(k==='ua'||k==='h'||k==='_sg'||k==='rua'||k==='bk')?undefined:v));
+    if(sg!==sh._sg||!sh.ua){sh._sg=sg;sh.ua=Date.now()}
+  }catch(e){sh.ua=Date.now()}
   try{localStorage.setItem('sheets',JSON.stringify(SHEETS));stWarn(false);mirror(false)}catch(e){stWarn(true);mirror(true)}
 }
 function stWarn(bad){const e=document.getElementById('sw');if(!e)return;e.classList.toggle('hid',!bad);e.textContent='⛔ حافظهٔ مرورگر پر است. یک نسخهٔ اضطراری جداگانه ذخیره شد، ولی همین حالا از تب «سیاهه» پشتیبان (JSON) بگیرید.'}
@@ -3631,6 +3676,42 @@ loadActive();norm();
     SHEETS=ms;activeId=SHEETS[0].id;switchSheet(activeId,true);alert('بازیابی شد. لطفاً بلافاصله پشتیبان (JSON) بگیرید.');
   }
 }catch(e){}})();
+
+/* بازخوانی نرم دادهٔ سربرگ فعال پس از دریافت تغییرات دستگاه‌های دیگر (بدون بستن فرم‌ها و بدون ریست GPS) */
+function hkToast(msg){
+  try{
+    let t=document.getElementById('hkToast');
+    if(!t){t=document.createElement('div');t.id='hkToast';document.body.appendChild(t)}
+    t.textContent=msg;t.style.display='block';
+    clearTimeout(hkToast._t);hkToast._t=setTimeout(()=>{t.style.display='none'},4000);
+  }catch(e){}
+}
+function softReload(){
+  const sh=getActiveSheet();if(!sh)return;
+  const before=T.length;
+  T=deepClone(sh.trees||[]);
+  MAPP=deepClone((sh.map&&sh.map.p)||[]);
+  MAPZ=(sh.map&&sh.map.z)||39;
+  MAPNM=(sh.map&&sh.map.nm)||'';
+  if(!trackOn){
+    TRACK=deepClone(sh.track||[]);
+    walkMeters=0;
+    if(TRACK.length>1){for(let i=1;i<TRACK.length;i++){walkMeters+=gdist(TRACK[i-1].lat,TRACK[i-1].lng,TRACK[i].lat,TRACK[i].lng)}}
+    lastWalkFix=TRACK.length?{lat:TRACK[TRACK.length-1].lat,lng:TRACK[TRACK.length-1].lng}:null;
+  }
+  try{norm()}catch(e){}
+  try{updateWalkUI()}catch(e){}
+  try{renderTabs();updateMapInfo()}catch(e){}
+  try{draw()}catch(e){}
+  try{mapCheck(true)}catch(e){}
+  try{updateModeLock()}catch(e){}
+  try{ if(window.HV&&typeof hvRenderSummary==='function'){ hvRenderSummary(); if(typeof hvRenderQuickChips==='function')hvRenderQuickChips(); } }catch(e){}
+  try{updateHarvestGate()}catch(e){}
+  const add=T.length-before;
+  if(add>0) hkToast('🌲 '+toFa(add)+' درخت جدید از دستگاه دیگر رسید');
+  else if(add<0) hkToast('🗑 '+toFa(-add)+' درخت در دستگاه دیگر حذف شد');
+  else if(before) hkToast('🔄 تغییرات دستگاه دیگر اعمال شد');
+}
 const store=()=>{saveActive();bnr();try{if(window.syncSoon)window.syncSoon()}catch(e){}};
 
 document.getElementById('btnModeGarden').onclick = () => {
@@ -6128,6 +6209,7 @@ function openQuickEntry(prefill, note) {
     });
   };
   
+  try{ hkSpBubbles(ov, tbody, '.q-sp', '.q-d'); }catch(e){}
   tbody.addEventListener('input', e => {
     if (e.target.matches('.q-h')) e.target.dataset.auto = '';
     if (e.target.matches('.q-no')) e.target.dataset.auto = '0';
@@ -6209,7 +6291,7 @@ function openQuickEntry(prefill, note) {
 function quickRowHtml(r) { r = r || {};
   return `<tr style="border-bottom:1px solid var(--bd);">
     <td style="padding:4px;"><input type="text" class="q-no" value="${esc(r.no || '')}" style="padding:6px;text-align:center;width:45px;"></td>
-    <td style="padding:4px;"><input type="text" class="q-sp" list="spList" value="${esc(r.sp || '')}" placeholder="${esc(r.spRaw || '')}" style="padding:6px;text-align:center;width:80px;${(r.spRaw && !r.sp) ? 'border-color:#d33;background:#fdecea;color:#000;' : ''}"></td>
+    <td style="padding:4px;"><input type="text" class="q-sp" autocomplete="off" value="${esc(r.sp || '')}" placeholder="${esc(r.spRaw || '')}" style="padding:6px;text-align:center;width:80px;${(r.spRaw && !r.sp) ? 'border-color:#d33;background:#fdecea;color:#000;' : ''}"></td>
     <td style="padding:4px;"><input type="text" inputmode="decimal" class="q-d" value="${r.d ? toFa(r.d) : ''}" style="padding:6px;text-align:center;width:60px;"></td>
     <td style="padding:4px;"><input type="text" inputmode="decimal" class="q-h" value="${r.h ? toFa(r.h) : ''}" style="padding:6px;text-align:center;width:60px;"></td>
     <td style="padding:4px;"><input type="text" inputmode="decimal" class="q-count" value="${toFa(r.n || 1)}" style="padding:6px;text-align:center;width:50px;"></td>
@@ -6716,10 +6798,52 @@ const fe=e=>{
 
 window.SB={api:(p,m,b,x)=>fresh().then(()=>api(p,m,b,x)),fresh,user:()=>S,url:SB_URL,key:SB_KEY,token:()=>S&&S.access_token};
 
-async function sync(){
+
+/* —— ادغام سه‌طرفه درخت‌ها: ثبت هم‌زمان چند نفر روی یک حساب از بین نمی‌رود —— */
+const tkey=t=>t.u||('L'+t.id+'|'+(t.dt||'')+'|'+(t.sp||''));
+const thash=t=>{const c=Object.assign({},t);delete c.id;delete c.u;return hs(JSON.stringify(c))};
+const mkBase=arr=>{const b={};(arr||[]).forEach(t=>{b[tkey(t)]=thash(t)});return b};
+function assignU(arr,base){
+  if(!base) return;
+  (arr||[]).forEach(t=>{ if(t && !t.u && !(tkey(t) in base)) t.u=rid(); });
+}
+function mergeTrees(l,rt,remoteNewer,remoteMV){
+  const lt=l.trees||[];
+  const hasBase=!!l.bk, base=l.bk||{};
+  assignU(lt,hasBase?base:null);
+  const Lm=new Map(),Rm=new Map();
+  lt.forEach(t=>Lm.set(tkey(t),t)); (rt||[]).forEach(t=>Rm.set(tkey(t),t));
+  const order=[...Lm.keys(),...[...Rm.keys()].filter(k=>!Lm.has(k))];
+  const out=[],usedIds=new Set(lt.map(t=>t.id));
+  let maxId=lt.reduce((a,t)=>Math.max(a,+t.id||0),0),diffLocal=false,diffRemote=false;
+  for(const k of order){
+    const a=Lm.get(k),b=Rm.get(k),inBase=hasBase&&(k in base);
+    if(a&&b){
+      const ha=thash(a),hb=thash(b);
+      if(ha===hb){out.push(a);continue}
+      const hbase=inBase?base[k]:null;
+      let pickRemote;
+      if(hbase===ha)pickRemote=true;else if(hbase===hb)pickRemote=false;else pickRemote=remoteNewer;
+      if(pickRemote){out.push(Object.assign({},b,{id:a.id}));diffLocal=true}
+      else{out.push(a);diffRemote=true}
+    }else if(a){
+      if(inBase&&remoteMV){diffLocal=true;continue}
+      out.push(a);diffRemote=true;
+    }else{
+      if(inBase){diffRemote=true;continue}
+      const c=Object.assign({},b);
+      if(usedIds.has(c.id))c.id=++maxId;
+      usedIds.add(c.id);out.push(c);diffLocal=true;
+    }
+  }
+  return {trees:out,diffLocal,diffRemote};
+}
+
+async function sync(q){
+  const quiet=(q===true);
   if(!S||busy||!navigator.onLine)return false;
   if(!S.uid){msg='⚠️ شناسه کاربر نامعتبر است؛ دوباره وارد شوید.';ui();return false;}
-  busy=true;msg='در حال همگام‌سازی…';ui();
+  busy=true;if(!quiet){msg='در حال همگام‌سازی…';ui();}
   try{
     await fresh();
     if(!S||!S.uid)throw new Error('شناسه کاربر نامعتبر است');
@@ -6731,8 +6855,11 @@ async function sync(){
       const h=shash(s);
       if(h!==s.h){s.h=h;s.ua=now}
     });
+    try{ const _as=SHEETS.find(x=>x.id===activeId); if(_as&&_as.bk) assignU(T,_as.bk); }catch(e){}
     saveActive();
     const rowsRaw=await api('/rest/v1/sheets?select=*');
+    try{ const _as=SHEETS.find(x=>x.id===activeId); if(_as&&_as.bk) assignU(T,_as.bk); }catch(e){}
+    saveActive();
     // فقط ردیف‌های همین کاربر — جلوگیری از ادغام با حساب دیگر
     const rows=(Array.isArray(rowsRaw)?rowsRaw:[]).filter(r=>r && (!r.user_id || r.user_id===S.uid));
     const prevU=LS('sbu');
@@ -6742,7 +6869,7 @@ async function sync(){
     }
     else if(!prevU&&rows.some(r=>!r.deleted)&&SHEETS.length===1&&!(SHEETS[0].trees||[]).length&&!SHEETS[0].map)SHEETS=[];
     const del=(prevU===S.uid?JSON.parse(LS('sbk')||'[]'):[]).filter(u=>u && !SHEETS.some(s=>s.uid===u));
-    const out=new Map();let chg=false;
+    const out=new Map();let chg=false;const pendBase=new Map(),pendRua=new Map();let activeTouched=false;
     del.forEach(u=>{
       if(!u) return;
       out.set(u,{user_id:S.uid,uid:u,name:'',data:null,ua:now,deleted:true});
@@ -6752,21 +6879,36 @@ async function sync(){
       if(del.includes(r.uid))continue;
       const l=SHEETS.find(s=>s.uid===r.uid);
       if(r.deleted){if(l){SHEETS=SHEETS.filter(s=>s!==l);chg=true}continue}
-      const d=r.data||{},tr=d.trees||[];
+      const d=r.data||{};let tr=d.trees||[];
+      const remoteMV=!!(d.ext&&d.ext.mv===2);
+      let mg=null;
+      if(l){ mg=mergeTrees(l,tr,(r.ua||0)>(l.ua||0),remoteMV); tr=mg.trees; }
+      const keepTrk=(l&&trackOn&&l.id===activeId);
       if(!l){
         let nm=r.name||'سربرگ';while(SHEETS.some(x=>x.name===nm))nm+=' (حساب)';
         const o={id:SHEETS.reduce((a,x)=>Math.max(a,x.id),0)+1,uid:r.uid,name:nm,trees:tr,ua:r.ua||now};
         if(d.map)o.map=d.map;if(d.mode)o.mode=d.mode;if(d.volClass)o.volClass=d.volClass;if(d.track)o.track=d.track;if(d.minutesText)o.minutesText=d.minutesText;applyExt(o,d);o.h=shash(o);SHEETS.push(o);chg=true;
+        pendBase.set(o.uid,mkBase(tr));pendRua.set(o.uid,r.ua||0);
       }else if((r.ua||0)>(l.ua||0)){
-        l.name=r.name;l.trees=tr;if(d.map)l.map=d.map;else delete l.map;if(d.mode)l.mode=d.mode;if(d.volClass)l.volClass=d.volClass;if(d.track)l.track=d.track;else delete l.track;if(d.minutesText)l.minutesText=d.minutesText;else delete l.minutesText;applyExt(l,d);l.ua=r.ua;l.h=shash(l);chg=true;
+        l.name=r.name;l.trees=tr;if(d.map)l.map=d.map;else delete l.map;if(d.mode)l.mode=d.mode;if(d.volClass)l.volClass=d.volClass;
+        if(!keepTrk){if(d.track)l.track=d.track;else delete l.track;}
+        if(d.minutesText)l.minutesText=d.minutesText;else delete l.minutesText;applyExt(l,d);l.ua=r.ua;l.h=shash(l);
+        if(l.id===activeId){activeTouched=true;chg=true}else chg=true;
+        if(mg&&mg.diffRemote){ l.ua=Math.max(now,(r.ua||0)+1); const rec=row(l); if(rec&&rec.uid){out.set(rec.uid,rec);pendBase.set(rec.uid,mkBase(rec.data.trees));pendRua.set(rec.uid,rec.ua);} }
+        else{ pendBase.set(l.uid,mkBase(tr));pendRua.set(l.uid,r.ua||0); }
       }else if((l.ua||0)>(r.ua||0)){
-        const rec=row(l); if(rec&&rec.uid) out.set(rec.uid,rec);
+        l.trees=tr;
+        if(mg&&mg.diffLocal){ chg=true; if(l.id===activeId)activeTouched=true; }
+        const rec=row(l); if(rec&&rec.uid){out.set(rec.uid,rec);pendBase.set(rec.uid,mkBase(rec.data.trees));pendRua.set(rec.uid,rec.ua);}
+      }else{
+        if(mg&&mg.diffLocal){ l.trees=tr; chg=true; if(l.id===activeId)activeTouched=true; }
+        pendBase.set(l.uid,mkBase(l.trees));pendRua.set(l.uid,r.ua||0);
       }
     }
     const known=new Set(rows.filter(r=>r&&r.uid).map(r=>r.uid));
     SHEETS.forEach(s=>{
       if(!s.uid) s.uid=rid();
-      if(!known.has(s.uid)){ const rec=row(s); if(rec&&rec.uid) out.set(rec.uid,rec); }
+      if(!known.has(s.uid)){ const rec=row(s); if(rec&&rec.uid){ out.set(rec.uid,rec); pendBase.set(rec.uid,mkBase(rec.data.trees)); pendRua.set(rec.uid,rec.ua); } }
     });
     if(!SHEETS.length)SHEETS.push({id:1,name:'زمین ۱',trees:[],uid:rid(),ua:now});
     if(out.size){
@@ -6775,9 +6917,14 @@ async function sync(){
         await api('/rest/v1/sheets?on_conflict=user_id,uid','POST',payload,{Prefer:'resolution=merge-duplicates,return=minimal'});
       }
     }
+    const hadActive=SHEETS.some(s=>s.id===activeId);
+    pendBase.forEach((b,u)=>{const x=SHEETS.find(z=>z.uid===u); if(x){x.bk=b; x.rua=pendRua.get(u)||0;}});
     if(!SHEETS.some(s=>s.id===activeId))activeId=SHEETS[0].id;
     LS('sheets',JSON.stringify(SHEETS));LS('sbu',S.uid);LS('sbk',JSON.stringify(SHEETS.map(s=>s.uid).filter(Boolean)));
-    if(chg)switchSheet(activeId,true);
+    if(chg){
+      if(hadActive){ if(activeTouched)softReload(); else renderTabs(); }
+      else switchSheet(activeId,true);
+    }
     msg='همگام شد ✓ '+new Date().toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'});
     return true;
   }catch(e){msg='⚠️ '+fe(e);return false}
@@ -6792,7 +6939,7 @@ function row(s){
     user_id: S.uid,
     uid: s.uid,
     name: s.name||'',
-    data: {trees:s.trees||[], map:s.map||null, mode:s.mode||null, volClass:s.volClass||null, track:(s.track&&s.track.length)?s.track:null, minutesText:s.minutesText||null, ext:{projectSaved:!!s.projectSaved, snapName:s.snapName||null, savedAt:s.savedAt||null, hvg:s.hvg||null, hvw:s.hvw||null, hvEntryPath:s.hvEntryPath||null, hvRevSaved:!!s.hvRevSaved}},
+    data: {trees:s.trees||[], map:s.map||null, mode:s.mode||null, volClass:s.volClass||null, track:(s.track&&s.track.length)?s.track:null, minutesText:s.minutesText||null, ext:{mv:2,projectSaved:!!s.projectSaved, snapName:s.snapName||null, savedAt:s.savedAt||null, hvg:s.hvg||null, hvw:s.hvw||null, hvEntryPath:s.hvEntryPath||null, hvRevSaved:!!s.hvRevSaved}},
     ua: s.ua||Date.now(),
     deleted: false
   };
@@ -6835,7 +6982,7 @@ function presenceTick(){
   try{
     const el=document.getElementById('presenceCnt');
     if(el){
-      const n=presenceCount();
+      const n=Math.max(presenceCount(),1+(window.hkLiveOnline||0));
       el.textContent = n>1 ? (' · 👥 '+n+' نفر هم‌زمان') : '';
       el.title = n>1 ? (n+' نشست فعال با این نام کاربری (ویرایش برای همه آزاد است)') : '';
     }
@@ -6856,7 +7003,7 @@ function ui(){
     A.querySelector('#aIn').onclick=login;return;
   }
   A.innerHTML='<span>☁️ '+esc(S.name)+'<span id="presenceCnt"></span> · '+esc(msg)+'</span><button id="aSy" class="o">همگام‌سازی</button><button id="aOut" class="o">خروج</button>';
-  A.querySelector('#aSy').onclick=sync;
+  A.querySelector('#aSy').onclick=()=>sync();
   A.querySelector('#aOut').onclick=logout;
   try{ presenceTick(); }catch(e){}
 }
@@ -6885,16 +7032,40 @@ function login(){
 
 async function logout(){
   const ok=await sync();
+  try{window.hkLiveStop&&window.hkLiveStop()}catch(e){}
   if(!confirm(ok?'خروج؟':'تغییرات سینک نشده پاک می‌شوند! خروج؟'))return;
   S=null;['sbs','sbu','sbk','aiChat','aiChat_specialist','aiChat_general','sosCfg','sosActive','sosLast','sosDis'].forEach(k=>LS(k,null));
   SHEETS=[{id:1,name:'زمین ۱',trees:[]}];activeId=1;LS('sheets',JSON.stringify(SHEETS));try{HKDB.put({t:0,json:'',fail:false})}catch(e){}
   switchSheet(1,true);msg='';ui();
 }
 
-window.syncSoon=()=>{if(S){clearTimeout(tm);tm=setTimeout(sync,4000)}};
-addEventListener('online',sync);
+
+/* —— بررسی سبک هر ۴ ثانیه: اگر دستگاه دیگری روی همین حساب چیزی ثبت کرد، فوراً دریافت شود —— */
+async function liveTick(){
+  if(!S||!S.uid||busy||!navigator.onLine||document.hidden)return;
+  try{
+    await fresh();
+    const rs=await api('/rest/v1/sheets?select=uid,ua,deleted,user_id&user_id=eq.'+S.uid);
+    if(!Array.isArray(rs))return;
+    let need=false;
+    for(const r of rs){
+      if(!r||!r.uid)continue;
+      const l=SHEETS.find(s=>s.uid===r.uid);
+      if(r.deleted){if(l)need=true;continue}
+      if(!l){need=true;continue}
+      if((r.ua||0)>(l.rua||0))need=true;
+    }
+    if(need)sync(true);
+  }catch(e){}
+}
+setInterval(liveTick,4000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)liveTick()});
+window.hkSyncNow=()=>sync(true);
+
+window.syncSoon=()=>{if(S){clearTimeout(tm);tm=setTimeout(()=>sync(true),1500)}};
+addEventListener('online',()=>sync());
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
-setInterval(sync,90000);
+setInterval(()=>sync(true),90000);
 ui();
 
 
@@ -6953,6 +7124,178 @@ document.getElementById('splashLogin').onclick = () => window.splashGo(false);
 document.getElementById('splashSignup').onclick = () => window.splashGo(true);
 document.getElementById('splashGuest').onclick = () => window.splashGuest();
 </script>
+
+<script>
+/* ===== مسیر زنده و حضور هم‌زمان چند دستگاه روی یک حساب =====
+   فقط ردیف‌های همین کاربر (RLS: user_id = auth.uid()) خوانده می‌شود؛ حساب‌های دیگر هرگز دیده نمی‌شوند. */
+(function(){
+const SBX=window.SB; if(!SBX) return;
+const el=id=>document.getElementById(id);
+const faN=n=>{try{return toFa(n)}catch(e){return String(n)}};
+const COLORS=['#e53935','#8e24aa','#fb8c00','#00897b','#d81b60','#6d4c41','#3949ab','#7cb342'];
+const TAB=(()=>{try{let t=sessionStorage.getItem('hk_tab');if(!t){t=Math.random().toString(36).slice(2,6);sessionStorage.setItem('hk_tab',t)}return t}catch(e){return Math.random().toString(36).slice(2,6)}})();
+const BASE=(()=>{try{let d=localStorage.getItem('hk_device');if(!d){d='d'+Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('hk_device',d)}return d}catch(e){return 'd'+Math.random().toString(36).slice(2)}})();
+const DEV=BASE.slice(0,14)+'-'+TAB;
+const UAS=navigator.userAgent||'';
+const LABEL=(/iPhone|iPad/.test(UAS)?'آیفون':/Android/.test(UAS)?'اندروید':'رایانه')+' '+DEV.slice(-3).toUpperCase();
+
+const peers=new Map();
+let skew=0,disabled=false,pushBusy=false,pollBusy=false,lastPush=0,lastTrk=0,tv=0,lastRec=false,lastUid=null,lg=null,lgMap=null;
+window.hkLiveOnline=0;
+
+async function lapi(path,method,body,extra){
+  await SBX.fresh();
+  const r=await fetch(SBX.url+path,{method:method||'GET',headers:Object.assign({apikey:SBX.key,'Content-Type':'application/json',Authorization:'Bearer '+SBX.token()},extra||{}),body:body?JSON.stringify(body):undefined});
+  const t=await r.text();let j=null;try{j=t?JSON.parse(t):null}catch(e){}
+  return {ok:r.ok,status:r.status,json:j};
+}
+const gone=r=>r.status===404||(r.json&&(r.json.code==='PGRST205'||r.json.code==='42P01'));
+
+async function push(force){
+  const u=SBX.user(); if(!u||!u.uid||!navigator.onLine||disabled||pushBusy) return;
+  const gps=(typeof gpsOn!=='undefined'&&gpsOn&&typeof cur!=='undefined'&&cur&&cur.lat!=null);
+  const rec=(typeof trackOn!=='undefined')&&!!trackOn;
+  const now=Date.now(), gap=rec?3000:(gps?5000:12000);
+  if(!force&&now-lastPush<gap-250) return;
+  pushBusy=true;
+  try{
+    let sh=null;try{sh=getActiveSheet()}catch(e){}
+    const body={user_id:u.uid,device:DEV,label:LABEL,sheet_uid:sh&&sh.uid||null,sheet_name:sh&&sh.name||null,gps:!!gps,rec:rec,lat:gps?cur.lat:null,lng:gps?cur.lng:null,acc:gps?Math.round(cur.acc||0):null};
+    const needTrk=(rec||lastRec)&&(rec!==lastRec||now-lastTrk>12000||force);
+    if(needTrk&&typeof TRACK!=='undefined'){
+      body.track=TRACK.slice(-600).map(p=>[+(+p.lat).toFixed(6),+(+p.lng).toFixed(6),p.t||0]);
+      body.trk_v=++tv;
+    }
+    const r=await lapi('/rest/v1/live_tracks?on_conflict=user_id,device&select=updated_at','POST',body,{Prefer:'resolution=merge-duplicates,return=representation'});
+    if(r.ok){
+      lastPush=now; if(needTrk){lastTrk=now} lastRec=rec;
+      try{const sv=Date.parse(r.json&&r.json[0]&&r.json[0].updated_at); if(sv) skew=sv-Date.now();}catch(e){}
+    }else if(gone(r)){disabled=true;render()}
+  }catch(e){}
+  pushBusy=false;
+}
+
+const dist=(a,b)=>{try{return gdist(a[0],a[1],b[0],b[1])}catch(e){return 999}};
+const pathOf=p=>(p.base||[]).concat(p.extra||[]);
+const pathLen=p=>{const a=pathOf(p);let m=0;for(let i=1;i<a.length;i++)m+=dist(a[i-1],a[i]);return m};
+
+async function poll(){
+  const u=SBX.user(); if(!u||!u.uid||!navigator.onLine||disabled||pollBusy||document.hidden) return;
+  pollBusy=true;
+  try{
+    const since=new Date(Date.now()+skew-45*60000).toISOString();
+    const r=await lapi('/rest/v1/live_tracks?select=device,label,sheet_uid,sheet_name,lat,lng,acc,gps,rec,trk_v,updated_at&user_id=eq.'+u.uid+'&device=neq.'+encodeURIComponent(DEV)+'&updated_at=gt.'+encodeURIComponent(since));
+    if(!r.ok){ if(gone(r)){disabled=true;render()} pollBusy=false; return; }
+    const rows=Array.isArray(r.json)?r.json:[]; const seen=new Set();
+    for(const row of rows){
+      if(row.user_id&&row.user_id!==u.uid) continue;
+      seen.add(row.device);
+      let p=peers.get(row.device);
+      if(!p){p={device:row.device,color:COLORS[peers.size%COLORS.length],base:[],extra:[],tv:null};peers.set(row.device,p)}
+      p.label=row.label||'دستگاه';p.sheet=row.sheet_name||'';p.sheetUid=row.sheet_uid||null;
+      p.lat=row.lat;p.lng=row.lng;p.acc=row.acc;p.gps=!!row.gps;p.rec=!!row.rec;
+      p.age=(Date.now()+skew)-Date.parse(row.updated_at);
+      if(row.trk_v!=null&&row.trk_v!==p.tv){
+        const t=await lapi('/rest/v1/live_tracks?select=track&user_id=eq.'+u.uid+'&device=eq.'+encodeURIComponent(row.device));
+        if(t.ok&&t.json&&t.json[0]&&Array.isArray(t.json[0].track)){p.base=t.json[0].track;p.extra=[];p.tv=row.trk_v}
+      }
+      if(p.gps&&p.lat!=null){
+        const a=pathOf(p),last=a[a.length-1];
+        if(p.rec&&(!last||dist(last,[p.lat,p.lng])>=3)){p.extra.push([p.lat,p.lng,Date.now()]);if(p.extra.length>1500)p.extra.shift()}
+      }
+    }
+    peers.forEach((p,k)=>{if(!seen.has(k))peers.delete(k)});
+    window.hkLiveOnline=[...peers.values()].filter(p=>p.age<30000).length;
+    render();draw();
+  }catch(e){}
+  pollBusy=false;
+}
+
+function ago(ms){const m=Math.round(ms/60000);return m<1?'لحظاتی پیش':faN(m)+' دقیقه پیش'}
+function render(){
+  const box=el('livePeers'); if(!box) return;
+  const u=SBX.user();
+  if(!u){box.classList.add('hid');box.innerHTML='';return}
+  if(disabled){
+    box.classList.remove('hid');
+    box.innerHTML='<div class="lpCard"><div class="lpSub">⚠️ مسیر زنده فعال نیست: جدول <b>live_tracks</b> در Supabase ساخته نشده است. فایل <b>supabase-live.sql</b> را یک بار در SQL Editor اجرا کنید.</div></div>';
+    return;
+  }
+  const list=[...peers.values()].filter(p=>p.age<45*60000);
+  if(!list.length){box.classList.add('hid');box.innerHTML='';return}
+  const me=(typeof cur!=='undefined'&&cur&&cur.lat!=null)?[cur.lat,cur.lng]:null;
+  let h='<div class="lpCard"><b>👥 هم‌زمان روی این حساب</b>';
+  list.forEach(p=>{
+    const on=p.age<30000;
+    const st=on?(p.rec?'🔴 در حال ثبت مسیر':(p.gps?'📍 مختصات روشن':'🟢 آنلاین')):'💤 '+ago(p.age);
+    const d=(me&&p.lat!=null)?dist(me,[p.lat,p.lng]):null;
+    const pl=pathLen(p);
+    h+='<div class="lpRow'+(on?'':' lpOff')+'"><span class="lpDot" style="background:'+p.color+'"></span><b>'+esc(p.label)+'</b><span>'+st+'</span>'
+      +(d!=null?'<span class="lpSub">فاصله از شما: '+(d<1000?faN(Math.round(d))+' متر':faN((d/1000).toFixed(1))+' کیلومتر')+'</span>':'')
+      +(pl>10?'<span class="lpSub">مسیر: '+(pl<1000?faN(Math.round(pl))+' متر':faN((pl/1000).toFixed(2))+' کیلومتر')+'</span>':'')
+      +(p.sheet?'<span class="lpSub">سربرگ: '+esc(p.sheet)+'</span>':'')+'</div>';
+  });
+  h+='<button type="button" id="lpShow" class="o" style="margin-top:6px;width:100%">🗺️ نمایش مسیر دیگران روی نقشه</button></div>';
+  box.innerHTML=h;box.classList.remove('hid');
+  const b=el('lpShow'); if(b) b.onclick=showOnMap;
+}
+
+function draw(){
+  try{
+    if(typeof satMap==='undefined'||!satMap||!window.L) return;
+    if(lg&&lgMap!==satMap){lg=null}
+    if(!lg){lg=L.layerGroup().addTo(satMap);lgMap=satMap}
+    lg.clearLayers();
+    if(typeof satOn!=='undefined'&&!satOn) return;
+    peers.forEach(p=>{
+      if(p.age>45*60000) return;
+      const on=p.age<30000, pts=pathOf(p).map(a=>[a[0],a[1]]);
+      if(pts.length>=2) L.polyline(pts,{color:p.color,weight:4,opacity:on?0.95:0.5,dashArray:p.rec?null:'6 8'}).addTo(lg);
+      if(p.lat!=null&&p.gps) L.circleMarker([p.lat,p.lng],{radius:9,color:'#fff',weight:2,fillColor:p.color,fillOpacity:on?1:0.5})
+        .bindTooltip(p.label+(p.rec?' · در حال ثبت مسیر':''),{permanent:true,direction:'top',offset:[0,-8]}).addTo(lg);
+    });
+  }catch(e){}
+}
+
+async function showOnMap(){
+  try{const d=el('mapDetails'); if(d) d.open=true;}catch(e){}
+  try{ if(typeof satOn!=='undefined'&&!satOn&&typeof toggleSatMap==='function') await toggleSatMap(true); }catch(e){}
+  setTimeout(()=>{
+    draw();
+    const pts=[]; peers.forEach(p=>{ if(p.lat!=null) pts.push([p.lat,p.lng]); pathOf(p).forEach(a=>pts.push([a[0],a[1]])); });
+    if(typeof cur!=='undefined'&&cur&&cur.lat!=null) pts.push([cur.lat,cur.lng]);
+    if(pts.length&&typeof satMap!=='undefined'&&satMap){ try{satMap.fitBounds(pts,{padding:[40,40],maxZoom:18})}catch(e){} }
+  },700);
+}
+
+async function stop(){
+  try{
+    const u=SBX.user(); if(u&&u.uid&&!disabled){
+      fetch(SBX.url+'/rest/v1/live_tracks?user_id=eq.'+u.uid+'&device=eq.'+encodeURIComponent(DEV),{method:'DELETE',keepalive:true,headers:{apikey:SBX.key,Authorization:'Bearer '+SBX.token()}}).catch(()=>{});
+    }
+  }catch(e){}
+  peers.clear(); window.hkLiveOnline=0; lastRec=false; render(); draw();
+}
+window.hkLiveStop=stop;
+window.hkLivePeers=()=>[...peers.values()].map(p=>({label:p.label,rec:p.rec,gps:p.gps,pts:pathOf(p).length,m:Math.round(pathLen(p)),age:Math.round(p.age)}));
+window.hkLivePush=push;
+
+function tick(){
+  const u=SBX.user();
+  if(!u){ if(lastUid){lastUid=null;peers.clear();window.hkLiveOnline=0;render();draw()} return; }
+  if(lastUid&&lastUid!==u.uid){peers.clear();window.hkLiveOnline=0}
+  lastUid=u.uid;
+  push(false); poll();
+}
+setInterval(tick,3000);
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) tick(); });
+addEventListener('pagehide',()=>{ try{const u=SBX.user(); if(u&&u.uid&&!disabled) fetch(SBX.url+'/rest/v1/live_tracks?user_id=eq.'+u.uid+'&device=eq.'+encodeURIComponent(DEV),{method:'DELETE',keepalive:true,headers:{apikey:SBX.key,Authorization:'Bearer '+SBX.token()}}).catch(()=>{}) }catch(e){} });
+const hook=(id)=>{const b=el(id); if(!b||b.dataset.lh) return; b.dataset.lh='1'; b.addEventListener('click',()=>setTimeout(()=>{push(true);poll()},250));};
+document.addEventListener('DOMContentLoaded',()=>{hook('trkToggle');hook('ga');hook('resetWalk')});
+setTimeout(()=>{hook('trkToggle');hook('ga');hook('resetWalk')},1500);
+})();
+</script>
+
 
 <script>
 /* ===== جستجو در بخشنامه‌ها (آفلاین) ===== */
