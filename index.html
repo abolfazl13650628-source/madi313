@@ -2011,7 +2011,7 @@ function hvApplyViewOnlyUI(){
   if(seg) seg.style.display = vo ? 'none' : '';
   if(vo){ try{ hvUpdatePostRegUI(); }catch(e){} }
 }
-function hvDraftKey(key){ return String(HV.mode||'')+'|'+String(HV.sub||'')+'|'+String(key||''); }
+function hvDraftKey(key){ return String(activeId)+'|'+String(HV.mode||'')+'|'+String(HV.sub||'')+'|'+String(key||''); }
 function hvReadDraftRows(body){
   if(!body) return [];
   return [...body.querySelectorAll('.hvRow:not(.hvHd)')].map(r=>{
@@ -3870,12 +3870,23 @@ function deleteSheet(id){
   else{SHEETS=SHEETS.filter(s=>s.id!==id);store();renderTabs();draw();}
 }
 function switchSheet(id,skipSave){
+  /* ذخیرهٔ در انتظارِ تجدید حجم باید همین‌جا و روی پروندهٔ قبلی انجام شود، نه بعد از جابه‌جایی روی پروندهٔ جدید */
+  try{ if(typeof hvFlushSave==='function') hvFlushSave(); }catch(e){}
   if(!skipSave)saveActive();
   if(typeof endEdit==='function')endEdit();
   lastSavedId=null;
   const target=SHEETS.find(s=>s.id===id);
   if(!target){console.warn('switchSheet: id not found', id);return}
   activeId=id;
+  /* پیش‌نویس و فرم‌های باز تجدید حجم متعلق به پروندهٔ قبلی‌اند؛ پاک شوند تا در پروندهٔ جدید ثبت نشوند */
+  try{
+    if(window.HV){
+      if(HV._st){ clearTimeout(HV._st); HV._st=null; }
+      HV._stBody=null; HV.draft={}; HV.sp=null; HV.sub=null; HV.registered=false;
+      const hf=document.getElementById('hvFull');
+      if(hf && !hf.classList.contains('hid')){ hf.classList.add('hid'); document.body.style.overflow=''; }
+    }
+  }catch(e){}
   loadActive();
   norm();
   const oldSIM=SIM;SIM=false;clr();SIM=oldSIM;updSimBtn();
