@@ -361,8 +361,12 @@ th{background:rgba(47,107,60,.1);font-weight:700}tr:nth-child(even) td{backgroun
 
 #spSug{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
 #spSug button{background:var(--sf);color:var(--tx);border:2px solid #1e88e5;border-radius:16px;padding:5px 12px;font-size:12px;cursor:pointer}
-#recentSp{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0}
+#recentSp{display:flex;gap:4px;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;margin:4px 0;padding:2px 0;max-width:100%;-webkit-overflow-scrolling:touch}
 #recentSp button{padding:6px 10px!important;font-size:12px!important;flex:0 0 auto!important;border-radius:16px}
+#manualFull #manualFormCard>label:first-of-type{margin-top:4px}
+#manualFull #manualFormCard>.r:has(#sps){position:sticky;top:0;z-index:5;background:var(--sf);padding:5px 0 7px;border-radius:8px}
+#manualFull #sp{min-width:0;flex:1.7!important}
+#manualFull #sps{min-width:0;flex:1!important}
 .chipbtn{padding:2px 8px!important;font-size:12px!important}
 #totSummary{background:var(--sf);border:1px solid var(--bd);border-radius:9px;padding:7px 9px;margin-top:6px;font-size:12px}
 #totSummary b{color:var(--ac)}
@@ -1839,6 +1843,8 @@ window.__appBack = {
   },
   tryClose(){
     /* اولویت: مودال‌ها → صفحهٔ دستی → زیر‌صفحهٔ تجدید → صفحهٔ تجدید */
+    /* اگر صفحه‌کلید داخلی باز است، ابتدا همان را ببند. */
+    try{ const kp=document.getElementById('kp'); if(kp&&kp.classList.contains('open')){ if(typeof window.__closeAppKeypad==='function') window.__closeAppKeypad(true); else { kp.classList.remove('open'); kp.setAttribute('aria-hidden','true'); document.body.classList.remove('kp-open'); } return true; } }catch(e){}
     const hide = id=>{
       const el=document.getElementById(id);
       if(el && !el.classList.contains('hid')){ el.classList.add('hid'); return true; }
@@ -1914,7 +1920,7 @@ const hvQ=id=>document.getElementById(id);
 function hvNorm(x){return String(x||'').replace(/ي/g,'ی').replace(/ك/g,'ک').replace(/[\u200c\s]/g,'').toLowerCase()}
 function hvHasRev(){
   const sh=getActiveSheet();
-  return T.some(t=>t.v2>0)||!!(sh&&sh.hvg&&sh.hvg.r&&Object.values(sh.hvg.r).some(a=>a&&a.length));
+  return T.some(t=>t.v2>0)||!!(sh&&((sh.hvg&&sh.hvg.r&&Object.values(sh.hvg.r).some(a=>a&&a.length))||(sh.hvw&&sh.hvw.r&&Object.values(sh.hvw.r).some(v=>+v>0))));
 }
 function hvRevSaved(){ const sh=getActiveSheet(); return !!(sh&&sh.hvRevSaved); }
 function hvHarvestAllowed(){
@@ -1933,8 +1939,8 @@ function hvRenMap(){
   const byKey=new Map(T.map(t=>['#'+t.id,t]));
   const bySp=new Map();
   T.forEach(t=>{ const k=t.sp||'نامشخص'; if(!bySp.has(k)) bySp.set(k,[]); bySp.get(k).push(t); });
-  Object.keys(src).forEach(k=>{
-    if(!src[k]||!src[k].length) return;
+  [...new Set([...Object.keys(src),...Object.keys(hw)])].forEach(k=>{
+    if((!src[k]||!src[k].length)&&!(+hw[k]>0)) return;
     if(String(k).charAt(0)==='#'){
       const t=byKey.get(k); if(t) out.set(t.id,{v:sum(k),d:(+t.rd||+t.d||0),h:(+t.rh||+t.h||0),ren:true});
     } else {
@@ -2064,6 +2070,7 @@ function hvHasHvgData(which){
   if(sh&&sh.hvg&&sh.hvg[which]){
     if(Object.values(sh.hvg[which]).some(a=>a&&a.length)) return true;
   }
+  if(sh&&sh.hvw&&sh.hvw[which]&&Object.values(sh.hvw[which]).some(v=>+v>0)) return true;
   if(which==='r' && typeof T!=='undefined' && T.some(t=>+t.v2>0)) return true;
   if(which==='h' && typeof T!=='undefined' && T.some(t=>+t.hv>0)) return true;
   return false;
@@ -2562,8 +2569,8 @@ function hvRowVal(r){
 
 function hvCalcRows(body){return [...body.querySelectorAll('.hvRow:not(.hvHd)')].map(hvRowVal).filter(Boolean)}
 function hvHasSavedKey(k){
-  const sh=getActiveSheet(); if(!sh||!sh.hvg||!HV.mode) return false;
-  return (HV_KEYS[HV.mode]||[]).some(x=>sh.hvg[x]&&sh.hvg[x][k]&&sh.hvg[x][k].length);
+  const sh=getActiveSheet(); if(!sh||!HV.mode) return false;
+  return (HV_KEYS[HV.mode]||[]).some(x=>(sh.hvg&&sh.hvg[x]&&sh.hvg[x][k]&&sh.hvg[x][k].length)||(sh.hvw&&sh.hvw[x]&&+sh.hvw[x][k]>0));
 }
 function hvCheckRows(k,rows,hz){
   const baseD=hvBaseDiam(k);
@@ -2595,7 +2602,8 @@ function hvCommit(k,rows,hz){
   if(tg){
     if(saveKeys.includes('r')){
       delete tg.d2; delete tg.h2;
-      tg.v2=tot/cnt(tg); tg.rd=rows[0].d; tg.rh=rows[0].h;
+      tg.v2=tot/cnt(tg);
+      if(rows.length){ tg.rd=rows[0].d; tg.rh=rows[0].h; } else { delete tg.rd; delete tg.rh; }
     }
     if(HV.mode==='h' || HV.mode==='b'){ tg.hv=tot; }
     delete tg.hd;
@@ -2658,6 +2666,15 @@ function hvAutoSave(body){
   const hz=hvCalcHz(body);
   const anyInput=hz>0||rowEls.some(r=>['.hvD','.hvH'].some(q=>String(r.querySelector(q).value).trim()!==''));
   const rows=hvCalcRows(body);
+  if(!rows.length && hz>0){
+    /* ثبت مستقل هیزم: بدون نیاز به ردیف قطر/طول */
+    const err=hvCheckRows(k,rows,hz);
+    if(err){ setMsg(esc(err),1); return; }
+    hvCommit(k,rows,hz); setMsg('');
+    hvUpdatePipe(body); hvUpdateMethodButtons(); hvRefreshOpts(); hvRenderSummary();
+    try{hvRenderQuickChips(); hvUpdatePostRegUI()}catch(e){}
+    return;
+  }
   if(!rows.length){
     if(!anyInput){
       if(hvHasSavedKey(k)){
@@ -2686,7 +2703,7 @@ function hvClearKey(key,quiet){
     delete tg.hd;
   }
   try{ if(HV.draft) delete HV.draft[hvDraftKey(key)]; }catch(e){}
-  const _hasRows=(w)=>!!(sh.hvg&&sh.hvg[w]&&Object.values(sh.hvg[w]).some(a=>a&&a.length));
+  const _hasRows=(w)=>!!((sh.hvg&&sh.hvg[w]&&Object.values(sh.hvg[w]).some(a=>a&&a.length))||(sh.hvw&&sh.hvw[w]&&Object.values(sh.hvw[w]).some(v=>+v>0))); 
   if(!_hasRows('r')){ T.forEach(t=>{ delete t.v2; delete t.rd; delete t.rh; delete t.d2; delete t.h2; }); }
   if(!_hasRows('h')){ T.forEach(t=>{ delete t.hv; delete t.hd; }); }
   try{ hvSyncEntryPath(); }catch(e){}
@@ -2727,27 +2744,29 @@ function hvAgg(which){
     const c=catOf(t); if(!c){ out.exUnk+=v; return 0; }
     return Math.round(v*(TAX_RATE[c]||TAX_RATE[3]));
   };
-  Object.keys(src).forEach(k=>{
-    const rows=src[k]; if(!rows||!rows.length) return;
+  [...new Set([...Object.keys(src),...Object.keys(hw)])].forEach(k=>{
+    const rows=src[k]||[];
+    const hz=+hw[k]||0;
+    if(!rows.length && !(hz>0)) return;
     let ind=0,fw=0;
     rows.forEach(r=>{ if(+r.d>=20) ind+=(+r.v||0); else fw+=(+r.v||0); });
-    fw+=0.6*(+hw[k]||0);
+    fw+=0.6*hz;
     const rv=ind+fw;
     let trees;
     if(String(k).charAt(0)==='#'){ const t=T.find(x=>'#'+x.id===k); trees=t?[t]:[]; }
     else trees=T.filter(t=>(t.sp||'نامشخص')===k);
-    if(!trees.length) return;
+    /* خلاصه باید بر اساس دادهٔ ثبت‌شده ساخته شود، نه صرفاً حجم پایهٔ درختان خودرو.
+       در عرصه‌های باغی/دست‌کاشت ممکن است baseNP صفر باشد؛ این نباید ردیف ثبت‌شده را پنهان کند. */
     const base=trees.reduce((a,t)=>a+tv(t),0);
-    if(!(base>0)) return;
     const np=trees.filter(t=>t.k!=='planted');
     const baseNP=np.reduce((a,t)=>a+tv(t),0);
-    if(!(baseNP>0)) return;
-    const f=baseNP/base;
-    add(trees[0].sp||'نامشخص',ind*f,fw*f,baseNP);
+    const f=(base>0 && baseNP>0)?(baseNP/base):1;
+    const speciesName=(trees[0]&&trees[0].sp)||((String(k).charAt(0)==='#')?'نامشخص':(k||'نامشخص'));
+    add(speciesName,ind*f,fw*f,baseNP);
     out.renewed+=rv*f;
-    if(rv>base+1e-9){
+    if(base>0 && rv>base+1e-9){
       const ex=rv-base;
-      np.forEach(t=>{ const e=ex*tv(t)/base; out.exVol+=e; out.exMoney+=money(t,e); });
+      if(np.length) np.forEach(t=>{ const e=ex*tv(t)/base; out.exVol+=e; out.exMoney+=money(t,e); });
     }
   });
   out.rows.forEach(e=>{ for(let i=0;i<3;i++) out.tot[i]+=e[i]; });
@@ -2763,9 +2782,12 @@ function hvDetailRows(which){
   // ۳) کاتین با قطر+طول یکسان ادغام می‌شود
   // ۴) ترتیب: گونه (بر اساس کوچک‌ترین شماره گردبینه) → گردبینه‌ها به شماره → کاتین از قطر بزرگ به کوچک
   const sh=getActiveSheet(); const src=(sh&&sh.hvg&&sh.hvg[which])||{};
+  const hw=(sh&&sh.hvw&&sh.hvw[which])||{};
   const bySp=new Map();
-  Object.keys(src).forEach(k=>{
-    const rows=src[k]; if(!rows||!rows.length) return;
+  [...new Set([...Object.keys(src),...Object.keys(hw)])].forEach(k=>{
+    const rows=src[k]||[];
+    const z=+hw[k]||0;
+    if(!rows.length && !(z>0)) return;
     let sp, treeNo=999999;
     if(String(k).charAt(0)==='#'){
       const t=T.find(x=>'#'+x.id===k);
@@ -2792,7 +2814,6 @@ function hvDetailRows(which){
       g.items.push({sp,d,h,n,v,kind,no:noRaw,tyLabel:(typeof hvKindLabel==='function'?hvKindLabel(kind):'')});
       if(kind==='kb' && noRaw!=null && noRaw<g.orderKey) g.orderKey=noRaw;
     });
-    const z=+(((sh.hvw||{})[which]||{})[k])||0;
     if(z>0) g.hz+=z;
   });
   const spOrder=[...bySp.entries()].sort((a,b)=>{
@@ -9428,12 +9449,16 @@ renderModeBar();render();fit();grow();
   var SKIP='#gi,#emGi';
   var FA='۰۱۲۳۴۵۶۷۸۹';
   var kp=document.getElementById('kp'); if(!kp) return;
-  var active=null, fresh=false, open=false;
+  var active=null, fresh=false, open=false, kpHistoryPushed=false;
   var $=function(i){return document.getElementById(i)};
   function enabled(){ try{ if(localStorage.getItem('kpOff')==='1') return false; return window.matchMedia('(pointer:coarse)').matches; }catch(e){ return false; } }
   function elig(t){ return t && t.matches && t.matches(SEL) && !t.readOnly && !t.disabled; }
   function visible(el){ return !!(el && el.isConnected && el.offsetParent!==null); }
   function noKb(el){ if(el.dataset.kpIm===undefined) el.dataset.kpIm=el.getAttribute('inputmode')||''; el.setAttribute('inputmode','none'); }
+  /* inputmode=none را از ابتدا اعمال کن تا کیبورد سیستم پیش از فوکوس باز نشود. */
+  function prepNumericFields(root){ (root||document).querySelectorAll(SEL).forEach(function(el){ if(elig(el)) noKb(el); }); }
+  prepNumericFields(document);
+  document.addEventListener('focusin',function(){ prepNumericFields(document); },true);
   function labelOf(el){
     if(el.classList.contains('hvHzIn')) return 'مقدار هیزم (استر)';
     var row=el.closest('.hvRow');
@@ -9497,6 +9522,7 @@ renderModeBar();render();fit();grow();
     if(!enabled()||!elig(el)||!visible(el)||el.dataset.kpNative==='1') return;
     if(active&&active!==el) active.classList.remove('kp-active');
     var same=(active===el&&open);
+    if(!open && window.__appBack){ try{ window.__appBack.push(); kpHistoryPushed=true; }catch(e){} }
     active=el; noKb(el); el.classList.add('kp-active');
     if(!same) fresh=true;
     open=true; kp.classList.add('open'); kp.setAttribute('aria-hidden','false'); document.body.classList.add('kp-open');
@@ -9504,9 +9530,10 @@ renderModeBar();render();fit();grow();
     setTimeout(function(){ setH(); ensureVisible(); },60);
     setTimeout(function(){ setH(); ensureVisible(); },320);
   }
-  function close(){
+  function close(fromPop){
     if(!open&&!active) return;
     var a=active; open=false; active=null;
+    if(kpHistoryPushed){ kpHistoryPushed=false; if(!fromPop&&window.__appBack){ try{ window.__appBack.backFromUI(); }catch(e){} } }
     kp.classList.remove('open'); kp.setAttribute('aria-hidden','true'); document.body.classList.remove('kp-open'); setH();
     if(a){ a.classList.remove('kp-active'); try{ a.dispatchEvent(new Event('change',{bubbles:true})); }catch(e){} try{ a.blur(); }catch(e){} }
   }
@@ -9536,6 +9563,7 @@ renderModeBar();render();fit();grow();
       if(wasManual&&sb){ try{ sb.scrollIntoView({block:'nearest',behavior:'smooth'}); }catch(e){} }
     }
   }
+  window.__closeAppKeypad=close;
   /* دکمه‌ها: فوکوس فیلد حفظ شود */
   var rep=null,repT=null;
   function stopRep(){ clearTimeout(repT); clearInterval(rep); repT=rep=null; }
