@@ -2890,10 +2890,154 @@ function hvDashSetup(){
   hvRenderSummary();
   try{ hvUpdatePostRegUI(); }catch(e){}
 }
+
+function hvSheetsGarden(which){
+  which=which||hvWhich();
+  const R=R3;
+  const sh=getActiveSheet();
+  const fileName=(sh&&sh.name)||'';
+  const sheets=[];
+
+  function allDetail(w){
+    const det=(typeof hvDetailRows==='function')?hvDetailRows(w):[];
+    const cuts=det.filter(r=>!r.isHz).map(r=>({sp:r.sp,d:r.d,h:r.h,n:r.n,v:r.v,kind:r.kind,no:r.no}));
+    const hz=det.filter(r=>r.isHz).map(r=>({sp:r.sp,ster:r.ster!=null?r.ster:(r.v/0.6),v:r.v}));
+    return {cuts, hz};
+  }
+
+  // دادهٔ اصلی جدول: استحصال اگر موجود باشد، وگرنه تجدید حجم
+  const preferH = (which==='h') || (HV.mode==='h') || (HV.mode==='b') || hvHasHvgData('h');
+  const detailSrc = preferH ? 'h' : 'r';
+  const d = allDetail(detailSrc);
+  const aR = hvAgg('r');
+  const aH = hvAgg('h');
+  // برای خلاصهٔ گونه‌ها از تجدید حجم استفاده می‌کنیم؛ اگر فقط استحصال باشد از استحصال
+  const aMain = (aR.tot[0]+aR.tot[1])>1e-12 ? aR : aH;
+
+  // ---- شیت اصلی مطابق taj.xlsx ----
+  const rows=[];
+  // ردیف عنوان
+  rows.push(['جدول محاسبه کاتین و گرده بینه','','','','نام پرونده',fileName,'پروانه قطع','','','']);
+  // هدر ستون‌ها
+  rows.push(['شماره گرده بینه','جنس چوب آلات','نوع چوب آلات','قطر (cm)','عرض (cm)','طول (m)','حجم واحد (متر مکعب)','تعداد','حجم کل (مترمکعب)','تجدید حجم']);
+
+  let totN=0, totV=0;
+  let vKb=0, vKi=0, vKh=0; // گرده بینه، کاتین بالای ۲۰، کاتین زیر ۲۰
+  const bySpInd=new Map(); // حجم صنعتی هر گونه از قطعات جدول
+  const bySpN=new Map();
+
+  d.cuts.forEach(r=>{
+    const kind=r.kind||(typeof hvKindFromD==='function'?hvKindFromD(r.d):'');
+    const isKb = kind==='kb' || (+r.d>=30);
+    const ty = isKb ? 'گرده بینه' : 'کاتین';
+    const unit = r.n ? (r.v/(+r.n||1)) : r.v;
+    const no = isKb ? (r.no!=null && r.no!=='_' ? r.no : '') : '';
+    rows.push([no, r.sp||'', ty, r.d, '', r.h, R(unit), r.n||1, R(r.v), '']);
+    totN += (+r.n||0);
+    totV += (+r.v||0);
+    if(isKb) vKb += (+r.v||0);
+    else if(+r.d>=20) vKi += (+r.v||0);
+    else vKh += (+r.v||0);
+    if(!bySpInd.has(r.sp)) bySpInd.set(r.sp,0);
+    if(+r.d>=20 || isKb) bySpInd.set(r.sp, bySpInd.get(r.sp)+(+r.v||0));
+    bySpN.set(r.sp, (bySpN.get(r.sp)||0)+(+r.n||0));
+  });
+
+  // اگر هیچ قطعه‌ای نبود ولی دادهٔ خلاصه هست، ردیف خالی نگذار
+  if(!d.cuts.length){
+    rows.push(['','—','—','','','','','','','']);
+  }
+
+  rows.push(['مجموع','','','','','','',totN,R(totV),'']);
+
+  // خلاصه به تفکیک گونه (صنعتی + هیزم استر + معادل + مجموع تجدید)
+  const spOrder = hvSortedEntries(aMain).map(([sp])=>sp);
+  // گونه‌هایی که فقط در cuts هستند
+  d.cuts.forEach(r=>{ if(r.sp && !spOrder.includes(r.sp)) spOrder.push(r.sp); });
+  d.hz.forEach(z=>{ if(z.sp && !spOrder.includes(z.sp)) spOrder.push(z.sp); });
+
+  let sumInd=0, sumSter=0, sumHzM3=0, sumMarked=0, sumRen=0;
+  spOrder.forEach(sp=>{
+    const e = aMain.rows.get(sp) || [0,0,0];
+    const ind = bySpInd.has(sp) ? bySpInd.get(sp) : e[0];
+    // هیزم: از agg (قبلاً به m3 تبدیل شده) یا از ster در detail
+    const hzM3 = e[1];
+    const ster = hzM3/0.6;
+    const marked = e[2];
+    const ren = ind + hzM3;
+    rows.push(['چوب آلات صنعتی '+sp, R(ind), 'هیزمی استر', +(ster.toFixed(8)), 'معادل مترمکعب', '', R(hzM3), 'مجموع تجدید حجم', R(marked), R(ren)]);
+    sumInd += ind; sumSter += ster; sumHzM3 += hzM3; sumMarked += marked; sumRen += ren;
+  });
+  rows.push(['صنعتی', R(sumInd), 'هیزم استر', +(sumSter.toFixed(8)), '', '', R(sumHzM3), 'مجموع', R(sumMarked), R(sumRen)]);
+  rows.push(['','','','','','','','','','']);
+  rows.push(['نشانه گذاری','تجدید حجم','گرده بینه','کاتین بالای 20','','کاتین زیر 20','','هیزم(متر مکعب)','مجموع صنعتی','']);
+  rows.push([R(sumMarked), R(sumRen), R(vKb), R(vKi), '', R(vKh), '', R(sumHzM3), R(sumInd),'']);
+  rows.push(['','','','','','','','','','']);
+  rows.push(['','','','','','','','','','']);
+
+  // فرم تجدید حجم باغی-جنگلی
+  rows.push(['','','','','','','','','','بسمه تعالی']);
+  rows.push(['','','','','','','','','','']);
+  rows.push(['','','','','','','','','','فرم تجدید حجم درختان باغی-جنگلی (بر اساس مترمکعب)']);
+  rows.push(['','','','','','','','','','پروانه قطع شماره ','','','','']);
+  rows.push(['','','','','','','','','','ردیف','نام گونه','حجم نشانه گذاری','تجدید حجم','','حجم کل تجدید حجم','مازاد صنعتی','مازاد هیزمی']);
+  rows.push(['','','','','','','','','','','','','صنعتی','هیزمی','','','','']);
+
+  let ri=0;
+  spOrder.forEach(sp=>{
+    ri++;
+    const e = aMain.rows.get(sp) || [0,0,0];
+    const ind = bySpInd.has(sp) ? bySpInd.get(sp) : e[0];
+    const hzM3 = e[1];
+    const marked = e[2];
+    const ren = ind + hzM3;
+    const mazadInd = Math.max(0, ind - marked);
+    rows.push(['','','','','','','','','',ri, sp, R(marked), R(ind), R(hzM3), R(ren), mazadInd?R(mazadInd):0, 0]);
+  });
+  rows.push(['','','','','','','','','','جمع حجم کل','', R(sumMarked), R(sumInd), R(sumHzM3), R(sumRen), 0, 0]);
+  rows.push(['','','','','','','','','','']);
+  rows.push(['','','','','','','','','','بر اساس نامه شماره 1401/42/26820-1401/11/5 اداره کل منابع طبیعی و آبخیزداری استان مازندران-ساری درصورت وجود چوب آلات مازاد بر پروانه قطع اعم از صنعتی و هیزمی و حصول اطمینان از عدم وقوع تخلف نسبت به تظیم صورتجلسه و تایید رئیس اداره شهرستان و پرداخت عوارض بر اساس ماده 15 قانون حفاظت کارسازی گردد.']);
+  rows.push(['','','','','','','','','','']);
+  rows.push(['','','','','','','','','','متقاضی','','','','','مسئول بهره برداری']);
+  rows.push(['','','','','','','','','',fileName,'','','','','','']);
+
+  // صورتجلسه پایان عملکرد
+  rows.push(['','','','','','','','','','']);
+  rows.push(['','','','','','','','','','']);
+  rows.push(['','','','','','','','','','بسمه تعالی']);
+  rows.push(['','','','','','','','','','']);
+  rows.push(['','','','','','','','','','صورتجلسه پایان عملکرد پروانه قطع شماره','','','','']);
+  rows.push(['','','','','','','','','','']);
+  rows.push(['','','','','','','','','','در تاریخ','','طبق بازدید بعمل آمده از پروانه قطع فوق مربوط به آقای','',fileName]);
+  rows.push(['','','','','','','','','','واقع در روستای','','با وضعیت بهرهبرداری ذیل:']);
+  rows.push(['','','','','','','','','','']);
+  rows.push(['','','','','','','','','','1-حجم نشانه گذاری:', R(sumMarked)]);
+  rows.push(['','','','','','','','','','2-تجدید حجم:', R(sumRen)]);
+  rows.push(['','','','','','','','','','3-استحصال گرده بینه:', R(vKb)]);
+  rows.push(['','','','','','','','','','4-استحصال کاتین:', R(vKi+vKh)]);
+  rows.push(['','','','','','','','','','5-موجودی هیزم:', R(sumHzM3)]);
+  rows.push(['','','','','','','','','','6-مازاد صنعتی:', 0]);
+  rows.push(['','','','','','','','','','7-مازاد هیزمی:', 0]);
+  rows.push(['','','','','','','','','','کلیه محمولات از عرصه خارج و نامبرده هیچگونه مطالبه ای بابت چوب آلات صنعتی و هیزمی ندارد ، لذا پروانه قطع فوق مختومه اعلام می گردد.']);
+  rows.push(['','','','','','','','','','']);
+  rows.push(['','','','','','','','','','مسئول بهره برداری','','','','','رئیس اداره منابع طبیعی شهرستان']);
+  rows.push(['','','','','','','','','','']);
+  rows.push(['','','','','','','','','','متقاضی']);
+  rows.push(['','','','','','','','','',fileName]);
+
+  const sheetName = (fileName||'باغی-جنگلی').slice(0,28);
+  sheets.push([sheetName, rows]);
+  return sheets;
+}
+
 function hvSheets(which){
   which=which||hvWhich();
   const R=R3;
   const sh=getActiveSheet();
+  /* باغی/جنگلی: فرمت اکسل مطابق نمونه taj؛ جنگلی: فرمت فعلی بدون تغییر */
+  if(((sh&&sh.mode)||'garden')==='garden'){
+    try{ return hvSheetsGarden(which); }catch(e){ console.warn('hvSheetsGarden',e); }
+  }
   const sheets=[];
 
   function allDetail(w){
