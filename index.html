@@ -528,6 +528,10 @@ body[data-tab="a"] #sec-a:not(.hid){
   background:radial-gradient(130% 50% at 50% 0,rgba(47,107,60,.14),transparent 62%),var(--bg);
 }
 #aiBox{flex:1;min-height:0;display:flex;flex-direction:column;margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
+/* هنگام باز بودن صفحه‌کلید نرم‌افزاری، دکمه بازگشت AI برجسته‌تر */
+#aiBox.kb .aiHead{position:sticky;top:0;z-index:5;background:var(--bg);box-shadow:0 2px 10px rgba(0,0,0,.12)}
+#aiBox.kb #aiBack{outline:2px solid var(--ac);background:var(--ac);color:var(--ac2)}
+
 
 /* نوار بالا */
 .aiHead{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px}
@@ -682,15 +686,21 @@ body.home-mode #ownerHome{display:block}
 #mmPreview .mmSig div{flex:1;min-width:140px;text-align:center;font-size:12px}
 /* ===== تنظیمات صفحه‌های بزرگ ===== */
 @media (min-width: 768px) {
-  #app { max-width: 900px !important; }
-  #acct, #sosCard, #saveBar .sbIn, #sosFab { max-width: 900px !important; }
+  #app { max-width: min(1100px, 96vw) !important; }
+  #acct, #sosCard, #saveBar .sbIn, #sosFab { max-width: min(1100px, 96vw) !important; }
   #app-header h1 { font-size: 32px; }
   nav button { font-size: 15px; padding: 12px 6px; }
   .c { padding: 16px; }
 }
 
 @media (min-width: 1200px) {
-  #app, #acct, #sosCard, #saveBar .sbIn, #sosFab { max-width: 1150px !important; }
+  #app, #acct, #sosCard, #saveBar .sbIn, #sosFab { max-width: min(1400px, 96vw) !important; }
+  body:not([data-tab="a"]) #app { padding-left: 24px; padding-right: 24px; }
+}
+
+/* دسکتاپ پهن؛ موبایل مثل قبل */
+@media (min-width: 900px) {
+  body:not([data-tab="a"]) #app { max-width: min(1400px, 96vw) !important; }
 }
 
 .h-wrap { position: relative; }
@@ -1177,12 +1187,7 @@ window.needOcr=async()=>{if(typeof Tesseract==='undefined')await loadLib('https:
   <div class="hvFullBody">
     <div class="hvSeg"><button id="hvSubSp" type="button" class="hvSegB"></button><button id="hvSubTr" type="button" class="hvSegB"></button></div>
     <div id="hvTopNote" class="hvTopNote hid"></div>
-    <div id="hvVcBar">
-      <button id="hvVcMic" type="button">🎙️ ورود با صدا (آفلاین)</button>
-      <div id="hvVcProg" class="hid"><i></i></div>
-      <div id="hvVcSt">مثال: «توسکا، قطر بیست، طول پانزده، تعداد دو، قطر سی، طول ده» — یا «هیزم پنج»</div>
-      <div id="hvVcCf" class="hid"></div>
-    </div>
+    <!-- ورود با صدا برای تجدید/استحصال حذف شد -->
     <div id="hvHint" class="m" style="text-align:center;margin-top:16px">یکی از دو روش بالا را انتخاب کنید.</div>
     <div id="hvSpWrap" class="hid">
       <div class="c hvPick">
@@ -1868,6 +1873,17 @@ window.__appBack = {
         }
         if(typeof hvBack==='function') hvBack(true);
         else { hf.classList.add('hid'); document.body.style.overflow=''; }
+        return true;
+      }
+    }catch(e){}
+    /* تب AI */
+    try{
+      if(document.body.dataset.tab==='a'){
+        if(typeof leaveAiTab==='function') leaveAiTab();
+        else {
+          const prev=document.querySelector('nav button[data-t="m"]');
+          if(prev) prev.click();
+        }
         return true;
       }
     }catch(e){}
@@ -6370,8 +6386,13 @@ function fnm(){return String(getActiveSheet().name).replace(/[\\\/:*?"<>|]/g,'-'
 const today=()=>isoLocal();
 async function shareBlob(fn,blob){
   try{
-    const file=new File([blob],fn,{type:blob.type||'application/octet-stream'});
+    const mime=blob.type|| (/\.xlsx$/i.test(fn)?'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':(/\.(json)$/i.test(fn)?'application/json':'application/octet-stream'));
+    const file=new File([blob],fn,{type:mime});
     if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{await navigator.share({files:[file],title:fn,text:'فایل خروجی برنامه هیرکانی: '+fn});return 'shared'}catch(e){if(e&&e.name==='AbortError')return 'cancel'}
+    }
+    // بعضی مرورگرها canShare سخت‌گیرند؛ یک‌بار مستقیم share را امتحان کن
+    if(navigator.share){
       try{await navigator.share({files:[file],title:fn});return 'shared'}catch(e){if(e&&e.name==='AbortError')return 'cancel'}
     }
   }catch(e){}
@@ -6429,7 +6450,50 @@ function allSheets(){
 }
 
 function harvestSheets(){return [['تجدید و استحصال',[['شماره','گونه','دسته','حجم اولیه (مترمکعب)','قطر جدید','ارتفاع جدید','حجم تجدید (مترمکعب)','تغییر %','حجم استحصال (مترمکعب)','تاریخ استحصال','یادداشت']].concat(T.filter(t=>t.v2||t.hv).map(t=>[t.ty==='h'?'هیزمی':(t.no||''),t.sp,G[catOf(t)]||'—',R3(t.v),t.d2||t.rd||'',t.h2||t.rh||'',t.v2?R3(t.v2):'',t.v2?+((t.v2-t.v)/t.v*100).toFixed(1):'',t.hv||'',t.hd||'',t.hn||'']))]]}
-function backupBlob(){ saveActive(); const payload={app:'hyrcanian',v:4,sheets:SHEETS,activeId,trees:T,snaps:SNAPS}; return new Blob([JSON.stringify(payload)],{type:'application/json'}) }
+function backupBlob(){ saveActive(); const payload={app:'hyrcanian',v:4,sheets:SHEETS,activeId,trees:T,snaps:SNAPS,user: (typeof S!=='undefined'&&S&&S.uid)?S.uid:null, at:Date.now()}; return new Blob([JSON.stringify(payload)],{type:'application/json'}) }
+/* پشتیبان خودکار دوره‌ای (OPFS در صورت امکان، وگرنه فقط نشانگر BK) */
+let _autoBkTimer=null, _autoBkBusy=false;
+async function writeAutoBackup(){
+  if(_autoBkBusy) return;
+  _autoBkBusy=true;
+  try{
+    saveActive();
+    const blob=backupBlob();
+    const name='hyrcanian-auto-backup.json';
+    let ok=false;
+    try{
+      if(navigator.storage && navigator.storage.getDirectory){
+        const root=await navigator.storage.getDirectory();
+        const fh=await root.getFileHandle(name,{create:true});
+        const w=await fh.createWritable();
+        await w.write(blob);
+        await w.close();
+        ok=true;
+      }
+    }catch(e){}
+    try{
+      // Cache Storage به‌عنوان مسیر دوم
+      const c=await caches.open('hk-auto-backup');
+      await c.put(name, new Response(blob, {headers:{'Content-Type':'application/json'}}));
+      ok=true;
+    }catch(e){}
+    if(ok || tot()>0){
+      BK={n:tot(), dt:new Date().toLocaleString('fa-IR')};
+      try{ localStorage.setItem('bk', JSON.stringify(BK)); }catch(e){}
+      try{ bnr(); }catch(e){}
+    }
+  }catch(e){}
+  finally{ _autoBkBusy=false; }
+}
+function scheduleAutoBackup(){
+  if(_autoBkTimer) return;
+  // هر ۱۵ دقیقه + یک‌بار بعد از بارگذاری
+  setTimeout(()=>{ writeAutoBackup().catch(()=>{}); }, 20000);
+  _autoBkTimer=setInterval(()=>{ writeAutoBackup().catch(()=>{}); }, 15*60*1000);
+  document.addEventListener('visibilitychange',()=>{ if(document.hidden) writeAutoBackup().catch(()=>{}); });
+}
+try{ scheduleAutoBackup(); }catch(e){}
+
 async function buildKMZ(){
   if(!window.JSZip)throw new Error('JSZip بارگذاری نشد (اینترنت لازم است)');
   const X=x=>String(x==null?'':x).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
@@ -6647,9 +6711,14 @@ async function sync(){
       if(h!==s.h){s.h=h;s.ua=now}
     });
     saveActive();
-    const rows=await api('/rest/v1/sheets?select=*');
+    const rowsRaw=await api('/rest/v1/sheets?select=*');
+    // فقط ردیف‌های همین کاربر — جلوگیری از ادغام با حساب دیگر
+    const rows=(Array.isArray(rowsRaw)?rowsRaw:[]).filter(r=>r && (!r.user_id || r.user_id===S.uid));
     const prevU=LS('sbu');
-    if(prevU&&prevU!==S.uid)SHEETS=[];
+    if(prevU&&prevU!==S.uid){
+      // تعویض کاربر: دادهٔ محلی حساب قبلی را دور نریز مگر بعد از پشتیبان؛ برای ایزوله بودن خالی می‌کنیم
+      SHEETS=[];
+    }
     else if(!prevU&&rows.some(r=>!r.deleted)&&SHEETS.length===1&&!(SHEETS[0].trees||[]).length&&!SHEETS[0].map)SHEETS=[];
     const del=(prevU===S.uid?JSON.parse(LS('sbk')||'[]'):[]).filter(u=>u && !SHEETS.some(s=>s.uid===u));
     const out=new Map();let chg=false;
@@ -6708,14 +6777,67 @@ function row(s){
   };
 }
 
+/* —— حضور هم‌زمان روی یک حساب (بدون قفل زمانی) —— */
+function deviceId(){
+  try{
+    let d=localStorage.getItem('hk_device');
+    if(!d){ d='d'+Math.random().toString(36).slice(2)+Date.now().toString(36); localStorage.setItem('hk_device',d); }
+    return d;
+  }catch(e){ return 'd'+Date.now(); }
+}
+const presenceMap = new Map(); // id -> lastSeen
+let presenceBC = null;
+try{ presenceBC = new BroadcastChannel('hk-presence'); }catch(e){}
+function presenceCount(){
+  const now=Date.now();
+  let n=1;
+  for(const [id,t] of presenceMap){ if(id!==deviceId() && now-t<90000) n++; }
+  return n;
+}
+function presenceTick(){
+  if(!S) return;
+  const me=deviceId(), now=Date.now();
+  presenceMap.set(me, now);
+  try{ presenceBC && presenceBC.postMessage({uid:S.uid, device:me, t:now, name:S.name||''}); }catch(e){}
+  // heartbeat سبک در localStorage برای تب‌های هم‌منشأ
+  try{
+    const key='hk_pres_'+S.uid;
+    let obj={};
+    try{ obj=JSON.parse(localStorage.getItem(key)||'{}')||{}; }catch(e){}
+    obj[me]={t:now, name:S.name||''};
+    // پاکسازی قدیمی
+    for(const k of Object.keys(obj)){ if(now-(obj[k].t||0)>120000) delete obj[k]; }
+    localStorage.setItem(key, JSON.stringify(obj));
+    for(const [k,v] of Object.entries(obj)) presenceMap.set(k, v.t||0);
+  }catch(e){}
+  // به‌روزرسانی UI
+  try{
+    const el=document.getElementById('presenceCnt');
+    if(el){
+      const n=presenceCount();
+      el.textContent = n>1 ? (' · 👥 '+n+' نفر هم‌زمان') : '';
+      el.title = n>1 ? (n+' نشست فعال با این نام کاربری (ویرایش برای همه آزاد است)') : '';
+    }
+  }catch(e){}
+}
+if(presenceBC){
+  presenceBC.onmessage = (ev)=>{
+    const m=ev && ev.data; if(!m||!S||m.uid!==S.uid) return;
+    if(m.device) presenceMap.set(m.device, m.t||Date.now());
+  };
+}
+setInterval(presenceTick, 15000);
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) presenceTick(); });
+
 function ui(){
   if(!S){
     A.innerHTML='<button id="aIn" class="o">☁️ ورود / ثبت‌نام</button>';
     A.querySelector('#aIn').onclick=login;return;
   }
-  A.innerHTML='<span>☁️ '+esc(S.name)+' · '+esc(msg)+'</span><button id="aSy" class="o">همگام‌سازی</button><button id="aOut" class="o">خروج</button>';
+  A.innerHTML='<span>☁️ '+esc(S.name)+'<span id="presenceCnt"></span> · '+esc(msg)+'</span><button id="aSy" class="o">همگام‌سازی</button><button id="aOut" class="o">خروج</button>';
   A.querySelector('#aSy').onclick=sync;
   A.querySelector('#aOut').onclick=logout;
+  try{ presenceTick(); }catch(e){}
 }
 
 function login(){
@@ -8956,8 +9078,7 @@ function fit(){
 }
 if(vv){vv.addEventListener('resize',fit);vv.addEventListener('scroll',fit)}
 addEventListener('resize',fit);document.addEventListener('hktab',fit);
-Q('#aiBack').onclick=()=>{
-  // خروج از تب AI بدون قطع صدا
+function leaveAiTab(){
   const prev = document.querySelector('nav button[data-t="m"]') || document.querySelector('nav button:not([data-t="a"])');
   if(prev) prev.click();
   else {
@@ -8967,7 +9088,18 @@ Q('#aiBack').onclick=()=>{
     document.dispatchEvent(new Event('hktab'));
   }
   setTimeout(typeof syncAiBgBar==='function'?syncAiBgBar:()=>{}, 50);
-};
+}
+Q('#aiBack').onclick=()=>leaveAiTab();
+document.addEventListener('keydown',function(ev){
+  if(ev.key==='Escape' && document.body.dataset.tab==='a'){
+    // اگر صفحه کلید/مودال خاصی باز نیست، از AI برگرد
+    try{
+      const pop=document.getElementById('aiVoicePop');
+      if(pop && !pop.classList.contains('hid')) return;
+    }catch(e){}
+    leaveAiTab();
+  }
+});
 
 function grow(){
   // ارتفاع را بدون ریست ناگهانی تنظیم کن تا نوار پایین نپرد
@@ -9711,7 +9843,7 @@ renderModeBar();render();fit();grow();
   window.__vc={parse:parseText};
 
   /* ===== ورود با صدا در تجدید حجم / استحصال ===== */
-  var hvMic=q('hvVcMic');
+  var hvMic=null; /* حذف‌شده */ //q('hvVcMic');
   if(hvMic){
     var UI_H={mic:hvMic,label:'🎙️ ورود با صدا (آفلاین)',st:'hvVcSt',prog:'hvVcProg',cf:'hvVcCf',onText:null};
     var hvPlan=null;
