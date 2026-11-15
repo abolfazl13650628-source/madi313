@@ -811,7 +811,7 @@ body.home-mode #ownerHome{display:block}
 .kpSave{display:flex;gap:8px;margin-bottom:6px}
 .kpSave.hid{display:none}
 .kpSave button{flex:1;min-width:0;padding:11px 6px;font-size:14px;font-weight:700;border-radius:12px}
-.kpGrid{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,var(--kpk,48px));gap:6px;direction:ltr;grid-template-areas:"k7 k8 k9 bk" "k4 k5 k6 nx" "k1 k2 k3 nx" "dc k0 pv cl"}
+.kpGrid{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,var(--kpk,48px));gap:6px;direction:ltr;grid-template-areas:"k7 k8 k9 bk" "k4 k5 k6 nx" "k1 k2 k3 nx" "pv k0 dc cl"}
 .kpGrid button{font-size:23px;font-weight:700;border-radius:12px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);padding:0;margin:0;touch-action:manipulation;min-height:0;box-shadow:none}
 .kpGrid button:active{background:var(--ac);color:var(--ac2)}
 .kpGrid button:disabled{opacity:.35}
@@ -914,7 +914,7 @@ window.needOcr=async()=>{if(typeof Tesseract==='undefined')await loadLib('https:
   </nav>
 
   <div id="gpsStrip">
-    <button id="drawerBtn" class="o sbtn" type="button" aria-label="پرونده‌ها" title="پرونده‌ها"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M3 5h18M3 12h18M3 19h18"/></svg></button>
+    <button id="drawerBtn" class="o sbtn" type="button" aria-label="ورود پرونده" title="ورود پرونده" style="font-size:11px;font-weight:700;padding:2px 8px!important;white-space:nowrap">ورود پرونده</button>
     <span id="gpsStripTxt"><span style="color:var(--mu)">◌ مختصات خاموش</span></span>
     <button id="ga" class="o sbtn" type="button">📍 مختصات</button>
     <button id="gTog" class="o sbtn hid" type="button" title="مخفی کردن مختصات">▴</button>
@@ -2199,16 +2199,32 @@ function hvKbBaseOutside(exceptKey){
   return n;
 }
 function hvRenumberKinds(box){
+  // شماره‌گذاری گردبینه فقط داخل همین پرونده (sheet فعال)؛ از ۱ به‌علاوه تعداد گردبینه‌های سایر کلیدها
   if(!box) return;
   let n=hvKbBaseOutside(box.dataset.hvkey);
   box.querySelectorAll('.hvRow:not(.hvHd)').forEach(row=>{
     const d=+toEn((row.querySelector('.hvD')||{}).value)||0;
     const kind=hvKindFromD(d);
-    const tyEl=row.querySelector('.hvTy'), noEl=row.querySelector('.hvNo');
+    const tyEl=row.querySelector('.hvTy');
+    const noInp=row.querySelector('.hvNoIn');
+    const noSpan=row.querySelector('.hvNo');
     if(tyEl) tyEl.textContent=kind?hvKindLabel(kind):'—';
-    if(noEl){
-      if(kind==='kb'){ n++; noEl.textContent=toFa(n); noEl.dataset.no=String(n); }
-      else { noEl.textContent='_'; noEl.dataset.no=''; }
+    if(kind==='kb'){
+      n++;
+      // اگر کاربر شماره را دستی گذاشته، حفظ کن؛ وگرنه خودکار
+      let cur=null;
+      if(noInp){
+        const t=String(noInp.value||'').trim();
+        if(t!==''){ const p=parseInt(String(toEn(t)),10); if(Number.isFinite(p)&&p>0) cur=p; }
+        if(cur==null){ noInp.value=toFa(n); noInp.dataset.no=String(n); }
+        else { noInp.dataset.no=String(cur); if(cur>n) n=cur; }
+        noInp.classList.remove('hid');
+        noInp.readOnly=false;
+      }
+      if(noSpan){ noSpan.textContent=toFa(cur!=null?cur:n); noSpan.dataset.no=String(cur!=null?cur:n); noSpan.classList.add('hid'); }
+    } else {
+      if(noInp){ noInp.value=''; noInp.dataset.no=''; noInp.classList.add('hid'); }
+      if(noSpan){ noSpan.textContent='_'; noSpan.dataset.no=''; noSpan.classList.remove('hid'); }
     }
   });
 }
@@ -2222,9 +2238,12 @@ function hvRowH(r,i){
   if(hvUseKindCols()){
     const dNum = (r && r.d!=null && r.d!=='') ? +toEn(String(r.d)) : 0;
     const kind = (r && r.kind) || hvKindFromD(dNum);
-    const no = (kind==='kb' && r && r.no!=null && r.no!=='') ? toFa(r.no) : '_';
+    const isKb = kind==='kb';
+    const noVal = (isKb && r && r.no!=null && r.no!=='') ? toFa(r.no) : '';
+    const noData = (isKb && r && r.no!=null && r.no!=='') ? String(r.no) : '';
     return '<div class="hvRow">'
-      +'<span class="hvNo" data-no="'+(kind==='kb'&&r&&r.no!=null?String(r.no):'')+'">'+no+'</span>'
+      +'<span class="hvNo'+(isKb?' hid':'')+'" data-no="'+noData+'">'+(isKb? (noVal||'_') : '_')+'</span>'
+      +'<input class="hvNoIn'+(isKb?'':' hid')+'" type="text" inputmode="numeric" dir="rtl" lang="fa" placeholder="ش" value="'+noVal+'" data-no="'+noData+'" title="شماره گردبینه (قابل ویرایش)" style="flex:0 0 40px;max-width:48px;text-align:center;font-weight:700;padding:6px 2px;min-height:40px;border-radius:10px">'
       +'<input class="hvD" type="text" inputmode="numeric" dir="rtl" lang="fa" placeholder="قطر" value="'+d+'">'
       +'<input class="hvH" type="text" inputmode="decimal" dir="rtl" lang="fa" placeholder="طول" value="'+h+'">'
       +plusBtn
@@ -2509,8 +2528,19 @@ function hvRowVal(r){
   const d=+toEn(r.querySelector('.hvD').value),h=+toEn(r.querySelector('.hvH').value),n=Math.round(+toEn(r.querySelector('.hvC').value))||1;
   if(!(d>0&&h>0)) return null;
   const kind=hvUseKindCols()?hvKindFromD(d):null;
-  const noEl=r.querySelector('.hvNo');
-  const no=(kind==='kb' && noEl && noEl.dataset.no)?(+noEl.dataset.no||null):null;
+  let no=null;
+  if(kind==='kb'){
+    const noInp=r.querySelector('.hvNoIn');
+    const noEl=r.querySelector('.hvNo');
+    if(noInp && String(noInp.value||'').trim()!==''){
+      const p=parseInt(String(toEn(noInp.value)),10);
+      if(Number.isFinite(p)&&p>0) no=p;
+    } else if(noInp && noInp.dataset.no){
+      const p=parseInt(noInp.dataset.no,10); if(Number.isFinite(p)&&p>0) no=p;
+    } else if(noEl && noEl.dataset.no){
+      const p=parseInt(noEl.dataset.no,10); if(Number.isFinite(p)&&p>0) no=p;
+    }
+  }
   return {d,h,n,v:vol(d,h,1)*n,kind:kind||undefined,no:no||undefined};
 }
 
@@ -2711,24 +2741,85 @@ function hvSortedEntries(a){
   return [...a.rows.entries()].sort((x,y)=>(((SP[x[0]]||[0,3])[1])-((SP[y[0]]||[0,3])[1]))||String(x[0]).localeCompare(String(y[0]),'fa'));
 }
 function hvDetailRows(which){
+  // قوانین:
+  // ۱) شماره گردبینه فقط برای همین پرونده (sheet فعال) و از ۱
+  // ۲) گردبینه با قطر/طول یکسان ادغام نمی‌شود — هر ردیف شماره جدا
+  // ۳) کاتین با قطر+طول یکسان ادغام می‌شود
+  // ۴) ترتیب: گونه (بر اساس کوچک‌ترین شماره گردبینه) → گردبینه‌ها به شماره → کاتین از قطر بزرگ به کوچک
   const sh=getActiveSheet(); const src=(sh&&sh.hvg&&sh.hvg[which])||{};
-  const cuts=[], hzList=[];
-  let kbSeq=0;
+  const bySp=new Map();
   Object.keys(src).forEach(k=>{
     const rows=src[k]; if(!rows||!rows.length) return;
-    let label,sp;
+    let sp, treeNo=999999;
     if(String(k).charAt(0)==='#'){
-      const t=T.find(x=>'#'+x.id===k); if(!t) return;
-      label=t.ty==='h'?'هیزمی':('شماره '+toFa(t.no||t.id)); sp=t.sp||'';
-    } else { label='گونه‌های مشابه'; sp=k; }
+      const t=T.find(x=>'#'+x.id===k);
+      if(t){
+        sp=t.sp||'نامشخص';
+        treeNo=(t.ty==='h'||t.no===''||t.no==null)?999999:(parseInt(String(toEn(t.no)),10)||999999);
+      } else {
+        sp='نامشخص';
+        treeNo=parseInt(String(k).slice(1),10)||999999;
+      }
+    } else {
+      sp=k||'نامشخص';
+    }
+    if(!bySp.has(sp)) bySp.set(sp,{items:[], hz:0, orderKey:treeNo});
+    const g=bySp.get(sp);
+    if(treeNo<g.orderKey) g.orderKey=treeNo;
     rows.forEach(r=>{
-      const kind=r.kind||(typeof hvKindFromD==='function'?hvKindFromD(r.d):null);
-      let no='_';
-      if(kind==='kb'){ kbSeq++; no=(r.no!=null&&r.no!=='')?r.no:kbSeq; }
-      cuts.push({label,sp,d:r.d,h:r.h,n:Math.round(+r.n)||1,v:+r.v||0,kind,no,tyLabel:(typeof hvKindLabel==='function'?hvKindLabel(kind):'')});
+      const d=+r.d||0, h=+r.h||0;
+      const kind=r.kind||(typeof hvKindFromD==='function'?hvKindFromD(d):null)||'';
+      const n=Math.round(+r.n)||1;
+      const v=+r.v||0;
+      let noRaw=null;
+      if(r.no!=null&&r.no!==''){ const p=parseInt(String(toEn(r.no)),10); if(Number.isFinite(p)&&p>0) noRaw=p; }
+      g.items.push({sp,d,h,n,v,kind,no:noRaw,tyLabel:(typeof hvKindLabel==='function'?hvKindLabel(kind):'')});
+      if(kind==='kb' && noRaw!=null && noRaw<g.orderKey) g.orderKey=noRaw;
     });
     const z=+(((sh.hvw||{})[which]||{})[k])||0;
-    if(z>0) hzList.push({label,sp,d:'',h:'',n:'',v:z*0.6,ster:z,note:'هیزم',kind:'hz',no:'_',tyLabel:'هیزم',isHz:true});
+    if(z>0) g.hz+=z;
+  });
+  const spOrder=[...bySp.entries()].sort((a,b)=>{
+    if(a[1].orderKey!==b[1].orderKey) return a[1].orderKey-b[1].orderKey;
+    const ca=(SP[a[0]]||[0,3])[1], cb=(SP[b[0]]||[0,3])[1];
+    if(ca!==cb) return ca-cb;
+    return String(a[0]).localeCompare(String(b[0]),'fa');
+  });
+  const cuts=[], hzList=[];
+  // شماره نمایشی گردبینه: همیشه از ۱ برای همین پرونده (نه ادامه پرونده دیگر)
+  let dispKb=0;
+  spOrder.forEach(([sp,g])=>{
+    const kbs=[], katins=[];
+    g.items.forEach(it=>{
+      if(it.kind==='kb') kbs.push(Object.assign({},it));
+      else katins.push(Object.assign({},it));
+    });
+    // گردبینه: بدون ادغام؛ مرتب بر اساس شماره ذخیره‌شده سپس قطر
+    kbs.sort((a,b)=>{
+      const na=(a.no!=null)?a.no:999999, nb=(b.no!=null)?b.no:999999;
+      if(na!==nb) return na-nb;
+      return (+b.d)-(+a.d) || (+b.h)-(+a.h);
+    });
+    kbs.forEach(r=>{
+      dispKb++;
+      cuts.push(Object.assign({},r,{no:dispKb,tyLabel:r.tyLabel||(typeof hvKindLabel==='function'?hvKindLabel('kb'):'کرده بینه')}));
+    });
+    // کاتین: ادغام قطر+طول+نوع یکسان
+    const mergeMap=new Map();
+    katins.forEach(it=>{
+      const key=String(it.kind||'')+'|'+String(+it.d)+'|'+String(+it.h);
+      if(mergeMap.has(key)){
+        const m=mergeMap.get(key);
+        m.n+=it.n; m.v+=it.v;
+      } else mergeMap.set(key,Object.assign({},it));
+    });
+    const merged=[...mergeMap.values()].sort((a,b)=> (+b.d)-(+a.d) || (+b.h)-(+a.h) || String(a.kind).localeCompare(String(b.kind)));
+    merged.forEach(r=>{
+      cuts.push(Object.assign({},r,{no:'_',tyLabel:r.tyLabel||(typeof hvKindLabel==='function'?hvKindLabel(r.kind):'')}));
+    });
+    if(g.hz>0){
+      hzList.push({sp,d:'',h:'',n:'',v:g.hz*0.6,ster:g.hz,note:'هیزم',kind:'hz',no:'_',tyLabel:'هیزم',isHz:true});
+    }
   });
   return cuts.concat(hzList);
 }
@@ -2806,26 +2897,10 @@ function hvSheets(which){
   const sheets=[];
 
   function allDetail(w){
-    const src=(sh&&sh.hvg&&sh.hvg[w])||{};
-    const hw=(sh&&sh.hvw&&sh.hvw[w])||{};
-    const cuts=[], hz=[];
-    let kbNo=0;
-    Object.keys(src).forEach(k=>{
-      const rows=src[k]; if(!rows||!rows.length) return;
-      let sp;
-      if(String(k).charAt(0)==='#'){ const t=T.find(x=>'#'+x.id===k); if(!t) return; sp=t.sp||''; }
-      else sp=k;
-      rows.forEach(r=>{
-        const d=+r.d||0, h=+r.h||0, n=Math.round(+r.n)||1, v=+r.v||0;
-        let kind=r.kind;
-        if(!kind){ if(d>=30) kind='kb'; else if(d>=20) kind='ki'; else if(d>=10) kind='kh'; else kind=''; }
-        let no='';
-        if(kind==='kb'){ kbNo++; no=(r.no!=null&&r.no!=='')?r.no:kbNo; }
-        cuts.push({sp,d,h,n,v,kind,no});
-      });
-      const z=+hw[k]||0;
-      if(z>0) hz.push({sp, ster:z, v:z*0.6});
-    });
+    // همان ترتیب/قوانین جدول روی صفحه (شماره گردبینه از ۱ برای همین پرونده؛ بدون ادغام گردبینه؛ ادغام کاتین)
+    const det=(typeof hvDetailRows==='function')?hvDetailRows(w):[];
+    const cuts=det.filter(r=>!r.isHz).map(r=>({sp:r.sp,d:r.d,h:r.h,n:r.n,v:r.v,kind:r.kind,no:r.no}));
+    const hz=det.filter(r=>r.isHz).map(r=>({sp:r.sp,ster:r.ster!=null?r.ster:(r.v/0.6),v:r.v}));
     return {cuts, hz};
   }
 
@@ -3214,9 +3289,16 @@ function hvInit(){
     };
     host.oninput=e=>{
       if(e.target.classList&&e.target.classList.contains('hvHzIn')){ const b=e.target.closest('[data-hvkey]'); if(b){ hvUpdatePipe(b); hvKeepDraft(b); hvScheduleSave(b); } return; }
+      if(e.target.classList&&e.target.classList.contains('hvNoIn')){
+        const b=e.target.closest('[data-hvkey]');
+        const p=parseInt(String(toEn(e.target.value||'')),10);
+        e.target.dataset.no=(Number.isFinite(p)&&p>0)?String(p):'';
+        if(b){ hvKeepDraft(b); hvScheduleSave(b); }
+        return;
+      }
       const row=e.target.closest('.hvRow'); if(!row||row.classList.contains('hvHd')) return;
       const body=e.target.closest('[data-hvkey]');
-      if(body && typeof hvUseKindCols==='function' && hvUseKindCols()) hvRenumberKinds(body);
+      if(body && typeof hvUseKindCols==='function' && hvUseKindCols() && !e.target.classList.contains('hvNoIn')) hvRenumberKinds(body);
       const x=hvRowVal(row);
       const vv=row.querySelector('.hvV'); if(vv) vv.value=x?fa(x.v,3):'';
       if(body){ hvUpdatePipe(body); hvKeepDraft(body); hvScheduleSave(body); }
@@ -5415,6 +5497,9 @@ function matchSp(raw){
 async function aiReadImage(file){
   const b64=await prepareAiImage(file);
   const j=await window.hkAiCall({image:b64,mime:'image/jpeg'});
+  return aiProcess(j);
+}
+function aiProcess(j,pageNote){
   const raw=(Array.isArray(j.rows)?j.rows:[]).map(o=>{
     const count=Math.max(1,Math.round(parseNum(o.count)||1));
     const planted=o.planted===true||String(o.planted).toLowerCase()==='true'||o.planted===1;
@@ -5437,7 +5522,39 @@ async function aiReadImage(file){
   if(j.partial)note+='⚠️ خروجی هوش مصنوعی ناقص بود؛ ردیف‌های آخر برگه را بررسی کنید. ';
   if(j.provider)note+='['+j.provider+'] ';
   if(unk)note+='⚠️ '+toFa(unk)+' سطر نام گونهٔ معتبر نداشت (قرمز)؛ اصلاح کنید. ';
+  if(pageNote)note+=pageNote;
   return {rows,note};
+}
+
+/* خواندن PDF چندصفحه‌ای: هر صفحه به تصویر تبدیل و جدا خوانده می‌شود، سپس ردیف‌ها ادغام می‌شوند */
+async function aiReadPdf(file,onProgress){
+  await needPdf();
+  const pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+  const MAXP=15,total=Math.min(pdf.numPages,MAXP);
+  const allRows=[];let lastTotal=null,failed=[],provider='',partial=false;
+  for(let i=1;i<=total;i++){
+    onProgress&&onProgress(i,total);
+    try{
+      const page=await pdf.getPage(i);
+      const v1=page.getViewport({scale:1});
+      const sc=Math.min(3,2000/Math.max(v1.width,v1.height));
+      const vp=page.getViewport({scale:sc});
+      const c=document.createElement('canvas');c.width=Math.round(vp.width);c.height=Math.round(vp.height);
+      const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);
+      await page.render({canvasContext:x,viewport:vp}).promise;
+      const b64=c.toDataURL('image/jpeg',0.85).split(',')[1];
+      const j=await window.hkAiCall({image:b64,mime:'image/jpeg'});
+      if(Array.isArray(j.rows))allRows.push(...j.rows);
+      const t=parseNum(j.total_volume);if(isFinite(t)&&t>0)lastTotal=t;
+      if(j.provider)provider=j.provider;if(j.partial)partial=true;
+    }catch(e){failed.push(i)}
+  }
+  if(!allRows.length)throw new Error('هیچ ردیفی از صفحه‌های PDF خوانده نشد');
+  let extra=' (PDF: '+toFa(total)+' صفحه';
+  if(pdf.numPages>MAXP)extra+='، فقط '+toFa(MAXP)+' صفحهٔ اول';
+  extra+=') ';
+  if(failed.length)extra+='⚠️ صفحه‌های '+failed.map(toFa).join('، ')+' خوانده نشد؛ دوباره امتحان کنید. ';
+  return aiProcess({rows:allRows,total_volume:lastTotal,provider,partial},extra);
 }
 
 const parseNum = s => {
@@ -5513,6 +5630,14 @@ document.getElementById('smartImportFile').onchange = async (e) => {
       btn.innerHTML = originalText; alert('فرمت .doc قدیمی پشتیبانی نمی‌شود. لطفاً به .docx تبدیل کنید.'); return;
     } else if (fext === 'pdf') {
       btn.innerHTML = '⏳ در حال خواندن PDF...';
+      let pdfAi = false;
+      if (window.hkAiLoggedIn && window.hkAiLoggedIn()) {
+        try {
+          const ai = await aiReadPdf(file, (i, n) => { btn.innerHTML = '🤖 خواندن صفحه ' + toFa(i) + ' از ' + toFa(n) + '...'; });
+          if (ai.rows.length) { aiRows = ai.rows; extractedData = ai.rows; importNote = ai.note; pdfAi = true; }
+        } catch (pe) { importNote = 'خواندن هوشمند PDF ناموفق بود (' + String(pe.message).split('\n')[0] + ')؛ فقط متن PDF خوانده شد (بدون نام گونه).'; }
+      }
+      if (!pdfAi) {
       await needPdf(); const arrayBuffer = await file.arrayBuffer(); const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       let fullText = '';
       for (let i = 1; i <= pdf.numPages; i++) {
@@ -5521,6 +5646,7 @@ document.getElementById('smartImportFile').onchange = async (e) => {
       }
       const lines = normalizeOcrText(fullText).split('\n');
       lines.forEach(line => { if (looksDate(line)) return; const matches = line.match(/\d+(?:\.\d+)?/g); if (matches && matches.length >= 2 && plausDH(parseFloat(matches[0]), parseFloat(matches[1]))) extractedData.push({ no:'', sp: '', d: parseFloat(matches[0]), h: parseFloat(matches[1]), ds: 'PDF' }); });
+      }
     } else if (file.type.startsWith('image/') || ['jpg','jpeg','png','webp','gif','bmp','heic','heif','tif','tiff'].includes(fext)) {
       let aiDone = false;
       if (!(window.hkAiLoggedIn && window.hkAiLoggedIn())) {
@@ -9003,9 +9129,9 @@ renderModeBar();render();fit();grow();
     <button type="button" data-k="1" style="grid-area:k1">۱</button>
     <button type="button" data-k="2" style="grid-area:k2">۲</button>
     <button type="button" data-k="3" style="grid-area:k3">۳</button>
-    <button type="button" data-k="dc" class="kDc" id="kpDc" aria-label="ممیز">٫</button>
-    <button type="button" data-k="0" style="grid-area:k0">۰</button>
     <button type="button" data-k="pv" class="kPv">▸ قبلی</button>
+    <button type="button" data-k="0" style="grid-area:k0">۰</button>
+    <button type="button" data-k="dc" class="kDc" id="kpDc" aria-label="ممیز">٫</button>
     <button type="button" data-k="cl" class="kCl">✕ بستن</button>
   </div>
 </div>
