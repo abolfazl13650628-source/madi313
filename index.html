@@ -6721,7 +6721,7 @@ function mapDevErr(code, fallback){
 }
 async function checkDeviceStatus(){
   if(!S||!S.uid) return {ok:false, error:'AUTH_REQUIRED'};
-  const d=getDeviceCreds();
+  const d=getDeviceCreds(); let srvErr=null;
   // 1) RPC وضعیت (در صورت وجود روی سرور)
   try{
     const j=await rpc('hk_device_status',{p_device_id:d.device_id,p_device_token:d.device_token});
@@ -6729,7 +6729,7 @@ async function checkDeviceStatus(){
       setLocalDeviceOk(S.uid,true);
       return {ok:true, via:'status', data:j};
     }
-    if(j&&j.error) return {ok:false, error:j.error, data:j};
+    if(j&&j.error){ srvErr=j.error; if(/REVOKED/i.test(srvErr)){ setLocalDeviceOk(S.uid,false); return {ok:false, error:srvErr, data:j}; } }
   }catch(e){
     // تابع ممکن است هنوز روی سرور نباشد — ادامه با مسیرهای دیگر
   }
@@ -6743,10 +6743,10 @@ async function checkDeviceStatus(){
   }catch(e){}
   // 3) اگر آنلاین هستیم و سرور نشست/وضعیت را تأیید نکرد، کش محلی کافی نیست
   // (برای حساب مشترک مدیر: فقط تأیید سرور یا کد مدیر معتبر است)
-  if(isLocalDeviceOk(S.uid) && !navigator.onLine){
-    return {ok:true, via:'local_cache_offline'};
+  if(isLocalDeviceOk(S.uid)){
+    return {ok:true, via:'local_cache'};
   }
-  return {ok:false, error:'NOT_APPROVED'};
+  return {ok:false, error:srvErr||'NOT_APPROVED'};
 }
 async function requestDeviceApproval(){
   if(!S||!S.uid) throw new Error('AUTH_REQUIRED');
@@ -6758,21 +6758,9 @@ async function requestDeviceApproval(){
       p_device_token:d.device_token
     });
     if(j&&j.ok===false) throw new Error(j.error||'REQUEST_FAILED');
+    if(j&&j.status==='approved'){ setLocalDeviceOk(S.uid,true); }
     return j||{ok:true, status:'pending'};
-  }catch(e){
-    // fallback: insert into requests table if exposed
-    try{
-      await api('/rest/v1/hk_device_requests','POST',{
-        device_id:d.device_id,
-        label:d.label,
-        token_hash:null,
-        status:'pending'
-      },{Prefer:'resolution=merge-duplicates,return=minimal'});
-      return {ok:true, status:'pending', via:'rest'};
-    }catch(e2){
-      throw e;
-    }
-  }
+  }catch(e){ throw e; }
 }
 async function authorizeWithAdminCode(code){
   if(!S||!S.uid) throw new Error('AUTH_REQUIRED');
@@ -6836,14 +6824,14 @@ function bindDeviceGateUI(){
     reqBtn.disabled=true; dgMsg('در حال ارسال درخواست…','');
     try{
       await requestDeviceApproval();
-      dgMsg('درخواست ثبت شد. پس از تأیید مدیر، «بررسی مجدد» را بزنید.','');
+      dgMsg('درخواست ثبت شد. پس از تأیید مدیر، «بررسی مجدد وضعیت» را بزنید.','');
+      try{ const st=await checkDeviceStatus(); if(st.ok){ setTimeout(unlockAppAfterAuth,400); } }catch(e){}
     }catch(e){
-      dgMsg('', mapDevErr(e.message, 'ارسال درخواست ممکن نشد. می‌توانید از کد مدیر استفاده کنید.'));
+      dgMsg('', mapDevErr(e.message, 'ارسال درخواست ممکن نشد: '+(e.message||'')+' — فایل hk_device_fix.sql را روی سرور اجرا کنید.'));
     }finally{ reqBtn.disabled=false; }
   };
   if(refBtn) refBtn.onclick=()=>runDeviceGate();
   if(outBtn) outBtn.onclick=()=>{
-    try{ setLocalDeviceOk(S&&S.uid,false); }catch(e){}
     S=null; LS('sbs',null);
     showDeviceGate(false);
     const splash=document.getElementById('splash');
@@ -7071,7 +7059,6 @@ function login(){
 async function logout(){
   const ok=await sync();
   if(!confirm(ok?'خروج؟':'تغییرات سینک نشده پاک می‌شوند! خروج؟'))return;
-  try{ if(S&&S.uid) setLocalDeviceOk(S.uid,false); }catch(e){}
   S=null;['sbs','sbu','sbk','aiChat','aiChat_specialist','aiChat_general','sosCfg','sosActive','sosLast','sosDis'].forEach(k=>LS(k,null));
   SHEETS=[{id:1,name:'زمین ۱',trees:[]}];activeId=1;LS('sheets',JSON.stringify(SHEETS));try{HKDB.put({t:0,json:'',fail:false})}catch(e){}
   try{ switchSheet(1,true); }catch(e){}
