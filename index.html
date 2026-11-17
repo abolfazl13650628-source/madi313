@@ -266,6 +266,24 @@ body[data-tab="h"] #sensors{display:none!important}
 button{font:inherit;background:var(--ac);color:var(--ac2);border:0;border-radius:10px;padding:10px 16px;cursor:pointer}
 button.o{background:none;color:var(--ac);border:1px solid var(--ac)}button.x{background:#b3402f;color:#fff;padding:2px 8px}
 
+
+/* ===== پنل حساب و همگام‌سازی + راهنمای کاربران نقشه ===== */
+#hkPanel{position:fixed;inset:0;z-index:1100;background:var(--bg);color:var(--tx);overflow-y:auto;padding:env(safe-area-inset-top,0px) 0 calc(16px + env(safe-area-inset-bottom,0px))}
+#hkPanel .pIn{max-width:640px;margin:auto;padding:10px 12px 24px}
+#hkPanel .pHd{display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--bg);padding:8px 0;z-index:2}
+#hkPanel h3{margin:0;color:var(--ac);font-size:17px}
+#hkPanel h4{margin:0 0 8px;font-size:14px;color:var(--ac)}
+#hkPanel .row{display:flex;gap:6px;align-items:center;justify-content:space-between;border:1px solid var(--bd);border-radius:10px;padding:8px 10px;margin-top:6px;font-size:13px}
+#hkPanel .row small{display:block;color:var(--mu);font-size:11px}
+#hkPanel .row .bt{display:flex;gap:4px;flex-shrink:0}
+#hkPanel .row button{padding:5px 10px;font-size:12px}
+#hkPanel .pm{min-height:20px;font-size:13px;margin-top:6px;color:var(--ac);font-weight:700}
+#hkPanel .pm.er{color:#b3261e}
+#hkPanel .dot{display:inline-block;width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--bd);vertical-align:middle;margin-left:6px}
+#opLegend{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;font-size:11px}
+#opLegend.hid{display:none}
+#opLegend .dot{display:inline-block;width:11px;height:11px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #888;vertical-align:middle;margin-left:4px}
+
 /* App Layout */
 #app{max-width:640px;margin:auto;padding:12px 12px 20px;display:none;min-height:100vh}
 #app-header{text-align:center;margin-bottom:10px;cursor:pointer}
@@ -1019,6 +1037,7 @@ window.needOcr=async()=>{if(typeof Tesseract==='undefined')await loadLib('https:
         </div>
         <canvas id="mc2" width="640" height="400" class="hid"></canvas>
         <div id="mapLegend" class="m hid" style="margin-top:4px;font-size:10px">● <span style="color:#1b7a34">صنعتی</span> ● <span style="color:#e08a00">هیزمی</span> ● <span style="color:#d33">خارج از محدوده</span> ● <span style="color:#2196f3">مسیر</span></div>
+        <div id="opLegend" class="m hid"></div>
         <div id="ms" class="gbox hid"><b id="mst"></b><div class="ac" id="msd"></div></div>
         <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="mal" checked style="width:auto"> هشدار صوتی هنگام خروج از محدوده</label>
       </div>
@@ -4267,9 +4286,9 @@ function refreshSatOverlays(){
   if(track.length>=2) L.polyline(track,{color:'#2196f3',weight:3,opacity:0.9}).addTo(satOverlays);
   (T||[]).forEach(t=>{
     if(!t.lat||!t.lng) return;
-    const col=t.ty==='h'?'#e08a00':'#1b7a34';
-    L.circleMarker([t.lat,t.lng],{radius:5,color:'#fff',weight:1,fillColor:col,fillOpacity:0.95})
-      .bindPopup((t.no?('ش '+t.no+' — '):'')+(t.sp||'')+(t.d?(' Ø'+t.d):''))
+    const col=t.ty==='h'?'#e08a00':'#1b7a34', oc=(window.hkOpColor&&t.by)?hkOpColor(t.by):col;
+    L.circleMarker([t.lat,t.lng],{radius:6,color:t.ty==='h'?'#e08a00':'#fff',weight:t.ty==='h'?3:1.5,fillColor:oc,fillOpacity:0.95})
+      .bindPopup((t.no?('ش '+t.no+' — '):'')+(t.sp||'')+(t.d?(' Ø'+t.d):'')+(t.bn?('<br>👤 '+t.bn):''))
       .addTo(satOverlays);
   });
   if(typeof cur!=='undefined' && cur && cur.lat){
@@ -4277,6 +4296,7 @@ function refreshSatOverlays(){
       .bindPopup('موقعیت فعلی شما').addTo(satOverlays);
   }
   satOverlays.addTo(satMap);
+  try{ window.hkOpLegend&&hkOpLegend(T); }catch(e){}
 }
 
 function fitSatView(preferUser){
@@ -5062,14 +5082,14 @@ function doSave(useCoords, forcedK){
   if (fw) {
     const o={no:'',sp,g:gVal,ty:'h',n:count,d,h,hManual:hv.hManual,f:ff(),v:hv.v,ds:$('#ds').value};
     if(forcedK) o.k = forcedK;
-    T.push(Object.assign({id:startId,...(coords||{lat:null,lng:null,ux:null,uy:null,uz:null,ua:null}),dt:isoLocal()},o));
+    T.push(Object.assign({id:startId,...(coords||{lat:null,lng:null,ux:null,uy:null,uz:null,ua:null}),dt:isoLocal(),...(window.hkOp?window.hkOp():{})},o));
   } else {
     let startNo = parseInt(toEn($('#no').value), 10);
     if (!startNo) startNo = nextIndustrialNo();
     for (let c = 0; c < count; c++) {
       const o={no:String(startNo + c),sp,g:gVal,ty:'i',n:1,d,h,hManual:hv.hManual,f:ff(),v:hv.v,ds:$('#ds').value};
       if(forcedK) o.k = forcedK;
-      T.push(Object.assign({id:startId+c, ...(coords||{lat:null,lng:null,ux:null,uy:null,uz:null,ua:null}), dt:isoLocal()},o));
+      T.push(Object.assign({id:startId+c, ...(coords||{lat:null,lng:null,ux:null,uy:null,uz:null,ua:null}), dt:isoLocal(),...(window.hkOp?window.hkOp():{})},o));
     }
   }
   
@@ -6022,7 +6042,7 @@ function showImportPreview(data, note, extra) {
         
         if (isFirewood(d)) {
           const newId = T.reduce((a, t) => Math.max(a, t.id), 0) + 1;
-          T.push({ id: newId, no: '', sp: sp, g: g, ty: 'h', n: n, d: d, h: h, hManual, f: 0.5, v: v, ds: ds, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: isoLocal() });
+          T.push({ id: newId, no: '', sp: sp, g: g, ty: 'h', n: n, d: d, h: h, hManual, f: 0.5, v: v, ds: ds, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: isoLocal(),...(window.hkOp?window.hkOp():{}) });
           added += n;
         } else {
           let finalNo = noRaw;
@@ -6030,7 +6050,7 @@ function showImportPreview(data, note, extra) {
             if (!finalNo) { currentMaxNo++; finalNo = String(currentMaxNo); }
             else { currentMaxNo = Math.max(currentMaxNo, parseInt(finalNo, 10) || 0); }
             const newId = T.reduce((a, t) => Math.max(a, t.id), 0) + 1;
-            T.push({ id: newId, no: finalNo, sp: sp, g: g, ty: 'i', n: 1, d: d, h: h, hManual, f: 0.5, v: v, ds: ds, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: isoLocal() });
+            T.push({ id: newId, no: finalNo, sp: sp, g: g, ty: 'i', n: 1, d: d, h: h, hManual, f: 0.5, v: v, ds: ds, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: isoLocal(),...(window.hkOp?window.hkOp():{}) });
             added++;
             finalNo = String((parseInt(finalNo, 10) || 0) + 1);
           }
@@ -6176,7 +6196,7 @@ function openQuickEntry(prefill, note) {
         
         if (isFirewood(d)) {
           const newId = T.reduce((a, t) => Math.max(a, t.id), 0) + 1;
-          T.push({ id: newId, no: '', sp: spFinal, g: g, ty: 'h', n: count, d: d, h: h, hManual, f: 0.5, v: v, ds: '', k: k, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: isoLocal() });
+          T.push({ id: newId, no: '', sp: spFinal, g: g, ty: 'h', n: count, d: d, h: h, hManual, f: 0.5, v: v, ds: '', k: k, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: isoLocal(),...(window.hkOp?window.hkOp():{}) });
           added += count;
         } else {
           for (let i = 0; i < count; i++) {
@@ -6184,7 +6204,7 @@ function openQuickEntry(prefill, note) {
             if (!finalNo) { currentMaxNo++; finalNo = String(currentMaxNo); }
             else { currentMaxNo = Math.max(currentMaxNo, parseInt(finalNo, 10) || 0); }
             const newId = T.reduce((a, t) => Math.max(a, t.id), 0) + 1;
-            T.push({ id: newId, no: finalNo, sp: spFinal, g: g, ty: 'i', n: 1, d: d, h: h, hManual, f: 0.5, v: v, ds: '', k: k, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: isoLocal() });
+            T.push({ id: newId, no: finalNo, sp: spFinal, g: g, ty: 'i', n: 1, d: d, h: h, hManual, f: 0.5, v: v, ds: '', k: k, lat: null, lng: null, ux: null, uy: null, uz: null, ua: null, dt: isoLocal(),...(window.hkOp?window.hkOp():{}) });
             added++;
             rowNo = String((parseInt(finalNo, 10) || 0) + 1);
           }
@@ -6643,7 +6663,7 @@ function getDeviceCreds(){
   if(!id||id.length<8){ id=(typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():(rid()+'-'+rid()); LS(DEV_ID_KEY,id); }
   if(!tok||tok.length<32){ tok=randHex(24); LS(DEV_TOK_KEY,tok); }
   let label='';
-  try{ label=(navigator.userAgent||'').slice(0,60)||'دستگاه'; }catch(e){ label='دستگاه'; }
+  label=LS('hk_op_name')||('کاربر '+id.slice(0,4));
   return {device_id:id, device_token:tok, label:label};
 }
 function deviceOkKey(uid){ return DEV_OK_PREFIX+(uid||''); }
@@ -6847,6 +6867,70 @@ async function fresh(){
   }
 }
 
+
+/* ===== کاربران روی نقشه ===== */
+const OPC=['#1e88e5','#8e24aa','#00acc1','#d81b60','#6d4c41','#3949ab','#f4511e','#7cb342','#5e35b1','#c0ca33'];
+const opName=()=>LS('hk_op_name')||('کاربر '+(LS(DEV_ID_KEY)||'0000').slice(0,4));
+window.hkOp=()=>({by:(LS(DEV_ID_KEY)||getDeviceCreds().device_id).slice(0,8),bn:opName()});
+window.hkOpColor=by=>{let h=0;for(const c of String(by))h=(h*31+c.charCodeAt(0))>>>0;return OPC[h%OPC.length]};
+window.hkOpLegend=trees=>{
+  const el=document.getElementById('opLegend');if(!el)return;
+  const m=new Map();(trees||[]).forEach(t=>{if(t.by&&t.lat&&t.lng){const o=m.get(t.by)||{n:t.bn||t.by,c:0};o.c++;if(t.bn)o.n=t.bn;m.set(t.by,o)}});
+  if(!m.size){el.classList.add('hid');return}
+  el.classList.remove('hid');
+  el.innerHTML='<span>کاربران:</span>'+[...m].map(([k,o])=>'<span><i class="dot" style="background:'+hkOpColor(k)+'"></i>'+esc(o.n)+' ('+(typeof toFa==='function'?toFa(o.c):o.c)+')</span>').join('')+'<span>· حلقهٔ نارنجی = هیزمی</span>';
+};
+
+/* ===== پنل حساب / همگام‌سازی / مدیر ===== */
+const fa=n=>typeof toFa==='function'?toFa(n):n;
+const dt=x=>x?new Date(x).toLocaleString('fa-IR',{dateStyle:'short',timeStyle:'short'}):'—';
+async function adm(fn,ex){const d=getDeviceCreds();const j=await rpc(fn,Object.assign({p_device_id:d.device_id,p_device_token:d.device_token},ex||{}));if(j&&j.ok===false)throw Object.assign(new Error(j.error||'ERR'),{code:j.error});return j}
+const ADM_ERR={NOT_ADMIN:'این بخش فقط روی دستگاه مدیر کار می‌کند.',WRONG_ADMIN_CODE:'کد مدیر فعلی اشتباه است.',CODE_TOO_SHORT:'کد جدید حداقل ۶ نویسه باشد.'};
+function openPanel(){
+  if(!S||document.getElementById('hkPanel'))return;
+  const p=document.createElement('div');p.id='hkPanel';
+  p.innerHTML='<div class="pIn"><div class="pHd"><h3>⚙️ حساب و همگام‌سازی</h3><button class="o" id="pX">بستن</button></div>'
+  +'<div class="c"><h4>وضعیت همگام‌سازی</h4><div id="pSt"></div><button id="pSy" style="width:100%;margin-top:8px">🔄 همگام‌سازی همین حالا</button></div>'
+  +'<div class="c"><h4>نام شما روی نقشه</h4><div class="m">درخت‌هایی که ثبت می‌کنید با این نام و رنگ دیده می‌شوند.</div><div class="row" style="border:0;padding:6px 0"><input id="pNm" maxlength="30"><button id="pNs">ذخیره</button></div><div id="pNc"></div></div>'
+  +'<div class="c"><h4>مدیریت دستگاه‌ها (مدیر)</h4><div id="pAd" class="m">در حال بارگذاری…</div></div></div>';
+  document.body.append(p);
+  const $p=s=>p.querySelector(s);
+  const st=()=>{$p('#pSt').innerHTML='👤 '+esc(S.name)+'<br>'+esc(msg||'—')+'<br><span class="m">'+fa(SHEETS.length)+' سربرگ · '+(navigator.onLine?'آنلاین':'آفلاین')+'</span>';$p('#pNc').innerHTML='<span class="dot" style="background:'+hkOpColor(hkOp().by)+'"></span> رنگ شما روی نقشه'};
+  st();$p('#pNm').value=opName();
+  $p('#pX').onclick=()=>p.remove();
+  $p('#pSy').onclick=async()=>{await sync();st()};
+  $p('#pNs').onclick=async()=>{
+    const v=$p('#pNm').value.trim();if(!v)return;LS('hk_op_name',v);st();
+    try{await adm('hk_device_rename',{p_label:v})}catch(e){}
+  };
+  const load=async()=>{
+    const box=$p('#pAd');
+    try{
+      const j=await adm('hk_admin_list');const me=getDeviceCreds().device_id;
+      const rq=(j.requests||[]).filter(r=>r.status==='pending'),ss=j.sessions||[];
+      box.innerHTML='<b>درخواست‌های در انتظار ('+fa(rq.length)+')</b>'
+       +(rq.map(r=>'<div class="row"><div>'+esc(r.label||'دستگاه')+'<small>'+esc((r.device_id||'').slice(0,10))+'…</small></div><div class="bt"><button data-a="ok" data-d="'+esc(r.device_id)+'">تأیید</button><button class="x" data-a="no" data-d="'+esc(r.device_id)+'">رد</button></div></div>').join('')||'<div class="m">درخواستی نیست.</div>')
+       +'<br><b style="display:block;margin-top:10px">دستگاه‌های واردشده ('+fa(ss.length)+')</b>'
+       +ss.map(s=>'<div class="row"><div><i class="dot" style="background:'+hkOpColor((s.device_id||'').slice(0,8))+'"></i>'+esc(s.label||'دستگاه')+(s.device_id===me?' (این دستگاه)':'')+(s.is_admin?' 👑':'')+'<small>آخرین فعالیت: '+dt(s.last_seen)+(s.revoked_at?' · قطع‌شده':'')+'</small></div>'
+         +((!s.revoked_at&&s.device_id!==me&&!s.is_admin)?'<div class="bt"><button class="x" data-a="rv" data-d="'+esc(s.device_id)+'">قطع دسترسی</button></div>':'')+'</div>').join('')
+       +'<br><b style="display:block;margin-top:10px">تغییر کد مدیر</b><input id="pC0" type="password" placeholder="کد فعلی" autocomplete="off" style="margin-top:6px"><input id="pC1" type="password" placeholder="کد جدید (حداقل ۶ نویسه)" autocomplete="off" style="margin-top:6px"><button id="pCs" style="width:100%;margin-top:6px">ذخیرهٔ کد جدید</button><div class="pm" id="pMs"></div>';
+      const ms=(t,e)=>{const m=$p('#pMs');m.textContent=t;m.className='pm'+(e?' er':'')};
+      box.querySelectorAll('[data-a]').forEach(b=>b.onclick=async()=>{
+        b.disabled=true;const a=b.dataset.a;
+        try{await adm(a==='rv'?'hk_admin_revoke':'hk_admin_decide',a==='rv'?{p_target:b.dataset.d}:{p_target:b.dataset.d,p_approve:a==='ok'});await load()}
+        catch(e){ms(ADM_ERR[e.code]||e.message,1);b.disabled=false}
+      });
+      $p('#pCs').onclick=async()=>{
+        try{await adm('hk_admin_set_code',{p_old:$p('#pC0').value,p_new:$p('#pC1').value});$p('#pC0').value=$p('#pC1').value='';ms('✓ کد مدیر تغییر کرد.')}
+        catch(e){ms(ADM_ERR[e.code]||e.message,1)}
+      };
+    }catch(e){
+      box.innerHTML='<div class="m">'+esc(e.code==='NOT_ADMIN'?ADM_ERR.NOT_ADMIN:(/Could not find|404|PGRST/i.test(e.message||'')?'توابع مدیریت هنوز روی سرور نصب نشده‌اند (فایل hk_admin_panel.sql را اجرا کنید).':(e.message||'خطا')))+'</div>';
+    }
+  };
+  load();
+}
+
 window.hkAiLoggedIn=()=>!!S;
 
 window.hkAiCall=async(body)=>{
@@ -6956,8 +7040,9 @@ function ui(){
     A.innerHTML='<button id="aIn" class="o">☁️ ورود / ثبت‌نام</button>';
     A.querySelector('#aIn').onclick=login;return;
   }
-  A.innerHTML='<span>☁️ '+esc(S.name)+' · '+esc(msg)+'</span><button id="aSy" class="o">همگام‌سازی</button><button id="aOut" class="o">خروج</button>';
+  A.innerHTML='<span>☁️ '+esc(S.name)+' · '+esc(msg)+'</span><button id="aSy" class="o">همگام‌سازی</button><button id="aPn" class="o">⚙️ پنل</button><button id="aOut" class="o">خروج</button>';
   A.querySelector('#aSy').onclick=sync;
+  A.querySelector('#aPn').onclick=openPanel;
   A.querySelector('#aOut').onclick=logout;
 }
 
