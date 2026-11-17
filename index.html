@@ -6768,6 +6768,7 @@ async function authorizeWithAdminCode(code){
     throw Object.assign(new Error(err),{code:err});
   }
   setLocalDeviceOk(S.uid,true);
+  try{ if(j&&j.role) LS('hk_dev_role_'+(S.uid||''), j.role); }catch(e){}
   return j;
 }
 async function runDeviceGate(){
@@ -6802,10 +6803,11 @@ function bindDeviceGateUI(){
     if(!code){ dgMsg('','کد مدیر را وارد کنید.'); return; }
     codeBtn.disabled=true; dgMsg('در حال بررسی کد…','');
     try{
-      await authorizeWithAdminCode(code);
-      dgMsg('✓ دستگاه با کد مدیر تأیید شد.','');
+      const res=await authorizeWithAdminCode(code);
+      const isAdmin=res&&(res.role==='admin'||res.admin_recovered);
+      dgMsg(isAdmin?'✓ بازیابی مدیر انجام شد؛ این دستگاه اختیارات کامل مدیر را دارد.':'✓ دستگاه با کد مدیر تأیید شد.','');
       if(codeIn) codeIn.value='';
-      setTimeout(unlockAppAfterAuth, 400);
+      setTimeout(unlockAppAfterAuth, 500);
     }catch(e){
       dgMsg('', mapDevErr(e.code||e.message, e.message));
     }finally{ codeBtn.disabled=false; }
@@ -6865,6 +6867,8 @@ const fe=e=>{
   if(/already/i.test(m))return 'این نام کاربری قبلاً ثبت شده.';
   if(/Failed to fetch|NetworkError|Load failed/i.test(m))return 'اتصال به سرور برقرار نشد.';
   if(/Confirm/i.test(m))return 'تایید ایمیل در Supabase خاموش نیست.';
+  if(/row-level security|hk_device_gate/i.test(m))
+    return 'دستگاه برای همگام‌سازی تأیید نشده. از منوی حساب خارج شوید، دوباره وارد شوید و کد مدیر را بزنید تا اختیارات کامل مدیر فعال شود.';
   return m;
 };
 
