@@ -6747,7 +6747,7 @@ function hkDeviceId(){try{let d=LS('hk_device');if(!d){d='d'+Math.random().toStr
 function hkDeviceToken(){try{let t=LS('hk_device_token');if(!t){if(!window.crypto||!crypto.getRandomValues)throw new Error('secure-random-unavailable');const a=new Uint8Array(32);crypto.getRandomValues(a);t=Array.from(a,b=>b.toString(16).padStart(2,'0')).join('');LS('hk_device_token',t)}return t}catch(e){return ''}}
 function hkDeviceHeaders(){const d=LS('hk_device'),t=LS('hk_device_token');return d&&t?{'x-hk-device':d,'x-hk-device-token':t}:{}}
 window.hkDeviceHeaders=hkDeviceHeaders;
-let deviceRole=null,deviceGateAvailable=null,deviceGateBusy=false,deviceGateBlocked=false,adminSetupShown=false;
+let deviceRole=null,deviceGateAvailable=null,deviceGateBusy=false,deviceGatePromise=null,deviceGateBlocked=false,adminSetupShown=false;
 let S=null;try{S=JSON.parse(LS('sbs')||'null')}catch(e){}
 let busy=false,tm=null,msg='';
 const em=u=>u.trim().toLowerCase()+'@hirkani.app';
@@ -6783,7 +6783,7 @@ window.hkAiCall=async(body)=>{
   const gate=await ensureDeviceAccess();if(!gate.ok)throw new Error('نشست این دستگاه مجاز نیست یا نیاز به تأیید مدیر دارد.');
   await fresh();
   let r;
-  try{r=await fetch(SB_URL+'/functions/v1/read-table',{method:'POST',headers:Object.assign({'Content-Type':'application/json',apikey:SB_KEY,Authorization:'Bearer '+S.access_token},hkDeviceHeaders()),body:JSON.stringify(body),signal:(AbortSignal.timeout?AbortSignal.timeout(body&&body.stt?30000:(body&&body.chat?70000:110000)):undefined)})}
+  try{r=await fetch(SB_URL+'/functions/v1/read-table',{method:'POST',headers:{'Content-Type':'application/json',apikey:SB_KEY,Authorization:'Bearer '+S.access_token},body:JSON.stringify(body),signal:(AbortSignal.timeout?AbortSignal.timeout(body&&body.stt?30000:(body&&body.chat?70000:110000)):undefined)})}
   catch(e){throw new Error(e&&(e.name==='TimeoutError'||e.name==='AbortError')?(body&&body.image?'زمان خواندن تصویر تمام شد؛ عکس واضح‌تر یا کوچک‌تر را امتحان کنید':'پاسخ‌گویی سرور بیش از حد طول کشید؛ دوباره امتحان کنید'):'اتصال به سرور برقرار نشد')}
   const j=await r.json().catch(()=>({}));
   if(r.status===404)throw new Error('سرویس هوشمند هنوز روی سرور نصب نشده');
@@ -6850,11 +6850,22 @@ function showAdminSetup(){
   document.body.append(o);
   o.querySelector('#hkAdminSave').onclick=async()=>{const c=o.querySelector('#hkAdminCode').value,c2=o.querySelector('#hkAdminCode2').value,er=o.querySelector('#hkAdminErr');if(c.length<8){er.textContent='کد باید حداقل ۸ نویسه داشته باشد.';return}if(c!==c2){er.textContent='دو کد واردشده یکسان نیستند.';return}const b=o.querySelector('#hkAdminSave');b.disabled=true;er.textContent='در حال ثبت امن کد…';try{await fresh();const r=await api('/rest/v1/rpc/hk_admin_claim','POST',{p_device_id:hkDeviceId(),p_label:deviceLabel(),p_device_token:hkDeviceToken(),p_code:c});if(!r||!r.ok)throw new Error('ثبت مدیریت انجام نشد؛ ممکن است دستگاه دیگری زودتر مدیر شده باشد.');deviceRole='admin';deviceGateAvailable=true;o.remove();adminSetupShown=false;ui();await sync(true)}catch(e){er.textContent=fe(e);b.disabled=false}};
 }
+function showDevicePending(){
+  if(document.querySelector('#aov[data-hk-device-pending]')||!S)return;
+  const old=document.getElementById('aov');if(old)old.remove();
+  try{const app=document.getElementById('app');if(app)app.style.display='none'}catch(e){}
+  const o=document.createElement('div');o.id='aov';o.dataset.hkDevicePending='1';
+  o.innerHTML='<div class="bx" style="max-width:390px"><div style="font-size:34px">🔒</div><b style="font-size:17px">درخواست تأیید دستگاه</b><p style="font-size:13px;line-height:2;text-align:right">این دستگاه هنوز توسط مدیر اصلی تأیید نشده است. تا زمان تأیید، اطلاعات حساب و امکانات برنامه قفل می‌ماند. لطفاً از مدیر بخواهید درخواست این دستگاه را در بخش «مدیریت دستگاه‌ها» تأیید کند.</p><div id="hkPendingStatus" class="err">در انتظار تأیید مدیر…</div><button id="hkPendingRetry" class="o" style="margin-top:10px">بررسی دوباره</button><button id="hkPendingLogout" class="o" style="margin-top:8px">خروج از حساب</button></div>';
+  document.body.append(o);
+  o.querySelector('#hkPendingRetry').onclick=async()=>{const b=o.querySelector('#hkPendingRetry');b.disabled=true;try{const g=await ensureDeviceAccess();if(g.ok){o.remove();await sync(true)}else{o.querySelector('#hkPendingStatus').textContent=g.requestRejected?'درخواست قبلی رد شده است؛ برای درخواست تازه با مدیر هماهنگ کنید.':'هنوز تأیید نشده است.'}}finally{b.disabled=false}};
+  o.querySelector('#hkPendingLogout').onclick=()=>{S=null;LS('sbs',null);o.remove();deviceRole=null;ui()};
+}
 async function ensureDeviceAccess(){
   if(!S||!S.uid)return {ok:false};
   if(deviceGateBlocked)return {ok:false,revoked:true};
-  if(deviceGateBusy)return {ok:false,busy:true};
+  if(deviceGateBusy)return deviceGatePromise||{ok:false,busy:true};
   deviceGateBusy=true;
+  deviceGatePromise=(async()=>{
   try{
     await fresh();
     const d=hkDeviceId(),t=hkDeviceToken();
@@ -6863,12 +6874,16 @@ async function ensureDeviceAccess(){
     if(!r.ok){const code=j&&j.code||'';const message=(j&&(j.message||j.details))||raw||'';if(r.status===404||code==='PGRST202'||code==='42883'||/could not find the function|schema cache/i.test(message)){deviceGateAvailable=false;throw new Error('سامانه مدیریت دستگاه‌ها هنوز روی Supabase نصب نشده است؛ تا نصب و فعال‌سازی آن، همگام‌سازی اطلاعات متوقف می‌ماند.')}throw new Error(message||('خطای کنترل دستگاه '+r.status));}
     if(Array.isArray(j))j=j[0];deviceGateAvailable=true;
     if(j&&j.needs_admin){deviceRole=null;showAdminSetup();return {ok:false,needsAdmin:true}}
+    if(j&&j.pending_approval){deviceRole=null;showDevicePending();return {ok:false,pending:true}}
+    if(j&&j.request_rejected){deviceRole=null;showDevicePending();return {ok:false,pending:true,requestRejected:true}}
     if(j&&j.revoked){deviceGateBlocked=true;forceDeviceExit();return {ok:false,revoked:true}}
-    if(j&&j.recover_required){showAdminRecovery();return {ok:false,recover:true}}
+    if(j&&j.recover_required){showDevicePending();return {ok:false,pending:true}}
     if(!j||j.ok!==true)throw new Error('پاسخ نامعتبر از سامانه مدیریت دستگاه‌ها');
-    deviceRole=j.role||'member';ui();return {ok:true,role:deviceRole};
+    deviceRole=j.role||'member';const pend=document.querySelector('#aov[data-hk-device-pending]');if(pend){pend.remove();try{document.getElementById('splash').style.display='none';document.getElementById('app').style.display='block';document.body.classList.add('home-mode')}catch(e){}}ui();return {ok:true,role:deviceRole};
   }catch(e){msg='⚠️ '+fe(e);try{ui()}catch(x){}return {ok:false,error:e}}
-  finally{deviceGateBusy=false}
+  finally{deviceGateBusy=false;deviceGatePromise=null}
+  })();
+  return deviceGatePromise;
 }
 window.hkEnsureDeviceAccess=ensureDeviceAccess;
 function forceDeviceExit(){
@@ -6885,10 +6900,39 @@ function showAdminRecovery(){
 async function adminRpc(name,args){await fresh();return api('/rest/v1/rpc/'+name,'POST',args)}
 async function showDeviceManager(){
   if(deviceRole!=='admin')return;
-  const o=document.createElement('div');o.id='aov';o.innerHTML='<div class="bx" style="max-width:440px;max-height:85vh;overflow:auto;text-align:right"><div style="display:flex;justify-content:space-between;align-items:center"><b>مدیریت دستگاه‌های متصل</b><button id="hkDevClose" class="o" style="width:auto">بستن</button></div><div id="hkDevList" style="margin-top:12px">در حال دریافت فهرست…</div><hr style="border:0;border-top:1px solid var(--bd);margin:14px 0"><button id="hkChangeCode" class="o">تغییر کد مدیریت</button><button id="hkKickOthers" style="background:#b42318;margin-top:8px">خروج همه دستگاه‌های دیگر</button></div>';document.body.append(o);o.querySelector('#hkDevClose').onclick=()=>o.remove();
+  const o=document.createElement('div');o.id='aov';o.innerHTML='<div class="bx" style="max-width:460px;max-height:85vh;overflow:auto;text-align:right"><div style="display:flex;justify-content:space-between;align-items:center"><b><span style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:#fff2c2;margin-left:6px">👑</span> مدیریت دستگاه‌های متصل</b><button id="hkDevClose" class="o" style="width:auto">بستن</button></div><div style="font-size:11px;color:var(--mu);margin:8px 0">درخواست‌های جدید فقط پس از تأیید مدیر به حساب دسترسی می‌گیرند.</div><div id="hkDevList" style="margin-top:12px">در حال دریافت فهرست…</div><hr style="border:0;border-top:1px solid var(--bd);margin:14px 0"><button id="hkChangeCode" class="o">تغییر کد مدیریت</button><button id="hkKickOthers" style="background:#b42318;margin-top:8px">خروج همه دستگاه‌های دیگر</button></div>';document.body.append(o);o.querySelector('#hkDevClose').onclick=()=>o.remove();
   const list=o.querySelector('#hkDevList');
-  async function refresh(){try{const data=await adminRpc('hk_device_list',{p_device_id:hkDeviceId(),p_device_token:hkDeviceToken()});const rows=Array.isArray(data)?data:(data&&data.devices)||[];list.innerHTML='';if(!rows.length){list.textContent='دستگاه دیگری ثبت نشده است.';return}rows.forEach(d=>{const row=document.createElement('div');row.style.cssText='display:flex;gap:8px;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--bd)';const info=document.createElement('div');const online=Date.now()-Date.parse(d.last_seen||0)<45000;info.innerHTML='<b></b><div style="font-size:11px;color:var(--mu)"></div>';info.querySelector('b').textContent=(d.label||'دستگاه')+(d.is_admin?' 👑 مدیر اصلی':'');info.querySelector('div').textContent=(online?'🟢 آنلاین':'⚪ غیرفعال')+' · آخرین فعالیت: '+(d.last_seen?new Date(d.last_seen).toLocaleString('fa-IR'):'نامشخص');row.append(info);if(!d.is_admin&&d.device_id){const x=document.createElement('button');x.textContent='×';x.title='اخراج دستگاه';x.style.cssText='background:#b42318;width:38px;min-width:38px;font-size:20px';x.onclick=async()=>{if(!confirm('این دستگاه از حساب خارج شود؟ نشست آن باطل خواهد شد.'))return;try{await adminRpc('hk_device_revoke',{p_device_id:hkDeviceId(),p_target_device_id:d.device_id,p_device_token:hkDeviceToken()});await refresh()}catch(e){alert(fe(e))}};row.append(x)}list.append(row)})}catch(e){list.textContent='خطا در دریافت دستگاه‌ها: '+fe(e)}}
-  await refresh();o.querySelector('#hkKickOthers').onclick=async()=>{if(!confirm('تمام دستگاه‌های دیگر از حساب خارج شوند؟'))return;try{await adminRpc('hk_device_revoke_all',{p_device_id:hkDeviceId(),p_device_token:hkDeviceToken()});await refresh()}catch(e){alert(fe(e))}};
+  async function refresh(){
+    try{
+      const data=await adminRpc('hk_device_list',{p_device_id:hkDeviceId(),p_device_token:hkDeviceToken()});
+      const rows=Array.isArray(data)?data:(data&&data.devices)||[];list.innerHTML='';
+      if(!rows.length){list.textContent='هنوز دستگاه دیگری ثبت نشده است.';return}
+      rows.forEach(d=>{
+        const row=document.createElement('div');row.style.cssText='display:flex;gap:9px;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--bd)';
+        const info=document.createElement('div');info.style.cssText='display:flex;gap:8px;align-items:flex-start;min-width:0;flex:1';
+        const ico=document.createElement('span');ico.textContent=d.is_admin?'👑':(d.is_pending?'🕓':(d.is_revoked||d.status==='rejected'?'⛔':'📱'));ico.style.cssText='font-size:22px;width:30px;text-align:center;flex:none';
+        const detail=document.createElement('div');detail.style.cssText='min-width:0';
+        const title=document.createElement('b');title.textContent=(d.label||'دستگاه')+(d.is_admin?' · مدیر اصلی':d.is_pending?' · درخواست تأیید':d.is_revoked?' · اخراج‌شده':d.status==='rejected'?' · ردشده':'');
+        const sub=document.createElement('div');sub.style.cssText='font-size:11px;color:var(--mu);line-height:1.8';
+        const online=d.last_seen&&Date.now()-Date.parse(d.last_seen)<45000;
+        sub.textContent=(d.is_pending?'در انتظار تصمیم مدیر':d.is_revoked?'دسترسی مسدود است':d.status==='rejected'?'درخواست قبلاً رد شده':(online?'🟢 آنلاین':'⚪ غیرفعال'))+(d.last_seen?' · آخرین فعالیت: '+new Date(d.last_seen).toLocaleString('fa-IR'):' · درخواست: '+(d.requested_at?new Date(d.requested_at).toLocaleString('fa-IR'):'زمان نامشخص'));
+        detail.append(title,sub);info.append(ico,detail);row.append(info);
+        if(d.is_pending&&d.device_id){
+          const actions=document.createElement('div');actions.style.cssText='display:flex;gap:5px;flex:none';
+          const yes=document.createElement('button');yes.textContent='تأیید';yes.style.cssText='background:#18794e;padding:7px 10px;width:auto';
+          yes.onclick=async()=>{yes.disabled=true;try{await adminRpc('hk_device_approve',{p_device_id:hkDeviceId(),p_target_device_id:d.device_id,p_device_token:hkDeviceToken()});await refresh()}catch(e){alert(fe(e));yes.disabled=false}};
+          const no=document.createElement('button');no.textContent='رد';no.style.cssText='background:#b42318;padding:7px 10px;width:auto';
+          no.onclick=async()=>{if(!confirm('درخواست این دستگاه رد شود؟'))return;no.disabled=true;try{await adminRpc('hk_device_reject',{p_device_id:hkDeviceId(),p_target_device_id:d.device_id,p_device_token:hkDeviceToken()});await refresh()}catch(e){alert(fe(e));no.disabled=false}};
+          actions.append(yes,no);row.append(actions);
+        }else if(!d.is_admin&&!d.is_revoked&&d.device_id){
+          const x=document.createElement('button');x.textContent='اخراج';x.title='اخراج دستگاه';x.style.cssText='background:#b42318;width:auto;padding:7px 10px;flex:none';
+          x.onclick=async()=>{if(!confirm('این دستگاه از حساب خارج و دسترسی آن مسدود شود؟'))return;try{await adminRpc('hk_device_revoke',{p_device_id:hkDeviceId(),p_target_device_id:d.device_id,p_device_token:hkDeviceToken()});await refresh()}catch(e){alert(fe(e))}};row.append(x);
+        }
+        list.append(row);
+      });
+    }catch(e){list.textContent='خطا در دریافت دستگاه‌ها: '+fe(e)}
+  }
+  await refresh();o.querySelector('#hkKickOthers').onclick=async()=>{if(!confirm('تمام دستگاه‌های دیگر از حساب خارج و مسدود شوند؟'))return;try{await adminRpc('hk_device_revoke_all',{p_device_id:hkDeviceId(),p_device_token:hkDeviceToken()});await refresh()}catch(e){alert(fe(e))}};
   o.querySelector('#hkChangeCode').onclick=()=>showChangeAdminCode();
 }
 function showChangeAdminCode(){
@@ -7053,9 +7097,8 @@ function ui(){
     A.innerHTML='<button id="aIn" class="o">☁️ ورود / ثبت‌نام</button>';
     A.querySelector('#aIn').onclick=login;return;
   }
-  A.innerHTML='<span>☁️ '+esc(S.name)+'<span id="presenceCnt"></span> · '+esc(msg)+'</span>'+(deviceRole==='admin'?'<button id="aDevices" class="o">👑 مدیریت دستگاه‌ها</button>':(deviceRole==='member'?'<button id="aRecoverAdmin" class="o">انتقال مدیریت به این دستگاه</button>':''))+(deviceGateAvailable===false?'<span style="font-size:10px;color:#b45309">مدیریت دستگاه‌ها هنوز فعال نیست؛ فایل SQL لازم است.</span>':'')+'<button id="aSy" class="o">همگام‌سازی</button><button id="aOut" class="o">خروج</button>';
+  A.innerHTML='<span>☁️ '+esc(S.name)+'<span id="presenceCnt"></span> · '+esc(msg)+'</span>'+(deviceRole==='admin'?'<button id="aDevices" class="o">👑 مدیریت دستگاه‌ها</button>':'')+(deviceGateAvailable===false?'<span style="font-size:10px;color:#b45309">مدیریت دستگاه‌ها هنوز فعال نیست؛ فایل SQL لازم است.</span>':'')+'<button id="aSy" class="o">همگام‌سازی</button><button id="aOut" class="o">خروج</button>';
   if(A.querySelector('#aDevices'))A.querySelector('#aDevices').onclick=showDeviceManager;
-  if(A.querySelector('#aRecoverAdmin'))A.querySelector('#aRecoverAdmin').onclick=showAdminRecovery;
   A.querySelector('#aSy').onclick=()=>sync();
   A.querySelector('#aOut').onclick=logout;
   try{ presenceTick(); }catch(e){}
@@ -7214,7 +7257,7 @@ async function push(force){
   pushBusy=true;
   try{
     let sh=null;try{sh=getActiveSheet()}catch(e){}
-    const body={user_id:u.uid,device:DEV,label:LABEL,sheet_uid:sh&&sh.uid||null,sheet_name:sh&&sh.name||null,gps:!!gps,rec:rec,lat:gps?cur.lat:null,lng:gps?cur.lng:null,acc:gps?Math.round(cur.acc||0):null};
+    const identity=(u.name||'کاربر')+' · '+LABEL;const body={user_id:u.uid,device:DEV,label:identity,sheet_uid:sh&&sh.uid||null,sheet_name:sh&&sh.name||null,gps:!!gps,rec:rec,lat:gps?cur.lat:null,lng:gps?cur.lng:null,acc:gps?Math.round(cur.acc||0):null};
     const needTrk=(rec||lastRec)&&(rec!==lastRec||now-lastTrk>12000||force);
     if(needTrk&&typeof TRACK!=='undefined'){
       body.track=TRACK.slice(-600).map(p=>[+(+p.lat).toFixed(6),+(+p.lng).toFixed(6),p.t||0]);
@@ -7245,7 +7288,7 @@ async function poll(){
       if(row.user_id&&row.user_id!==u.uid) continue;
       seen.add(row.device);
       let p=peers.get(row.device);
-      if(!p){p={device:row.device,color:COLORS[peers.size%COLORS.length],base:[],extra:[],tv:null};peers.set(row.device,p)}
+      if(!p){let hv=0;for(let z=0;z<String(row.device||'').length;z++)hv=(hv*31+String(row.device).charCodeAt(z))>>>0;p={device:row.device,color:COLORS[hv%COLORS.length],base:[],extra:[],tv:null};peers.set(row.device,p)}
       p.label=row.label||'دستگاه';p.sheet=row.sheet_name||'';p.sheetUid=row.sheet_uid||null;
       p.lat=row.lat;p.lng=row.lng;p.acc=row.acc;p.gps=!!row.gps;p.rec=!!row.rec;
       p.age=(Date.now()+skew)-Date.parse(row.updated_at);
@@ -7305,7 +7348,8 @@ function draw(){
       if(p.age>45*60000) return;
       const on=p.age<30000, pts=pathOf(p).map(a=>[a[0],a[1]]);
       if(pts.length>=2) L.polyline(pts,{color:p.color,weight:4,opacity:on?0.95:0.5,dashArray:p.rec?null:'6 8'}).addTo(lg);
-      if(p.lat!=null&&p.gps) L.circleMarker([p.lat,p.lng],{radius:9,color:'#fff',weight:2,fillColor:p.color,fillOpacity:on?1:0.5})
+      const lastPoint=(pts.length?pts[pts.length-1]:(p.lat!=null&&p.gps?[p.lat,p.lng]:null));
+      if(lastPoint) L.circleMarker(lastPoint,{radius:10,color:'#fff',weight:2,fillColor:p.color,fillOpacity:on?1:0.5})
         .bindTooltip(p.label+(p.rec?' · در حال ثبت مسیر':''),{permanent:true,direction:'top',offset:[0,-8]}).addTo(lg);
     });
   }catch(e){}
