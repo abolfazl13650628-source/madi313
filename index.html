@@ -359,8 +359,10 @@ th{background:rgba(47,107,60,.1);font-weight:700}tr:nth-child(even) td{backgroun
 #chips button.active{outline:2px solid #ffd400;outline-offset:1px}
 #gd1{min-height:2.6em;margin:8px 0;line-height:1.4}
 
-#spSug{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
-#spSug button{background:var(--sf);color:var(--tx);border:2px solid #1e88e5;border-radius:16px;padding:5px 12px;font-size:12px;cursor:pointer}
+#spSug{display:flex;flex-direction:column;gap:2px;margin-top:5px;max-height:190px;overflow:auto;border:1px solid var(--bd);border-radius:8px;background:var(--sf)}
+#spSug button{display:block;width:100%;text-align:right;background:transparent;color:var(--tx);border:0;border-bottom:1px solid var(--bd);border-radius:0;padding:9px 12px;font-size:14px;cursor:pointer}
+#spSug button:last-child{border-bottom:0}
+#spSug button:active{background:var(--bg)}
 .spBubBar{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;max-height:108px;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .spBubBar button{background:var(--sf);color:var(--tx);border:2px solid #1e88e5;border-radius:16px;padding:6px 14px;font-size:13px;cursor:pointer;flex:0 0 auto}
 #livePeers{margin:8px 0}
@@ -370,17 +372,16 @@ th{background:rgba(47,107,60,.1);font-weight:700}tr:nth-child(even) td{backgroun
 #livePeers .lpSub{color:var(--mu);font-size:12px}
 #livePeers .lpOff{opacity:.55}
 #hkToast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#1e88e5;color:#fff;padding:9px 16px;border-radius:20px;font-size:13px;z-index:10001;box-shadow:0 4px 14px #0005;max-width:90vw;text-align:center}
-#recentSp{display:flex;gap:4px;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;margin:4px 0;padding:2px 0;max-width:100%;-webkit-overflow-scrolling:touch}
+#recentSp{display:flex;gap:4px;flex-wrap:wrap;overflow:visible;margin:6px 0;padding:2px 0;max-width:100%}
 #recentSp button{padding:6px 10px!important;font-size:12px!important;flex:0 0 auto!important;border-radius:16px}
 #manualFull #manualFormCard>label:first-of-type{margin-top:4px}
 #manualFull #manualFormCard>.r:has(#sps){position:sticky;top:0;z-index:5;background:var(--sf);padding:5px 0 7px;border-radius:8px}
-#manualFull #sp{min-width:0;flex:1.7!important}
-#manualFull #sps{min-width:0;flex:1!important}
+#manualFull #sp{display:none!important}
+#manualFull #sps{width:100%;min-width:0;flex:1!important}
+#manualFull #simBtn{display:none!important}
 .chipbtn{padding:2px 8px!important;font-size:12px!important}
 #totSummary{background:var(--sf);border:1px solid var(--bd);border-radius:9px;padding:7px 9px;margin-top:6px;font-size:12px}
 #totSummary b{color:var(--ac)}
-#spTotLine{margin-top:6px;font-size:12px;background:var(--sf);border:1px solid var(--bd);border-radius:9px;padding:6px 9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#spTotLine b{color:var(--ac)}
 #hvDash .c{margin-top:10px}
 .hvMk{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:12px;background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:7px 9px}
 .hvMk b{color:var(--ac)}
@@ -1299,16 +1300,6 @@ window.needOcr=async()=>{if(typeof Tesseract==='undefined')await loadLib('https:
         </select>
       </div>
 
-      <label>گونه</label>
-      <div id="recentSp"></div>
-      <div class="r" style="align-items:stretch; margin-top:4px;">
-        <input id="sps" placeholder="جستجوی گونه..." autocomplete="off" style="flex:1.2">
-        <select id="sp" style="flex:1.5; margin-top:0;"></select>
-        <button id="simBtn" class="o" type="button" title="پس از ذخیره، گونه تغییر نکند" style="flex:0.55; white-space:nowrap;">🔁 مشابه</button>
-      </div>
-      <div id="spSug" class="hid"></div>
-      <div id="spTotLine"></div>
-
       <div id="vcBar">
         <button id="vcMic" type="button">🎙️ ورود با صدا (آفلاین)</button>
         <div id="vcProg" class="hid"><i></i></div>
@@ -1316,6 +1307,13 @@ window.needOcr=async()=>{if(typeof Tesseract==='undefined')await loadLib('https:
         <div id="vcCf" class="hid"></div>
         <label id="vcGr"><input type="checkbox" id="vcGrCb"> محدود به کلمات برنامه (آزمایشی)</label>
       </div>
+
+      <label for="sps">جستجوی گونه</label>
+      <input id="sps" type="text" placeholder="نام گونه را بنویسید؛ با هر کلمه نتایج محدودتر می‌شود…" autocomplete="off" aria-label="جستجوی گونه">
+      <div id="spSug" class="hid" role="listbox" aria-label="نتایج گونه‌ها"></div>
+      <div id="recentSp" aria-label="گونه‌های انتخاب‌شده و اخیر"></div>
+      <select id="sp" class="hid" aria-hidden="true" tabindex="-1"></select>
+      <button id="simBtn" class="hid" type="button" title="پس از ذخیره، گونه تغییر نکند">🔁 مشابه</button>
       <div class="r" style="margin-top:6px;">
         <div><label>قطر سینه (cm)</label><input id="d" type="text" inputmode="decimal" class="tall-input"></div>
         <div class="h-wrap">
@@ -3763,7 +3761,7 @@ function addRecent(sp){
 const DEF_SP=['راش','ممرز','افرا','توسکا','بلوط','ون'];
 function renderRecent(){
   const el=$('#recentSp');if(!el)return;
-  const list = [...RECENT, ...DEF_SP.filter(s=>!RECENT.includes(s))].slice(0, 6);
+  const list = RECENT.slice(0, 8);
   const csel = $('#sp') ? $('#sp').value : '';
   el.innerHTML=list.map(s=>`<button type="button" class="${s===csel?'':'o '}spchip" data-sp="${esc(s)}">${esc(s)}</button>`).join('');
   el.querySelectorAll('button').forEach(b=>{
@@ -5432,18 +5430,16 @@ $('#emSave').onclick = () => {
 const cnt=t=>t.n||1,tv=t=>t.v*cnt(t),sv=a=>a.reduce((x,t)=>x+tv(t),0),ct=a=>a.reduce((x,t)=>x+cnt(t),0);
 
 function sumX(){
-  const I=T.filter(t=>t.ty!='h'&&t.k!=='planted'),H=T.filter(t=>t.ty=='h'&&t.k!=='planted');
+  // خلاصهٔ کلی گونه‌ها؛ بدون تفکیک خودرو و دست‌کاشت
+  const I=T.filter(t=>t.ty!=='h'), H=T.filter(t=>t.ty==='h');
   const sp=[...new Set(T.map(t=>t.sp))].sort((a,b)=>((SP[a]||[0,3])[1]-(SP[b]||[0,3])[1])||a.localeCompare(b,'fa'));
-  return{r:sp.map(n=>{const i=I.filter(t=>t.sp==n),h=H.filter(t=>t.sp==n);return[n,ct(i),sv(i),ct(h),sv(h)]}),t:['مجموع',ct(I),sv(I),ct(H),sv(H)]};
+  return {
+    r:sp.map(n=>{const i=I.filter(t=>t.sp==n),h=H.filter(t=>t.sp==n);return[n,ct(i),sv(i),ct(h),sv(h),ct(i)+ct(h),sv(i)+sv(h)];}),
+    t:['مجموع',ct(I),sv(I),ct(H),sv(H),ct(I)+ct(H),sv(I)+sv(H)]
+  };
 }
 
 function invTrees(){return T.slice();}
-function updateSpTotLine(){
-  const el=document.getElementById('spTotLine'); if(!el) return;
-  const sel=document.getElementById('sp'); const sp=sel?sel.value:'';
-  const list=sp?T.filter(t=>t.sp===sp):T;
-  el.innerHTML=(sp?'گونهٔ '+esc(sp)+': ':'کل درختان: ')+'تعداد <b>'+toFa(ct(list))+'</b> اصله · حجم تجمیعی <b>'+fa(sv(list),3)+'</b> مترمکعب';
-}
 
 function updateNoCoord(){
   const el=$('#noCoordBanner');if(!el)return;
@@ -5538,6 +5534,7 @@ function draw(){
     return noA - noB;
   });
 
+  const isForestMode = (getActiveSheet().mode||'garden') === 'forest';
   const taxHeader = showTax ? '<th>عوارض (ریال)</th>' : '';
   $('#tb').innerHTML='<tr><th>شماره</th><th>گونه</th><th>دسته</th><th>نوع</th><th>قطر</th><th>ارتفاع</th><th>حجم</th>'+taxHeader+'<th>X</th><th>Y</th><th>زون</th><th>توضیحات</th><th></th></tr>'+
     list.map(t=>{
@@ -5545,20 +5542,21 @@ function draw(){
       const tx = taxOf(t);
       const taxCell = showTax ? `<td class="taxCol">${isPlanted ? '۰' : (tx===null ? '—' : fa(tx,0))}</td>` : '';
       const catCell = G[catOf(t)] || '—';
-      return `<tr><td>${t.ty==='h'?'—':esc(toFa(t.no||''))}</td><td>${esc(t.sp)}</td><td>${catCell}</td><td>${t.ty==='h'?'هیزمی ('+toFa(cnt(t))+')':(isPlanted?'دست‌کاشت':'صنعتی')}</td><td>${fa(t.d,1)}</td><td>${fa(t.h,1)}</td><td>${fa(tv(t),3)}</td>${taxCell}<td${t.ua>10?' style="color:#b78500" title="دقت ضعیف"':''}>${t.ux?toFa(t.ux):'<span style="color:#d33">⚠</span>'}</td><td>${t.uy?toFa(t.uy):'—'}</td><td>${t.uz?toFa(t.uz):'—'}</td><td>${esc(t.ds||'')}</td><td>${(typeof isMarkingLocked==='function'&&isMarkingLocked())?'<small style="color:var(--mu)">قفل</small>':`<button class="o chipbtn" onclick="ed(${t.id})">ویرایش</button> <button class="x" onclick="del(${t.id})">حذف</button>`}</td></tr>`;
+      const typeLabel = isForestMode ? (t.ty === 'h' ? 'هیزمی' : 'صنعتی') : (isPlanted ? 'دست‌کاشت' : 'خودرو');
+      return `<tr><td>${t.ty==='h'?'—':esc(toFa(t.no||''))}</td><td>${esc(t.sp)}</td><td>${catCell}</td><td>${typeLabel}</td><td>${fa(t.d,1)}</td><td>${fa(t.h,1)}</td><td>${fa(tv(t),3)}</td>${taxCell}<td${t.ua>10?' style="color:#b78500" title="دقت ضعیف"':''}>${t.ux?toFa(t.ux):'<span style="color:#d33">⚠</span>'}</td><td>${t.uy?toFa(t.uy):'—'}</td><td>${t.uz?toFa(t.uz):'—'}</td><td>${esc(t.ds||'')}</td><td>${(typeof isMarkingLocked==='function'&&isMarkingLocked())?'<small style="color:var(--mu)">قفل</small>':`<button class="o chipbtn" onclick="ed(${t.id})">ویرایش</button> <button class="x" onclick="del(${t.id})">حذف</button>`}</td></tr>`;
     }).join('');
   $('#tot').textContent=fa(sv(list),3);
   const x=sumX();
-  $('#sm').innerHTML='<tr><th rowspan="2">ردیف</th><th rowspan="2">دسته‌بندی</th><th colspan="2">صنعتی</th><th colspan="2">هیزمی</th></tr><tr><th>تعداد</th><th>حجم</th><th>تعداد</th><th>حجم</th></tr>'+
-    x.r.map((a,i)=>`<tr><td>${fa(i+1)}</td><td>${esc(a[0])}</td><td>${fa(a[1])}</td><td>${fa(a[2],2)}</td><td>${fa(a[3])}</td><td>${fa(a[4],2)}</td></tr>`).join('')+
-    `<tr style="font-weight:700"><td colspan="2">مجموع</td><td>${fa(x.t[1])}</td><td>${fa(x.t[2],2)}</td><td>${fa(x.t[3])}</td><td>${fa(x.t[4],2)}</td></tr>`;
+  $('#tb').insertAdjacentHTML('beforeend',`<tr style="font-weight:800;background:rgba(47,107,60,.12)"><td colspan="${showTax?7:6}">جمع حجم سیاهه</td><td>${fa(sv(list),3)} مترمکعب</td><td colspan="5"></td></tr>`);
+  $('#sm').innerHTML='<tr><th rowspan="2">ردیف</th><th rowspan="2">دسته‌بندی</th><th colspan="2">صنعتی</th><th colspan="2">هیزمی</th><th colspan="2">مجموع</th></tr><tr><th>تعداد</th><th>حجم</th><th>تعداد</th><th>حجم</th><th>تعداد</th><th>حجم</th></tr>'+
+    x.r.map((a,i)=>`<tr><td>${fa(i+1)}</td><td>${esc(a[0])}</td><td>${fa(a[1])}</td><td>${fa(a[2],2)}</td><td>${fa(a[3])}</td><td>${fa(a[4],2)}</td><td>${fa(a[5])}</td><td>${fa(a[6],2)}</td></tr>`).join('')+
+    `<tr style="font-weight:700"><td colspan="2">مجموع کل</td><td>${fa(x.t[1])}</td><td>${fa(x.t[2],2)}</td><td>${fa(x.t[3])}</td><td>${fa(x.t[4],2)}</td><td>${fa(x.t[5])}</td><td>${fa(x.t[6],2)}</td></tr>`;
   const cu=$('#hs2').value;
   $('#hs2').innerHTML=T.map(t=>`<option value="${t.id}">${t.ty==='h'?'هیزمی':(t.k==='planted'?'دست‌کاشت':'شماره '+esc(toFa(t.no||t.id)))} - ${esc(t.sp)} - ${fa(t.d,0)}</option>`).join('');
   if(cu)$('#hs2').value=cu;
   $('#tb2').innerHTML='<tr><th>#</th><th>گونه</th><th>حجم اولیه</th><th>حجم تجدید</th><th>تغییر٪</th><th>استحصال</th><th>تاریخ</th></tr>'+
     T.filter(t=>t.v2||t.hv).map(t=>`<tr><td>${t.ty==='h'?'هیزمی':esc(toFa(t.no||t.id))}</td><td>${esc(t.sp)}</td><td>${fa(t.v,3)}</td><td>${fa(t.v2,3)}</td><td>${t.v2?fa((t.v2-t.v)/t.v*100,1):'—'}</td><td>${fa(t.hv,3)}</td><td>${esc(t.hd||'—')}</td></tr>`).join('');
   
-  try{updateSpTotLine()}catch(e){}
   try{ if(window.HV&&HV.mode) hvRenderSummary(); }catch(e){}
   updateModeLock();
   try{mapCheck(true)}catch(e){}
@@ -5643,7 +5641,6 @@ $('#volClass').addEventListener('change',()=>{
 });
 
 function calc(){
-  try{updateSpTotLine()}catch(e){}
   autoTy();
   const sp = $('#sp').value;
   const isTala = getActiveSheet()?.volClass === 'tala';
@@ -6429,7 +6426,7 @@ function buildInventorySheet(title, allTrees, modeOverride){
       t.ty==='h'?'':(t.no||''), 
       t.sp, 
       G[catOf(t)] || '—', 
-      t.ty==='h'?'هیزمی ('+toFa(t.n||1)+')':(isPlanted?'دست‌کاشت':'صنعتی'), 
+      isPlanted?'دست‌کاشت':'خودرو', 
       t.d, 
       t.h, 
       R3(rowV), 
@@ -6442,15 +6439,17 @@ function buildInventorySheet(title, allTrees, modeOverride){
     rows.push(row);
   });
 
+  const totalVolume = list.reduce((sum,t)=>sum+tv(t),0);
+  rows.push(['','جمع حجم سیاهه','','', '', '', '', R3(totalVolume)]);
   rows.push([]); 
   
   const x=sumX();
   rows.push(['خلاصه وضعیت', '']);
-  rows.push(['ردیف','دسته‌بندی','تعداد صنعتی','حجم صنعتی','تعداد هیزمی','حجم هیزمی']);
+  rows.push(['ردیف','دسته‌بندی','تعداد صنعتی','حجم صنعتی','تعداد هیزمی','حجم هیزمی','تعداد مجموع','حجم مجموع']);
   x.r.forEach((a, idx)=>{
-    rows.push([idx+1, a[0], a[1], R3(a[2]), a[3], R3(a[4])]);
+    rows.push([idx+1, a[0], a[1], R3(a[2]), a[3], R3(a[4]), a[5], R3(a[6])]);
   });
-  rows.push(['مجموع', '', x.t[1], R3(x.t[2]), x.t[3], R3(x.t[4])]);
+  rows.push(['مجموع کل', '', x.t[1], R3(x.t[2]), x.t[3], R3(x.t[4]), x.t[5], R3(x.t[6])]);
 
   const mg = [];
   return ['سیاهه', rows, mg, 2]; 
@@ -9795,9 +9794,12 @@ renderModeBar();render();fit();grow();
   var active=null, fresh=false, open=false, kpHistoryPushed=false;
   var $=function(i){return document.getElementById(i)};
   function enabled(){ try{ if(localStorage.getItem('kpOff')==='1') return false; return window.matchMedia('(pointer:coarse)').matches; }catch(e){ return false; } }
-  function elig(t){ return t && t.matches && t.matches(SEL) && !t.readOnly && !t.disabled; }
+  function elig(t){ return t && t.matches && t.matches(SEL) && (!t.readOnly || t.dataset.kpLock==='1') && !t.disabled; }
   function visible(el){ return !!(el && el.isConnected && el.offsetParent!==null); }
   function noKb(el){ if(el.dataset.kpIm===undefined) el.dataset.kpIm=el.getAttribute('inputmode')||''; el.setAttribute('inputmode','none'); }
+  /* در مرورگرهایی که inputmode=none را نادیده می‌گیرند، readonly مانع بازشدن صفحه‌کلید بومی می‌شود. */
+  function lockNative(el){ if(!el) return; if(el.dataset.kpLock!=='1'){ el.dataset.kpWasReadonly=el.readOnly?'1':'0'; el.dataset.kpLock='1'; } el.readOnly=true; noKb(el); }
+  function unlockNative(el){ if(!el||el.dataset.kpLock!=='1') return; el.readOnly=el.dataset.kpWasReadonly==='1'; delete el.dataset.kpLock; delete el.dataset.kpWasReadonly; }
   /* inputmode=none را از ابتدا اعمال کن تا کیبورد سیستم پیش از فوکوس باز نشود. */
   function prepNumericFields(root){ (root||document).querySelectorAll(SEL).forEach(function(el){ if(elig(el)) noKb(el); }); }
   prepNumericFields(document);
@@ -9828,7 +9830,7 @@ renderModeBar();render();fit();grow();
   function esc2(x){ return String(x).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]}); }
   function chain(){
     var sc=active.closest('#manualFormCard')||active.closest('#editModal')||active.closest('#hvFull')||document;
-    return Array.prototype.filter.call(sc.querySelectorAll(SEL),function(e){ return visible(e)&&!e.readOnly&&!e.disabled&&!e.matches(SKIP); });
+    return Array.prototype.filter.call(sc.querySelectorAll(SEL),function(e){ return visible(e)&&(!e.readOnly||e.dataset.kpLock==='1')&&!e.disabled&&!e.matches(SKIP); });
   }
   function isLastHvC(){
     if(!active||!active.classList.contains('hvC')) return false;
@@ -9866,7 +9868,7 @@ renderModeBar();render();fit();grow();
     if(active&&active!==el) active.classList.remove('kp-active');
     var same=(active===el&&open);
     if(!open && window.__appBack){ try{ window.__appBack.push(); kpHistoryPushed=true; }catch(e){} }
-    active=el; noKb(el); el.classList.add('kp-active');
+    active=el; lockNative(el); el.classList.add('kp-active');
     if(!same) fresh=true;
     open=true; kp.classList.add('open'); kp.setAttribute('aria-hidden','false'); document.body.classList.add('kp-open');
     setH(); update();
@@ -9878,11 +9880,11 @@ renderModeBar();render();fit();grow();
     var a=active; open=false; active=null;
     if(kpHistoryPushed){ kpHistoryPushed=false; if(!fromPop&&window.__appBack){ try{ window.__appBack.backFromUI(); }catch(e){} } }
     kp.classList.remove('open'); kp.setAttribute('aria-hidden','true'); document.body.classList.remove('kp-open'); setH();
-    if(a){ a.classList.remove('kp-active'); try{ a.dispatchEvent(new Event('change',{bubbles:true})); }catch(e){} try{ a.blur(); }catch(e){} }
+    if(a){ a.classList.remove('kp-active'); unlockNative(a); try{ a.dispatchEvent(new Event('change',{bubbles:true})); }catch(e){} try{ a.blur(); }catch(e){} }
   }
   function go(el){
     if(!el) return;
-    var a=active; if(a){ try{ a.dispatchEvent(new Event('change',{bubbles:true})); }catch(e){} }
+    var a=active; if(a){ unlockNative(a); try{ a.dispatchEvent(new Event('change',{bubbles:true})); }catch(e){} }
     noKb(el); openFor(el); try{ el.focus({preventScroll:true}); }catch(e){}
   }
   function setVal(v){ if(!active) return; active.value=v; active.dispatchEvent(new Event('input',{bubbles:true})); update(); }
@@ -9923,7 +9925,7 @@ renderModeBar();render();fit();grow();
     press(k);
   });
   /* باز شدن با لمس/فوکوس فیلدهای عددی */
-  document.addEventListener('pointerdown',function(e){ if(!enabled()) return; var t=e.target; if(elig(t)&&t.dataset.kpNative!=='1') noKb(t); },true);
+  document.addEventListener('pointerdown',function(e){ if(!enabled()) return; var t=e.target; if(elig(t)&&t.dataset.kpNative!=='1'){ lockNative(t); } },true);
   document.addEventListener('focusin',function(e){ var t=e.target; if(!enabled()||!elig(t)||t.dataset.kpNative==='1') return; noKb(t); if(t!==active||!open) openFor(t); });
   document.addEventListener('focusout',function(e){ var t=e.target; if(t&&t.dataset&&t.dataset.kpNative==='1'){ delete t.dataset.kpNative; if(t.dataset.kpIm!==undefined) t.setAttribute('inputmode','none'); } });
   document.addEventListener('click',function(e){
