@@ -7033,7 +7033,7 @@ window.hkOpLegend=trees=>{
 /* ===== پنل حساب / همگام‌سازی / مدیر ===== */
 const fa=n=>typeof toFa==='function'?toFa(n):n;
 const fdt=x=>x?new Date(x).toLocaleString('fa-IR',{dateStyle:'short',timeStyle:'short'}):'—';
-async function adm(fn,ex){const d=getDeviceCreds();const j=await rpc(fn,Object.assign({p_device_id:d.device_id,p_device_token:d.device_token},ex||{}));if(j&&j.ok===false)throw Object.assign(new Error(j.error||'ERR'),{code:j.error});return j}
+async function adm(fn,ex){const d=getDeviceCreds();const j=await rpc(fn,Object.assign({p_device_id:d.device_id,p_device_token:d.device_token},window.__hkAC?{p_code:window.__hkAC}:{},ex||{}));if(j&&j.ok===false)throw Object.assign(new Error(j.error||'ERR'),{code:j.error});return j}
 const ADM_ERR={NOT_ADMIN:'این بخش فقط روی دستگاه مدیر کار می‌کند.',WRONG_ADMIN_CODE:'کد مدیر فعلی اشتباه است.',CODE_TOO_SHORT:'کد جدید حداقل ۶ نویسه باشد.',CANNOT_REVOKE_SELF:'نمی‌توانید دستگاه مدیر را قطع کنید.'};
 function openPanel(){
   if(!S||document.getElementById('hkPanel'))return;
@@ -7046,7 +7046,7 @@ function openPanel(){
   const $p=s=>p.querySelector(s);
   const st=()=>{$p('#pSt').innerHTML='👤 '+esc(S.name)+'<br>'+esc(msg||'—')+'<br><span class="m">'+fa(SHEETS.length)+' سربرگ · '+(navigator.onLine?'آنلاین':'آفلاین')+'</span>';$p('#pNc').innerHTML='<span class="dot" style="background:'+hkOpColor(opBase())+'"></span> رنگ شما روی نقشه'};
   st();$p('#pNm').value=opName();
-  $p('#pX').onclick=()=>p.remove();
+  $p('#pX').onclick=()=>{window.__hkAC=null;p.remove()};
   $p('#pSy').onclick=async()=>{await sync();st()};
   $p('#pNs').onclick=async()=>{
     const v=$p('#pNm').value.trim();if(!v)return;LS('hk_op_name',v);st();
@@ -7070,11 +7070,19 @@ function openPanel(){
         catch(e){ms(ADM_ERR[e.code]||e.message,1);b.disabled=false}
       });
       $p('#pCs').onclick=async()=>{
-        try{await adm('hk_admin_set_code',{p_old:$p('#pC0').value,p_new:$p('#pC1').value});$p('#pC0').value=$p('#pC1').value='';ms('✓ کد مدیر تغییر کرد.')}
+        try{await adm('hk_admin_set_code',{p_old:$p('#pC0').value,p_new:$p('#pC1').value});window.__hkAC=$p('#pC1').value;$p('#pC0').value=$p('#pC1').value='';ms('✓ کد مدیر تغییر کرد.')}
         catch(e){ms(ADM_ERR[e.code]||e.message,1)}
       };
     }catch(e){
-      box.innerHTML='<div class="m">'+esc(e.code==='NOT_ADMIN'?ADM_ERR.NOT_ADMIN:(/Could not find|404|PGRST/i.test(e.message||'')?'توابع مدیریت روی سرور نصب نشده‌اند (فایل hk_all_in_one.sql را اجرا کنید).':(e.message||'خطا')))+'</div>';
+      const cd=e.code||'';
+      if(/NOT_ADMIN|WRONG_ADMIN_CODE|ADMIN_CODE_LOCKED|ADMIN_NOT_CONFIGURED/.test(cd)){
+        window.__hkAC=null;
+        const er=cd==='WRONG_ADMIN_CODE'?ADM_ERR.WRONG_ADMIN_CODE:cd==='ADMIN_CODE_LOCKED'?'به‌خاطر تلاش‌های ناموفق، کد موقتاً قفل شد (حدود ۱۵ دقیقه).':cd==='ADMIN_NOT_CONFIGURED'?'کد مدیر برای این حساب تنظیم نشده است.':'';
+        box.innerHTML='<div class="m">هر کس کد مدیر را بداند، روی هر دستگاهی دسترسی کامل مدیر دارد. کد را وارد کنید:</div><input id="pAc" type="password" placeholder="کد مدیر" autocomplete="off" style="margin-top:6px"><button id="pAb" style="width:100%;margin-top:6px">ورود به مدیریت</button><div class="pm er">'+er+'</div>';
+        $p('#pAb').onclick=()=>{window.__hkAC=$p('#pAc').value.trim();load()};
+      }else{
+        box.innerHTML='<div class="m">'+esc(/Could not find|404|PGRST/i.test(e.message||'')?'توابع مدیریت روی سرور نصب نشده‌اند (فایل hk_all_in_one.sql را کامل اجرا کنید).':(e.message||'خطا'))+'</div>';
+      }
     }
   };
   load();
