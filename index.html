@@ -7061,7 +7061,7 @@ function openPanel(){
        +(rq.map(r=>'<div class="row"><div>'+esc(r.label||'دستگاه')+'<small>'+esc((r.device_id||'').slice(0,10))+'…</small></div><div class="bt"><button data-a="ok" data-d="'+esc(r.device_id)+'">تأیید</button><button class="x" data-a="no" data-d="'+esc(r.device_id)+'">رد</button></div></div>').join('')||'<div class="m">درخواستی نیست.</div>')
        +'<b style="display:block;margin-top:12px">دستگاه‌های واردشده ('+fa(ss.length)+')</b>'
        +ss.map(s=>'<div class="row"><div>'+esc(s.label||'دستگاه')+(s.device_id===me?' (این دستگاه)':'')+(s.is_admin?' 👑':'')+'<small>آخرین فعالیت: '+fdt(s.last_seen)+(s.revoked_at?' · قطع‌شده':'')+'</small></div>'
-         +((!s.revoked_at&&s.device_id!==me&&!s.is_admin)?'<div class="bt"><button class="x" data-a="rv" data-d="'+esc(s.device_id)+'">قطع دسترسی</button></div>':'')+'</div>').join('')
+         +((!s.revoked_at&&s.device_id!==me)?'<div class="bt"><button class="x" data-a="rv" data-d="'+esc(s.device_id)+'">قطع دسترسی</button></div>':'')+'</div>').join('')
        +'<b style="display:block;margin-top:12px">تغییر کد مدیر</b><input id="pC0" type="password" placeholder="کد فعلی" autocomplete="off" style="margin-top:6px"><input id="pC1" type="password" placeholder="کد جدید (حداقل ۶ نویسه)" autocomplete="off" style="margin-top:6px"><button id="pCs" style="width:100%;margin-top:6px">ذخیرهٔ کد جدید</button><div class="pm" id="pMs"></div>';
       const ms=(t,e)=>{const m=$p('#pMs');m.textContent=t;m.className='pm'+(e?' er':'')};
       box.querySelectorAll('[data-a]').forEach(b=>b.onclick=async()=>{
