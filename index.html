@@ -5971,8 +5971,7 @@ document.getElementById('smartImportFile').onchange = async (e) => {
           if (ai.rows.length) { aiRows = ai.rows; extractedData = ai.rows; importNote = ai.note; aiDone = true; }
           else importNote = 'هوش مصنوعی ردیفی پیدا نکرد؛ با OCR ساده خوانده شد.';
         } catch (aiErr) {
-          if (!confirm('خواندن هوشمند ناموفق بود:\n' + aiErr.message + '\n\nبا OCR ساده ادامه دهم؟ (دقت آن برای این برگه‌ها خیلی کم است؛ بهتر است انصراف دهید و چند دقیقه بعد دوباره امتحان کنید.)')) { btn.innerHTML = originalText; return; }
-          importNote = 'خواندن هوشمند ناموفق بود؛ با OCR ساده خوانده شد (دقت کم).';
+          importNote = 'خواندن هوشمند ناموفق بود (' + String(aiErr.message||'خطا').split('\n')[0] + ')؛ با OCR ساده ادامه داده شد (دقت کمتر، لطفاً کنترل کنید).';
         }
       }
       if (!aiDone) {
@@ -8368,9 +8367,9 @@ async function send(text,o){
   }
 
   if(o.mode&&o.mode!==mode)setMode(o.mode);
-  hist.push({role:'user',content:text.slice(0,3000)});inp.value='';busy=true;render();
+  hist.push({role:'user',content:text.slice(0,12000)});inp.value='';busy=true;render();
   try{
-    const chat={mode,voice:!!o.voice,messages:hist.filter(m=>!m.err).slice(-8).map(m=>({role:m.role,content:m.content.slice(0,2000)})).reduce((a,m)=>{const l=a[a.length-1];if(l&&l.role===m.role)l.content=(l.content+'\n'+m.content).slice(0,2000);else a.push(m);return a},[])};
+    const chat={mode,voice:!!o.voice,messages:hist.filter(m=>!m.err).slice(-16).map(m=>({role:m.role,content:m.content.slice(0,10000)})).reduce((a,m)=>{const l=a[a.length-1];if(l&&l.role===m.role)l.content=(l.content+'\n'+m.content).slice(0,12000);else a.push(m);return a},[])};
     if(mode==='app'){
       const c=o.context||ctx();
       try{
